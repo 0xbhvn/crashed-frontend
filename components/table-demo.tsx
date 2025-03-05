@@ -36,6 +36,8 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	ChevronUp,
+	Copy,
+	Check,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -203,9 +205,87 @@ export function Component() {
 		setPage(1); // Reset to first page when changing per_page
 	};
 
+	// Add this after the usePagination hook functions and before the return statement
+	const [copySuccess, setCopySuccess] = useState(false);
+
+	// Function to copy table data to clipboard
+	const copyTableDataToClipboard = () => {
+		if (!table.getRowModel().rows.length) return;
+
+		// Format visible data for Google Sheets (TSV format)
+		const visibleData = table
+			.getRowModel()
+			.rows.map((row) => {
+				// Get cell values for each visible column
+				return row
+					.getVisibleCells()
+					.map((cell) => {
+						// Get raw value when possible
+						const column = cell.column.id;
+						const rawValue =
+							row.original[column as keyof typeof row.original];
+
+						// For formatted values, try to get the raw value first
+						if (column === 'crashPoint')
+							return String(rawValue || '');
+
+						// For duration column (which has accessorKey 'endTime'), calculate duration instead of showing raw endTime
+						if (column === 'endTime') {
+							const beginTime = row.original.beginTime;
+							return calculateDuration(
+								String(rawValue || ''),
+								beginTime
+							);
+						}
+
+						if (column === 'beginTime')
+							return String(rawValue || '');
+
+						// Return the rendered value as fallback
+						return String(rawValue || '');
+					})
+					.join('\t'); // Tab separated for spreadsheet compatibility
+			})
+			.join('\n'); // New line for each row
+
+		// Copy to clipboard
+		navigator.clipboard
+			.writeText(visibleData)
+			.then(() => {
+				setCopySuccess(true);
+				setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
+			})
+			.catch((err) => {
+				console.error('Failed to copy: ', err);
+			});
+	};
+
 	return (
 		<div className="space-y-4">
 			<div className="overflow-hidden rounded-lg border border-border bg-background">
+				{/* Add a toolbar with copy button */}
+				<div className="flex justify-between items-center p-2 border-b border-border">
+					<div className="text-sm font-medium">Game Data</div>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={copyTableDataToClipboard}
+						className="h-8 gap-1"
+						title="Copy data to clipboard for spreadsheet"
+					>
+						{copySuccess ? (
+							<>
+								<Check className="h-3.5 w-3.5" />
+								<span>Copied!</span>
+							</>
+						) : (
+							<>
+								<Copy className="h-3.5 w-3.5" />
+								<span>Copy Data</span>
+							</>
+						)}
+					</Button>
+				</div>
 				<Table className="table-fixed">
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -285,17 +365,13 @@ export function Component() {
 							// Loading state - using unique ID patterns for keys instead of index
 							Array.from({ length: perPage }).map((_, index) => (
 								<TableRow
-									key={`loading-row-${
-										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-										index
-									}`}
+									// biome-ignore lint/suspicious/noArrayIndexKey: Using index as key for loading skeletons is acceptable
+									key={`loading-row-${index}`}
 								>
 									{columns.map((column, colIndex) => (
 										<TableCell
-											key={`loading-cell-${index}-${
-												// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-												colIndex
-											}`}
+											// biome-ignore lint/suspicious/noArrayIndexKey: Using indices for loading skeleton cells is acceptable
+											key={`loading-cell-${index}-${colIndex}`}
 											className="h-10 py-2"
 										>
 											<div className="h-3 bg-muted/30 animate-pulse rounded" />
