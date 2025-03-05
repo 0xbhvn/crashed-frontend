@@ -104,15 +104,15 @@ const columns: ColumnDef<Game>[] = [
 		accessorKey: 'crashPoint',
 		cell: ({ row }) => {
 			const value = row.getValue('crashPoint') as number;
-			const isHighValue = value >= 10;
 
 			return (
 				<div
-					className={`font-medium ${
-						isHighValue
-							? 'text-green-600 dark:text-green-400'
-							: 'text-primary'
-					}`}
+					className={cn(
+						'rounded font-semibold px-2 py-0.5 inline-block',
+						value < 10
+							? 'bg-red-600/20 text-red-600 dark:bg-red-800/30 dark:text-red-400'
+							: 'bg-green-600/20 text-green-600 dark:bg-green-800/30 dark:text-green-400'
+					)}
 				>
 					{value.toFixed(2)}
 				</div>
