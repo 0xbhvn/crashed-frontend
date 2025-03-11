@@ -36,6 +36,8 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	ChevronUp,
+	ChevronsLeft,
+	ChevronsRight,
 	Copy,
 	Check,
 	AlertTriangle,
@@ -651,6 +653,27 @@ export function GamesTable() {
 					<div className="grow">
 						<Pagination>
 							<PaginationContent>
+								{/* First page button */}
+								<PaginationItem>
+									<Button
+										size="icon"
+										variant="outline"
+										className="disabled:pointer-events-none disabled:opacity-50"
+										onClick={() => handlePageChange(1)}
+										disabled={
+											page === 1 ||
+											!apiData.pagination.has_prev
+										}
+										aria-label="Go to first page"
+									>
+										<ChevronsLeft
+											size={16}
+											strokeWidth={2}
+											aria-hidden="true"
+										/>
+									</Button>
+								</PaginationItem>
+
 								{/* Previous page button */}
 								<PaginationItem>
 									<Button
@@ -726,6 +749,33 @@ export function GamesTable() {
 										aria-label="Go to next page"
 									>
 										<ChevronRight
+											size={16}
+											strokeWidth={2}
+											aria-hidden="true"
+										/>
+									</Button>
+								</PaginationItem>
+
+								{/* Last page button */}
+								<PaginationItem>
+									<Button
+										size="icon"
+										variant="outline"
+										className="disabled:pointer-events-none disabled:opacity-50"
+										onClick={() =>
+											handlePageChange(
+												apiData.pagination.total_pages
+											)
+										}
+										disabled={
+											page ===
+												apiData.pagination
+													.total_pages ||
+											!apiData.pagination.has_next
+										}
+										aria-label="Go to last page"
+									>
+										<ChevronsRight
 											size={16}
 											strokeWidth={2}
 											aria-hidden="true"
