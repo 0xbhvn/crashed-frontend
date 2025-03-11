@@ -50,7 +50,7 @@ export const calculateDuration = (
 		}
 
 		const durationSec = durationMs / 1000;
-		return durationSec.toFixed(2); // Return with 2 decimal places
+		return `${durationSec.toFixed(3)}s`;
 	} catch {
 		return 'Error';
 	}
