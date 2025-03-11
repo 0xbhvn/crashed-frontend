@@ -38,7 +38,7 @@ This application allows users to view and interact with crash instances data thr
 │   │   ├── pagination.tsx
 │   │   ├── select.tsx
 │   │   └── table.tsx
-│   └── table-demo.tsx    # Main table component
+│   └── games-table.tsx   # Main games table component
 ├── lib/                  # Utility functions
 │   └── utils.ts
 ├── public/               # Static assets
