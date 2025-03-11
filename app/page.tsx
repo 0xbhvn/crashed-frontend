@@ -1,6 +1,6 @@
 'use client';
 
-import { Component as TableDemo } from '@/components/table-demo';
+import { GamesTable } from '@/components/games-table';
 
 export default function Home() {
 	return (
@@ -10,7 +10,7 @@ export default function Home() {
 					Crash Instances
 				</h1>
 				<div className="w-full">
-					<TableDemo />
+					<GamesTable />
 				</div>
 			</main>
 		</div>

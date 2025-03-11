@@ -135,7 +135,7 @@ const columns: ColumnDef<Game>[] = [
 	},
 ];
 
-export function Component() {
+export function GamesTable() {
 	const [page, setPage] = useState(1);
 	const [perPage, setPerPage] = useState(10);
 	const [apiData, setApiData] = useState<ApiResponse | null>(null);
