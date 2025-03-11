@@ -1,6 +1,6 @@
 'use client';
 
-import { GamesTable } from '@/components/games-table';
+import GamesTableWrapper from '@/components/games-table-wrapper';
 
 export default function Home() {
 	return (
@@ -10,7 +10,7 @@ export default function Home() {
 					Crash Instances
 				</h1>
 				<div className="w-full">
-					<GamesTable />
+					<GamesTableWrapper />
 				</div>
 			</main>
 		</div>
