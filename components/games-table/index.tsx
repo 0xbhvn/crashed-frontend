@@ -1,7 +1,6 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import {
 	Table,
 	TableBody,
@@ -17,13 +16,13 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
-import { ChevronDown, ChevronUp, Check, Copy } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 import { useGamesData } from '@/hooks/use-games-data';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { columns } from './columns';
 import { TableSkeleton } from './table-skeleton';
-import { PaginationControls } from './pagination-controls';
+import { TableControlsHeader } from './table-controls-header';
 
 export interface GamesTableProps {
 	initialPage?: number;
@@ -82,37 +81,25 @@ export function GamesTable({
 				</div>
 			)}
 
+			{/* Sticky header with controls */}
+			<TableControlsHeader
+				apiData={apiData}
+				page={page}
+				perPage={perPage}
+				loading={loading}
+				error={error}
+				copySuccess={copySuccess}
+				onPageChange={setPage}
+				onPerPageChange={(value) => {
+					setPerPage(Number(value));
+					setPage(1); // Reset to first page when changing per_page
+				}}
+				onCopyClick={() =>
+					copyTableDataToClipboard(table.getRowModel().rows)
+				}
+			/>
+
 			<div className="overflow-hidden rounded-lg border border-border bg-background">
-				{/* Add a toolbar with copy button */}
-				<div className="flex justify-between items-center p-2 border-b border-border">
-					<div className="text-sm font-medium">Game Data</div>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() =>
-							copyTableDataToClipboard(table.getRowModel().rows)
-						}
-						className="h-8 gap-1"
-						title="Copy data to clipboard for spreadsheet"
-						disabled={
-							loading ||
-							!!error ||
-							!table.getRowModel().rows.length
-						}
-					>
-						{copySuccess ? (
-							<>
-								<Check className="h-3.5 w-3.5" />
-								<span>Copied!</span>
-							</>
-						) : (
-							<>
-								<Copy className="h-3.5 w-3.5" />
-								<span>Copy Data</span>
-							</>
-						)}
-					</Button>
-				</div>
 				<Table className="table-fixed">
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -235,21 +222,6 @@ export function GamesTable({
 					</TableBody>
 				</Table>
 			</div>
-
-			{apiData && !loading && !error && (
-				<PaginationControls
-					apiData={apiData}
-					page={page}
-					perPage={perPage}
-					loading={loading}
-					error={error}
-					onPageChange={setPage}
-					onPerPageChange={(value) => {
-						setPerPage(Number(value));
-						setPage(1); // Reset to first page when changing per_page
-					}}
-				/>
-			)}
 		</div>
 	);
 }
