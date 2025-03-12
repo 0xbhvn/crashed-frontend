@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
 	Table,
@@ -19,6 +20,7 @@ import {
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 import { useGamesData } from '@/hooks/use-games-data';
+import type { UseGamesDataReturn } from '@/hooks/use-games-data';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { columns } from './columns';
 import { TableSkeleton } from './table-skeleton';
@@ -29,13 +31,25 @@ export interface GamesTableProps {
 	initialPage?: number;
 	initialPerPage?: number;
 	enableRealtime?: boolean;
+	onPerPageChange?: (perPage: number) => void;
+	gamesDataHook?: UseGamesDataReturn;
 }
 
 export function GamesTable({
 	initialPage = 1,
 	initialPerPage = 10,
 	enableRealtime = true,
+	onPerPageChange,
+	gamesDataHook,
 }: GamesTableProps) {
+	// Create a local hook if one isn't provided
+	const localGamesDataHook = useGamesData({
+		initialPage,
+		initialPerPage,
+		enableRealtime,
+	});
+
+	// Use the passed hook if available, otherwise use the local one
 	const {
 		page,
 		perPage,
@@ -48,11 +62,14 @@ export function GamesTable({
 		setPage,
 		setPerPage,
 		setSorting,
-	} = useGamesData({
-		initialPage,
-		initialPerPage,
-		enableRealtime,
-	});
+	} = gamesDataHook || localGamesDataHook;
+
+	// Notify parent component when perPage changes
+	useEffect(() => {
+		if (onPerPageChange && perPage) {
+			onPerPageChange(perPage);
+		}
+	}, [perPage, onPerPageChange]);
 
 	// Copy to clipboard functionality
 	const { copySuccess, copyTableDataToClipboard } = useClipboard();
@@ -69,7 +86,23 @@ export function GamesTable({
 			sorting,
 		},
 		manualPagination: true, // We're handling pagination outside of the table
+		// Force re-calculation of data when it changes
+		defaultColumn: {
+			// This ensures the table is aware of cell updates
+			cell: (info) => info.getValue(),
+		},
+		// Key the table data by gameId to help React identify which rows have changed
+		getRowId: (row) => row.gameId,
 	});
+
+	// Log table data for debugging
+	useEffect(() => {
+		if (apiData) {
+			console.log(
+				`Table rendering with ${apiData.data.length} rows (expected: ${perPage})`
+			);
+		}
+	}, [apiData, perPage]);
 
 	// Extract the copy to clipboard handler for direct call
 	const handleCopyData = () =>

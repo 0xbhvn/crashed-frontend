@@ -12,7 +12,8 @@ interface UseGamesDataProps {
 	enableRealtime?: boolean;
 }
 
-interface UseGamesDataReturn {
+// Export the interface for use in other components
+export interface UseGamesDataReturn {
 	apiData: ApiResponse | null;
 	loading: boolean;
 	error: string | null;
@@ -121,32 +122,66 @@ export function useGamesData({
 	const incorporateNewGames = useCallback(() => {
 		if (newGames.length === 0 || !apiData) return;
 
+		console.log('Incorporating new games:', newGames);
+
 		setApiData((prevData) => {
 			if (!prevData) return prevData;
 
-			// Create a new data array with the new games and existing games
-			const updatedData = [...newGames, ...prevData.data];
+			// Create a new data array with the new games at the beginning
+			// followed by the existing games, but remove duplicates
+			const existingIds = new Set(
+				prevData.data.map((game) => game.gameId)
+			);
+			const uniqueNewGames = newGames.filter(
+				(game) => !existingIds.has(game.gameId)
+			);
 
-			// Update the pagination and count info
-			return {
-				...prevData,
-				count: prevData.count + newGames.length,
-				data: updatedData.slice(0, perPage), // Keep only 'perPage' number of games
+			// Add the unique new games to the beginning followed by existing data
+			// but limit to perPage total items to maintain correct page size
+			const updatedData = [...uniqueNewGames, ...prevData.data].slice(
+				0,
+				perPage
+			);
+
+			// Calculate new pagination info
+			const newTotalItems =
+				prevData.pagination.total_items + uniqueNewGames.length;
+			const newTotalPages = Math.ceil(newTotalItems / perPage);
+
+			console.log('Updated data preview:', updatedData.slice(0, 3));
+			console.log('New total items:', newTotalItems);
+			console.log(
+				'Table will display exactly',
+				updatedData.length,
+				'rows (perPage:',
+				perPage,
+				')'
+			);
+
+			// Create an entirely new object to ensure React detects the change
+			const newApiData = {
+				status: prevData.status,
+				count: prevData.count + uniqueNewGames.length,
+				// Create a new array with the updated data to ensure React detects the change
+				data: updatedData,
 				pagination: {
 					...prevData.pagination,
-					total_items:
-						prevData.pagination.total_items + newGames.length,
-					total_pages: Math.ceil(
-						(prevData.pagination.total_items + newGames.length) /
-							perPage
-					),
+					total_items: newTotalItems,
+					total_pages: newTotalPages,
+					has_next: page < newTotalPages,
 				},
 			};
+
+			console.log(
+				'New data created with length:',
+				newApiData.data.length
+			);
+			return newApiData;
 		});
 
 		// Clear the new games list after incorporating
 		clearNewGames();
-	}, [newGames, apiData, perPage, clearNewGames]);
+	}, [newGames, apiData, perPage, clearNewGames, page]);
 
 	return {
 		apiData,
