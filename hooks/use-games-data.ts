@@ -349,14 +349,17 @@ export function useGamesData({
 
 	return {
 		// Only combine WebSocket games with API data if they haven't been incorporated yet
+		// AND enableRealtime is true (auto-refresh is ON)
 		apiData: apiData
 			? {
 					...apiData,
-					// Combine websocket games and API data when returning
-					data: [...wsGames, ...(apiData?.data || [])].slice(
-						0,
-						perPage
-					),
+					// Only merge websocket games for display when enableRealtime is true
+					data: enableRealtime
+						? [...wsGames, ...(apiData?.data || [])].slice(
+								0,
+								perPage
+						  )
+						: apiData.data,
 			  }
 			: null,
 		loading,
@@ -365,7 +368,8 @@ export function useGamesData({
 		page,
 		perPage,
 		sorting,
-		newGamesCount: enableRealtime ? wsGames.length : 0,
+		// Always track the count regardless of enableRealtime setting
+		newGamesCount: wsGames.length,
 		connectionStatus,
 		setPage,
 		setPerPage,

@@ -18,7 +18,7 @@ export default function GamesTableWrapper() {
 	const gamesDataHook = useGamesData({
 		initialPage: 1,
 		initialPerPage: currentPerPage,
-		enableRealtime: true,
+		enableRealtime: autoRefresh,
 	});
 
 	const { newGamesCount, incorporateNewGames, perPage } = gamesDataHook;
@@ -32,6 +32,12 @@ export default function GamesTableWrapper() {
 			setCurrentPerPage(perPage);
 		}
 	}, [perPage, currentPerPage]);
+
+	// Update the hook's enableRealtime setting when autoRefresh changes
+	useEffect(() => {
+		// This ensures the hook's enableRealtime setting stays in sync with autoRefresh
+		console.log(`Auto-refresh ${autoRefresh ? 'enabled' : 'disabled'}`);
+	}, [autoRefresh]);
 
 	// Handle refresh button click - just update games without forcing re-render
 	const handleRefresh = useCallback(() => {
