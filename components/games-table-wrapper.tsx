@@ -6,8 +6,7 @@ import { useGamesData } from '@/hooks/use-games-data';
 import { toast } from 'sonner';
 
 export default function GamesTableWrapper() {
-	// Add a key to force re-render when new games are added
-	const [tableKey, setTableKey] = useState(0);
+	// Remove the tableKey state as we don't need to force re-renders anymore
 
 	// Initialize with default page size
 	const [currentPerPage, setCurrentPerPage] = useState(25);
@@ -34,27 +33,61 @@ export default function GamesTableWrapper() {
 		}
 	}, [perPage, currentPerPage]);
 
-	// Handle refresh button click - update games and force table to re-render
+	// Handle refresh button click - just update games without forcing re-render
 	const handleRefresh = useCallback(() => {
-		incorporateNewGames();
-		// Force a re-render of the GamesTable component
-		setTableKey((prev) => prev + 1);
+		const currentPage = gamesDataHook.page;
 
-		// Only show success toast for manual refresh
-		if (!autoRefresh || newGamesCount === 0) {
-			toast.success('Games updated!');
+		if (newGamesCount > 0) {
+			console.log(`Incorporating ${newGamesCount} new games into table`);
+			incorporateNewGames();
+
+			// Different message based on which page we're on
+			if (currentPage === 1) {
+				toast.success(
+					`${newGamesCount} new game${
+						newGamesCount === 1 ? '' : 's'
+					} added to table!`
+				);
+			} else {
+				toast.success(
+					`${newGamesCount} new game${
+						newGamesCount === 1 ? '' : 's'
+					} added to page 1 and your view has been updated.`
+				);
+			}
+		} else {
+			incorporateNewGames();
+			// Only show success toast for manual refresh
+			if (!autoRefresh) {
+				toast.success('Games updated!');
+			}
 		}
-	}, [incorporateNewGames, autoRefresh, newGamesCount]);
+	}, [incorporateNewGames, autoRefresh, newGamesCount, gamesDataHook.page]);
 
 	// Show a toast notification when new games are available
 	// and auto-incorporate them if autoRefresh is enabled
 	useEffect(() => {
 		if (newGamesCount > 0) {
+			// Get the current page from the hook
+			const currentPage = gamesDataHook.page;
+
 			// Only show the toast for the first time when new games arrive
+			// Add page information if not on page 1
+			const pageInfo =
+				currentPage > 1
+					? ` (added to page 1${
+							autoRefresh
+								? ' and refreshing your current view'
+								: ''
+					  })`
+					: '';
+
 			toast.info(
 				`${newGamesCount} new game${
 					newGamesCount === 1 ? '' : 's'
-				} available${autoRefresh ? ' - Auto-refreshing...' : ''}`,
+				} available${pageInfo}${
+					autoRefresh ? ' - Auto-refreshing...' : ''
+				}`,
 				{
 					duration: 4000,
 					position: 'top-right',
@@ -66,7 +99,7 @@ export default function GamesTableWrapper() {
 				handleRefresh();
 			}
 		}
-	}, [newGamesCount, autoRefresh, handleRefresh]);
+	}, [newGamesCount, autoRefresh, handleRefresh, gamesDataHook.page]);
 
 	// Toggle auto-refresh setting
 	const handleAutoRefreshToggle = () => {
@@ -79,7 +112,6 @@ export default function GamesTableWrapper() {
 	return (
 		<div className="flex flex-col gap-4 w-full">
 			<GamesTable
-				key={tableKey} // Add key to force re-render when new games are added
 				gamesDataHook={gamesDataHook} // Pass the entire hook instance
 				// Pass auto-refresh props to be used in TableControlsHeader
 				autoRefreshEnabled={autoRefresh}

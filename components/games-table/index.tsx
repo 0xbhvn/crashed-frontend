@@ -19,7 +19,6 @@ import {
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-import { useGamesData } from '@/hooks/use-games-data';
 import type { UseGamesDataReturn } from '@/hooks/use-games-data';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { columns } from './columns';
@@ -28,11 +27,8 @@ import { TableControlsHeader } from './table-controls-header';
 import { TableFooter } from './table-footer';
 
 export interface GamesTableProps {
-	initialPage?: number;
-	initialPerPage?: number;
-	enableRealtime?: boolean;
 	onPerPageChange?: (perPage: number) => void;
-	gamesDataHook?: UseGamesDataReturn;
+	gamesDataHook: UseGamesDataReturn;
 	autoRefreshEnabled?: boolean;
 	onAutoRefreshToggle?: () => void;
 	newGamesCount?: number;
@@ -40,9 +36,6 @@ export interface GamesTableProps {
 }
 
 export function GamesTable({
-	initialPage = 1,
-	initialPerPage = 10,
-	enableRealtime = true,
 	onPerPageChange,
 	gamesDataHook,
 	autoRefreshEnabled = true,
@@ -50,14 +43,7 @@ export function GamesTable({
 	newGamesCount = 0,
 	onRefreshClick = () => {},
 }: GamesTableProps) {
-	// Create a local hook if one isn't provided
-	const localGamesDataHook = useGamesData({
-		initialPage,
-		initialPerPage,
-		enableRealtime,
-	});
-
-	// Use the passed hook if available, otherwise use the local one
+	// Use the passed hook
 	const {
 		page,
 		perPage,
@@ -70,7 +56,7 @@ export function GamesTable({
 		setPage,
 		setPerPage,
 		setSorting,
-	} = gamesDataHook || localGamesDataHook;
+	} = gamesDataHook;
 
 	// Notify parent component when perPage changes
 	useEffect(() => {
@@ -109,6 +95,13 @@ export function GamesTable({
 			console.log(
 				`Table rendering with ${apiData.data.length} rows (expected: ${perPage})`
 			);
+			// Log the first few game IDs to help debugging
+			if (apiData.data.length > 0) {
+				console.log(
+					'First games in table:',
+					apiData.data.slice(0, 3).map((game) => game.gameId)
+				);
+			}
 		}
 	}, [apiData, perPage]);
 
@@ -145,7 +138,7 @@ export function GamesTable({
 					setPage(1); // Reset to first page when changing per_page
 				}}
 				onCopyClick={handleCopyData}
-				showWebSocketStatus={enableRealtime}
+				showWebSocketStatus={true}
 				connectionStatus={connectionStatus}
 				hidePageInfo={true} // Hide page info from header
 				autoRefreshEnabled={autoRefreshEnabled}

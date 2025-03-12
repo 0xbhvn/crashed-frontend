@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ApiResponseSchema, createEmptyResponse } from '@/models/game';
-import type { ApiResponse } from '@/models/game';
+import type { ApiResponse, Game } from '@/models/game';
 import type { SortingState } from '@tanstack/react-table';
 import { useWebSocketGames } from './use-websocket-games';
 
@@ -41,6 +41,9 @@ export function useGamesData({
 	const [error, setError] = useState<string | null>(null);
 	const [dataValidationIssues, setDataValidationIssues] = useState(false);
 
+	// Add state for WebSocket-received games
+	const [wsGames, setWsGames] = useState<Game[]>([]);
+
 	const [sorting, setSorting] = useState<SortingState>([
 		{
 			id: 'gameId',
@@ -50,6 +53,9 @@ export function useGamesData({
 
 	// Use the WebSocket hook to get real-time game updates
 	const { newGames, connectionStatus, clearNewGames } = useWebSocketGames();
+
+	// Flag to track if we need to refresh the current page after incorporating new games
+	const [needsPageRefresh, setNeedsPageRefresh] = useState(false);
 
 	// Fetch data from API
 	useEffect(() => {
@@ -118,52 +124,87 @@ export function useGamesData({
 		fetchGames();
 	}, [page, perPage]);
 
-	// Function to incorporate new games into the API data
+	// Track WebSocket received games separately
+	useEffect(() => {
+		if (newGames.length > 0) {
+			setWsGames((prevWsGames) => {
+				// Add only games we don't already have
+				const existingIds = new Set(
+					prevWsGames.map((game) => game.gameId)
+				);
+				const uniqueNewGames = newGames.filter(
+					(game) => !existingIds.has(game.gameId)
+				);
+
+				// Return unchanged array if no new unique games
+				if (uniqueNewGames.length === 0) return prevWsGames;
+
+				// Add new games to our WebSocket games list
+				return [...uniqueNewGames, ...prevWsGames];
+			});
+
+			// Clear the newGames list in the WebSocket hook
+			clearNewGames();
+		}
+	}, [newGames, clearNewGames]);
+
+	// Modified incorporate function to properly merge WS games with API data
 	const incorporateNewGames = useCallback(() => {
-		if (newGames.length === 0 || !apiData) return;
+		if (wsGames.length === 0 || !apiData) return;
 
-		console.log('Incorporating new games:', newGames);
+		console.log('Incorporating new games:', wsGames);
 
+		// Properly merge WebSocket games with API data
 		setApiData((prevData) => {
 			if (!prevData) return prevData;
 
-			// Create a new data array with the new games at the beginning
-			// followed by the existing games, but remove duplicates
+			// Get existing game IDs to avoid duplicates
 			const existingIds = new Set(
 				prevData.data.map((game) => game.gameId)
 			);
-			const uniqueNewGames = newGames.filter(
+
+			// Filter out any duplicate games from wsGames
+			const uniqueNewGames = wsGames.filter(
 				(game) => !existingIds.has(game.gameId)
 			);
 
-			// Add the unique new games to the beginning followed by existing data
-			// but limit to perPage total items to maintain correct page size
-			const updatedData = [...uniqueNewGames, ...prevData.data].slice(
-				0,
-				perPage
-			);
+			if (uniqueNewGames.length === 0) return prevData;
 
 			// Calculate new pagination info
 			const newTotalItems =
 				prevData.pagination.total_items + uniqueNewGames.length;
 			const newTotalPages = Math.ceil(newTotalItems / perPage);
 
-			console.log('Updated data preview:', updatedData.slice(0, 3));
-			console.log('New total items:', newTotalItems);
-			console.log(
-				'Table will display exactly',
-				updatedData.length,
-				'rows (perPage:',
-				perPage,
-				')'
-			);
+			// The correct handling depends on which page we're currently viewing
+			if (page === 1) {
+				// If we're on page 1, prepend the new games to the current page data
+				const updatedData = [...uniqueNewGames, ...prevData.data].slice(
+					0,
+					perPage
+				);
 
-			// Create an entirely new object to ensure React detects the change
-			const newApiData = {
-				status: prevData.status,
+				return {
+					status: prevData.status,
+					count: prevData.count + uniqueNewGames.length,
+					data: updatedData,
+					pagination: {
+						...prevData.pagination,
+						total_items: newTotalItems,
+						total_pages: newTotalPages,
+						has_next: newTotalPages > 1,
+					},
+				};
+			}
+
+			// If we're NOT on page 1, set the flag to trigger a refetch
+			if (page > 1) {
+				setNeedsPageRefresh(true);
+			}
+
+			// Return updated data but keep the same page content for now
+			return {
+				...prevData,
 				count: prevData.count + uniqueNewGames.length,
-				// Create a new array with the updated data to ensure React detects the change
-				data: updatedData,
 				pagination: {
 					...prevData.pagination,
 					total_items: newTotalItems,
@@ -171,27 +212,160 @@ export function useGamesData({
 					has_next: page < newTotalPages,
 				},
 			};
-
-			console.log(
-				'New data created with length:',
-				newApiData.data.length
-			);
-			return newApiData;
 		});
 
-		// Clear the new games list after incorporating
-		clearNewGames();
-	}, [newGames, apiData, perPage, clearNewGames, page]);
+		// Clear the WebSocket games list after incorporating
+		setWsGames([]);
+	}, [wsGames, apiData, perPage, page]);
+
+	// Handle page refresh when needed (separate from the incorporateNewGames callback)
+	useEffect(() => {
+		if (needsPageRefresh) {
+			// Reset the flag
+			setNeedsPageRefresh(false);
+
+			// Get current page info
+			const currentPage = page;
+			const currentPerPage = perPage;
+
+			// Instead of just fetching the last item of the previous page,
+			// we fetch the entire current page data but without showing loading state
+			(async () => {
+				try {
+					console.log(
+						`Smart-refreshing page ${currentPage} without loading indicator`
+					);
+
+					// Fetch the fresh data for the current page
+					const res = await fetch(
+						`/api/games?per_page=${currentPerPage}&page=${currentPage}`
+					);
+
+					if (!res.ok) {
+						throw new Error(`API error: ${res.status}`);
+					}
+
+					const rawData = await res.json();
+					const result = ApiResponseSchema.safeParse(rawData);
+
+					if (!result.success) {
+						console.error(
+							'Validation errors during smart refresh:',
+							JSON.stringify(result.error.format(), null, 2)
+						);
+						return;
+					}
+
+					const freshData = result.data;
+
+					// Only update if we have both current and fresh data
+					if (apiData && freshData) {
+						// Compare the current and fresh data to see what's changed
+						const currentIds = apiData.data.map(
+							(game) => game.gameId
+						);
+						const freshIds = freshData.data.map(
+							(game) => game.gameId
+						);
+
+						// Check if any changes are needed
+						const needsUpdate = !arraysEqual(currentIds, freshIds);
+
+						if (needsUpdate) {
+							console.log(
+								'Detected changes in game list, updating view:',
+								{
+									current: currentIds.slice(0, 3),
+									fresh: freshIds.slice(0, 3),
+								}
+							);
+
+							// Update only the data portion without showing loading state
+							setApiData({
+								...apiData,
+								data: freshData.data,
+								count: freshData.count,
+								pagination: freshData.pagination,
+							});
+
+							console.log(
+								`Updated page ${currentPage} with fresh data containing ${freshData.data.length} games`
+							);
+						} else {
+							console.log(
+								'No changes detected in game list, keeping current view'
+							);
+						}
+					}
+				} catch (err) {
+					console.error('Failed to perform smart refresh:', err);
+					// Fallback to full page refresh on error
+					await fetchFullPage(currentPage, currentPerPage);
+				}
+			})();
+		}
+	}, [needsPageRefresh, page, perPage, apiData]);
+
+	// Helper function to compare arrays
+	const arraysEqual = <T>(a: T[], b: T[]): boolean => {
+		if (a.length !== b.length) return false;
+		for (let i = 0; i < a.length; i++) {
+			if (a[i] !== b[i]) return false;
+		}
+		return true;
+	};
+
+	// Helper function to fetch a full page of data (used as fallback)
+	const fetchFullPage = async (pageNumber: number, itemsPerPage: number) => {
+		try {
+			console.log(`Fetching full page ${pageNumber} data as fallback`);
+			setLoading(true);
+
+			const res = await fetch(
+				`/api/games?per_page=${itemsPerPage}&page=${pageNumber}`
+			);
+
+			if (!res.ok) {
+				throw new Error(`API error: ${res.status}`);
+			}
+
+			const rawData = await res.json();
+			const result = ApiResponseSchema.safeParse(rawData);
+
+			if (result.success) {
+				setApiData(result.data);
+			} else {
+				console.error(
+					'Validation errors during page refresh:',
+					JSON.stringify(result.error.format(), null, 2)
+				);
+			}
+		} catch (err) {
+			console.error('Failed to refresh page data:', err);
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	return {
-		apiData,
+		// Only combine WebSocket games with API data if they haven't been incorporated yet
+		apiData: apiData
+			? {
+					...apiData,
+					// Combine websocket games and API data when returning
+					data: [...wsGames, ...(apiData?.data || [])].slice(
+						0,
+						perPage
+					),
+			  }
+			: null,
 		loading,
 		error,
 		dataValidationIssues,
 		page,
 		perPage,
 		sorting,
-		newGamesCount: enableRealtime ? newGames.length : 0,
+		newGamesCount: enableRealtime ? wsGames.length : 0,
 		connectionStatus,
 		setPage,
 		setPerPage,

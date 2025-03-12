@@ -71,6 +71,11 @@ export function useWebSocketGames(): UseWebSocketGamesResult {
 						validatedMessage.type === 'new_game' ||
 						validatedMessage.type === 'game_update'
 					) {
+						console.log(
+							`WebSocket received ${validatedMessage.type}:`,
+							validatedMessage.data.gameId
+						);
+
 						// Add the new game to the list
 						setNewGames((prevGames) => {
 							// Check if the game already exists in our list
@@ -81,10 +86,16 @@ export function useWebSocketGames(): UseWebSocketGamesResult {
 
 							// If the game doesn't exist, add it to the list
 							if (!gameExists) {
+								console.log(
+									`Adding new game to WebSocket buffer: ${validatedMessage.data.gameId}`
+								);
 								return [validatedMessage.data, ...prevGames];
 							}
 
 							// If the game exists, update it
+							console.log(
+								`Updating existing game in WebSocket buffer: ${validatedMessage.data.gameId}`
+							);
 							return prevGames.map((game) =>
 								game.gameId === validatedMessage.data.gameId
 									? validatedMessage.data
