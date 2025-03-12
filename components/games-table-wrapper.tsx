@@ -35,26 +35,16 @@ export default function GamesTableWrapper() {
 
 	// Handle refresh button click - just update games without forcing re-render
 	const handleRefresh = useCallback(() => {
-		const currentPage = gamesDataHook.page;
-
 		if (newGamesCount > 0) {
 			console.log(`Incorporating ${newGamesCount} new games into table`);
 			incorporateNewGames();
 
-			// Different message based on which page we're on
-			if (currentPage === 1) {
-				toast.success(
-					`${newGamesCount} new game${
-						newGamesCount === 1 ? '' : 's'
-					} added to table!`
-				);
-			} else {
-				toast.success(
-					`${newGamesCount} new game${
-						newGamesCount === 1 ? '' : 's'
-					} added to page 1 and your view has been updated.`
-				);
-			}
+			// Simplified toast message
+			toast.success(
+				`${newGamesCount} new game${
+					newGamesCount === 1 ? '' : 's'
+				} added to table!`
+			);
 		} else {
 			incorporateNewGames();
 			// Only show success toast for manual refresh
@@ -62,32 +52,17 @@ export default function GamesTableWrapper() {
 				toast.success('Games updated!');
 			}
 		}
-	}, [incorporateNewGames, autoRefresh, newGamesCount, gamesDataHook.page]);
+	}, [incorporateNewGames, autoRefresh, newGamesCount]);
 
 	// Show a toast notification when new games are available
 	// and auto-incorporate them if autoRefresh is enabled
 	useEffect(() => {
 		if (newGamesCount > 0) {
-			// Get the current page from the hook
-			const currentPage = gamesDataHook.page;
-
-			// Only show the toast for the first time when new games arrive
-			// Add page information if not on page 1
-			const pageInfo =
-				currentPage > 1
-					? ` (added to page 1${
-							autoRefresh
-								? ' and refreshing your current view'
-								: ''
-					  })`
-					: '';
-
+			// Simplified toast message
 			toast.info(
 				`${newGamesCount} new game${
 					newGamesCount === 1 ? '' : 's'
-				} available${pageInfo}${
-					autoRefresh ? ' - Auto-refreshing...' : ''
-				}`,
+				} available`,
 				{
 					duration: 4000,
 					position: 'top-right',
@@ -99,7 +74,7 @@ export default function GamesTableWrapper() {
 				handleRefresh();
 			}
 		}
-	}, [newGamesCount, autoRefresh, handleRefresh, gamesDataHook.page]);
+	}, [newGamesCount, autoRefresh, handleRefresh]);
 
 	// Toggle auto-refresh setting
 	const handleAutoRefreshToggle = () => {
