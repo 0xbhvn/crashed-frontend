@@ -33,6 +33,10 @@ export interface GamesTableProps {
 	enableRealtime?: boolean;
 	onPerPageChange?: (perPage: number) => void;
 	gamesDataHook?: UseGamesDataReturn;
+	autoRefreshEnabled?: boolean;
+	onAutoRefreshToggle?: () => void;
+	newGamesCount?: number;
+	onRefreshClick?: () => void;
 }
 
 export function GamesTable({
@@ -41,6 +45,10 @@ export function GamesTable({
 	enableRealtime = true,
 	onPerPageChange,
 	gamesDataHook,
+	autoRefreshEnabled = true,
+	onAutoRefreshToggle = () => {},
+	newGamesCount = 0,
+	onRefreshClick = () => {},
 }: GamesTableProps) {
 	// Create a local hook if one isn't provided
 	const localGamesDataHook = useGamesData({
@@ -140,6 +148,10 @@ export function GamesTable({
 				showWebSocketStatus={enableRealtime}
 				connectionStatus={connectionStatus}
 				hidePageInfo={true} // Hide page info from header
+				autoRefreshEnabled={autoRefreshEnabled}
+				onAutoRefreshToggle={onAutoRefreshToggle}
+				newGamesCount={newGamesCount}
+				onRefreshClick={onRefreshClick}
 			/>
 
 			<div className="space-y-4 flex flex-col">

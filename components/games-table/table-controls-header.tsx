@@ -16,7 +16,10 @@ import {
 	PageSizeSelector,
 } from './pagination-context';
 import { CopyButton } from '@/components/copy-button';
-import { Wifi, WifiOff } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface TableControlsHeaderProps {
 	apiData: ApiResponse | null;
@@ -32,6 +35,11 @@ interface TableControlsHeaderProps {
 	showWebSocketStatus?: boolean;
 	connectionStatus?: string;
 	hidePageInfo?: boolean; // New prop to hide page info
+	// New props for auto-refresh feature
+	autoRefreshEnabled?: boolean;
+	onAutoRefreshToggle?: () => void;
+	newGamesCount?: number;
+	onRefreshClick?: () => void;
 }
 
 export function TableControlsHeader({
@@ -48,6 +56,11 @@ export function TableControlsHeader({
 	showWebSocketStatus = false,
 	connectionStatus = 'Disconnected',
 	hidePageInfo = false, // Default to showing page info
+	// New props with defaults
+	autoRefreshEnabled = true,
+	onAutoRefreshToggle = () => {},
+	newGamesCount = 0,
+	onRefreshClick = () => {},
 }: TableControlsHeaderProps) {
 	// Keep a ref to the provider update function
 	const providerUpdateRef = useRef<((data: ApiResponse) => void) | null>(
@@ -86,22 +99,90 @@ export function TableControlsHeader({
 			<Card className="sticky top-0 z-10 mb-4 p-0 shadow-md">
 				<CardContent className="p-3">
 					<div className="flex items-center gap-3">
-						{/* WebSocket status indicator */}
+						{/* Connection Status & Auto-refresh section - grouped in a bordered container */}
 						{showWebSocketStatus && (
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<div className="flex items-center mr-2">
-										{isConnected ? (
-											<Wifi className="h-5 w-5 text-green-500" />
-										) : (
-											<WifiOff className="h-5 w-5 text-red-500" />
-										)}
-									</div>
-								</TooltipTrigger>
-								<TooltipContent>
-									<p>WebSocket: {connectionStatus}</p>
-								</TooltipContent>
-							</Tooltip>
+							<div className="flex items-center border border-border rounded-md h-8 px-2 gap-2">
+								{/* WebSocket status indicator */}
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<div className="flex items-center">
+											{isConnected ? (
+												<Wifi className="h-5 w-5 text-green-500" />
+											) : (
+												<WifiOff className="h-5 w-5 text-red-500" />
+											)}
+										</div>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>WebSocket: {connectionStatus}</p>
+									</TooltipContent>
+								</Tooltip>
+
+								{/* Auto-refresh toggle */}
+								{isConnected && (
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												onClick={onAutoRefreshToggle}
+												className="h-6 w-6 p-0"
+											>
+												<RefreshCw
+													className={cn(
+														'h-4 w-4',
+														autoRefreshEnabled
+															? 'text-green-500'
+															: 'text-muted-foreground'
+													)}
+												/>
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>
+												Auto-refresh:{' '}
+												{autoRefreshEnabled
+													? 'ON'
+													: 'OFF'}
+											</p>
+										</TooltipContent>
+									</Tooltip>
+								)}
+
+								{/* New Games Counter - Moved from right side to left group box */}
+								{isConnected &&
+									!autoRefreshEnabled &&
+									newGamesCount > 0 && (
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Button
+													variant="ghost"
+													size="icon"
+													onClick={onRefreshClick}
+													className="h-6 w-6 p-0"
+												>
+													<Badge
+														variant="destructive"
+														className="flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium rounded-md"
+													>
+														{newGamesCount > 99
+															? '99+'
+															: newGamesCount}
+													</Badge>
+												</Button>
+											</TooltipTrigger>
+											<TooltipContent>
+												<p>
+													{newGamesCount} new game
+													{newGamesCount === 1
+														? ''
+														: 's'}{' '}
+													- Click to refresh
+												</p>
+											</TooltipContent>
+										</Tooltip>
+									)}
+							</div>
 						)}
 
 						{/* Wrap in PaginationProvider to isolate state updates */}
@@ -124,7 +205,7 @@ export function TableControlsHeader({
 									)}
 
 									{/* Navigation section with enhanced copy button */}
-									<div className="flex items-center gap-1">
+									<div className="flex items-center gap-2">
 										{/* Navigation buttons that only update when page changes */}
 										<NavigationButtons compact={true} />
 

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GamesTable } from '@/components/games-table';
 import { useGamesData } from '@/hooks/use-games-data';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export default function GamesTableWrapper() {
@@ -23,8 +22,7 @@ export default function GamesTableWrapper() {
 		enableRealtime: true,
 	});
 
-	const { newGamesCount, connectionStatus, incorporateNewGames, perPage } =
-		gamesDataHook;
+	const { newGamesCount, incorporateNewGames, perPage } = gamesDataHook;
 
 	// Sync the perPage state whenever it changes in the hook
 	useEffect(() => {
@@ -71,8 +69,8 @@ export default function GamesTableWrapper() {
 	}, [newGamesCount, autoRefresh, handleRefresh]);
 
 	// Toggle auto-refresh setting
-	const toggleAutoRefresh = () => {
-		setAutoRefresh(!autoRefresh);
+	const handleAutoRefreshToggle = () => {
+		setAutoRefresh((prev) => !prev);
 		toast.info(`Auto-refresh ${!autoRefresh ? 'enabled' : 'disabled'}`, {
 			duration: 2000,
 		});
@@ -80,32 +78,14 @@ export default function GamesTableWrapper() {
 
 	return (
 		<div className="flex flex-col gap-4 w-full">
-			{connectionStatus === 'Connected' && (
-				<div className="flex justify-between w-full items-center">
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={toggleAutoRefresh}
-						className={autoRefresh ? 'bg-green-100' : ''}
-					>
-						Auto-refresh: {autoRefresh ? 'ON' : 'OFF'}
-					</Button>
-
-					{newGamesCount > 0 && !autoRefresh && (
-						<Button
-							className="bg-blue-500 hover:bg-blue-600 text-white"
-							onClick={handleRefresh}
-						>
-							{newGamesCount} new game
-							{newGamesCount === 1 ? '' : 's'} available - Click
-							to refresh
-						</Button>
-					)}
-				</div>
-			)}
 			<GamesTable
 				key={tableKey} // Add key to force re-render when new games are added
 				gamesDataHook={gamesDataHook} // Pass the entire hook instance
+				// Pass auto-refresh props to be used in TableControlsHeader
+				autoRefreshEnabled={autoRefresh}
+				onAutoRefreshToggle={handleAutoRefreshToggle}
+				newGamesCount={newGamesCount}
+				onRefreshClick={handleRefresh}
 			/>
 		</div>
 	);
