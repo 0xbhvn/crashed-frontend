@@ -66,6 +66,10 @@ export function GamesTable({
 		manualPagination: true, // We're handling pagination outside of the table
 	});
 
+	// Extract the copy to clipboard handler for direct call
+	const handleCopyData = () =>
+		copyTableDataToClipboard(table.getRowModel().rows);
+
 	return (
 		<div className="space-y-4">
 			{dataValidationIssues && (
@@ -94,9 +98,7 @@ export function GamesTable({
 					setPerPage(Number(value));
 					setPage(1); // Reset to first page when changing per_page
 				}}
-				onCopyClick={() =>
-					copyTableDataToClipboard(table.getRowModel().rows)
-				}
+				onCopyClick={handleCopyData}
 			/>
 
 			<div className="overflow-hidden rounded-lg border border-border bg-background">

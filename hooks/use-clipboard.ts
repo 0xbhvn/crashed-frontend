@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Game } from '@/models/game';
 import { calculateDuration, isValidDate } from '@/utils/date-utils';
 import type { Row } from '@tanstack/react-table';
+import { toast } from 'sonner';
 
 export function useClipboard() {
 	const [copySuccess, setCopySuccess] = useState(false);
@@ -65,14 +66,33 @@ export function useClipboard() {
 			navigator.clipboard
 				.writeText(visibleData)
 				.then(() => {
+					// Set copy success state for button UI feedback
 					setCopySuccess(true);
-					setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
+
+					// Show a toast notification
+					toast.success('Data copied to clipboard', {
+						description: `${rows.length} rows copied to clipboard`,
+						duration: 2000,
+					});
+
+					// Reset after 2 seconds
+					setTimeout(() => setCopySuccess(false), 2000);
 				})
 				.catch((err) => {
 					console.error('Failed to copy: ', err);
+
+					// Show error toast
+					toast.error('Failed to copy data', {
+						description: 'Please try again',
+					});
 				});
 		} catch (error) {
 			console.error('Error copying data to clipboard:', error);
+
+			// Show error toast
+			toast.error('Error copying data', {
+				description: 'An unexpected error occurred',
+			});
 		}
 	};
 
