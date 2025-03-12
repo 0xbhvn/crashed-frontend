@@ -49,7 +49,7 @@ export default function GamesTableWrapper() {
 			toast.success(
 				`${newGamesCount} new game${
 					newGamesCount === 1 ? '' : 's'
-				} added to table!`
+				} added!`
 			);
 		} else {
 			incorporateNewGames();
@@ -64,16 +64,19 @@ export default function GamesTableWrapper() {
 	// and auto-incorporate them if autoRefresh is enabled
 	useEffect(() => {
 		if (newGamesCount > 0) {
-			// Simplified toast message
-			toast.info(
-				`${newGamesCount} new game${
-					newGamesCount === 1 ? '' : 's'
-				} available`,
-				{
-					duration: 4000,
-					position: 'top-right',
-				}
-			);
+			// Only show the "available" toast when auto-refresh is OFF
+			if (!autoRefresh) {
+				// Simplified toast message
+				toast.info(
+					`${newGamesCount} new game${
+						newGamesCount === 1 ? '' : 's'
+					} available`,
+					{
+						duration: 4000,
+						position: 'top-right',
+					}
+				);
+			}
 
 			// Auto-incorporate new games if enabled
 			if (autoRefresh) {
