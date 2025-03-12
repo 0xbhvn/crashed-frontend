@@ -23,15 +23,18 @@ import { useClipboard } from '@/hooks/use-clipboard';
 import { columns } from './columns';
 import { TableSkeleton } from './table-skeleton';
 import { TableControlsHeader } from './table-controls-header';
+import { TableFooter } from './table-footer';
 
 export interface GamesTableProps {
 	initialPage?: number;
 	initialPerPage?: number;
+	enableRealtime?: boolean;
 }
 
 export function GamesTable({
 	initialPage = 1,
 	initialPerPage = 10,
+	enableRealtime = true,
 }: GamesTableProps) {
 	const {
 		page,
@@ -41,12 +44,14 @@ export function GamesTable({
 		error,
 		dataValidationIssues,
 		sorting,
+		connectionStatus,
 		setPage,
 		setPerPage,
 		setSorting,
 	} = useGamesData({
 		initialPage,
 		initialPerPage,
+		enableRealtime,
 	});
 
 	// Copy to clipboard functionality
@@ -85,7 +90,7 @@ export function GamesTable({
 				</div>
 			)}
 
-			{/* Sticky header with controls */}
+			{/* Table controls with WebSocket status - page info hidden */}
 			<TableControlsHeader
 				apiData={apiData}
 				page={page}
@@ -99,130 +104,146 @@ export function GamesTable({
 					setPage(1); // Reset to first page when changing per_page
 				}}
 				onCopyClick={handleCopyData}
+				showWebSocketStatus={enableRealtime}
+				connectionStatus={connectionStatus}
+				hidePageInfo={true} // Hide page info from header
 			/>
 
-			<div className="overflow-hidden rounded-lg border border-border bg-background">
-				<Table className="table-fixed">
-					<TableHeader>
-						{table.getHeaderGroups().map((headerGroup) => (
-							<TableRow
-								key={headerGroup.id}
-								className="hover:bg-transparent"
-							>
-								{headerGroup.headers.map((header) => (
-									<TableHead
-										key={header.id}
-										className="h-11"
-									>
-										{header.isPlaceholder ? null : header.column.getCanSort() ? (
-											<div
-												className={cn(
-													header.column.getCanSort() &&
-														'flex h-full cursor-pointer select-none items-center justify-between gap-2'
-												)}
-												onClick={header.column.getToggleSortingHandler()}
-												onKeyDown={(e) => {
-													if (
+			<div className="space-y-4 flex flex-col">
+				<div className="overflow-hidden rounded-lg border border-border bg-background">
+					<Table className="table-fixed">
+						<TableHeader>
+							{table.getHeaderGroups().map((headerGroup) => (
+								<TableRow
+									key={headerGroup.id}
+									className="hover:bg-transparent"
+								>
+									{headerGroup.headers.map((header) => (
+										<TableHead
+											key={header.id}
+											className="h-11"
+										>
+											{header.isPlaceholder ? null : header.column.getCanSort() ? (
+												<div
+													className={cn(
 														header.column.getCanSort() &&
-														(e.key === 'Enter' ||
-															e.key === ' ')
-													) {
-														e.preventDefault();
-														header.column.getToggleSortingHandler()?.(
-															e
-														);
+															'flex h-full cursor-pointer select-none items-center justify-between gap-2'
+													)}
+													onClick={header.column.getToggleSortingHandler()}
+													onKeyDown={(e) => {
+														if (
+															header.column.getCanSort() &&
+															(e.key ===
+																'Enter' ||
+																e.key === ' ')
+														) {
+															e.preventDefault();
+															header.column.getToggleSortingHandler()?.(
+																e
+															);
+														}
+													}}
+													tabIndex={
+														header.column.getCanSort()
+															? 0
+															: undefined
 													}
-												}}
-												tabIndex={
-													header.column.getCanSort()
-														? 0
-														: undefined
-												}
-											>
-												{flexRender(
+												>
+													{flexRender(
+														header.column.columnDef
+															.header,
+														header.getContext()
+													)}
+													{{
+														asc: (
+															<ChevronUp
+																className="shrink-0 opacity-60"
+																size={16}
+																strokeWidth={2}
+																aria-hidden="true"
+															/>
+														),
+														desc: (
+															<ChevronDown
+																className="shrink-0 opacity-60"
+																size={16}
+																strokeWidth={2}
+																aria-hidden="true"
+															/>
+														),
+													}[
+														header.column.getIsSorted() as string
+													] ?? null}
+												</div>
+											) : (
+												flexRender(
 													header.column.columnDef
 														.header,
 													header.getContext()
-												)}
-												{{
-													asc: (
-														<ChevronUp
-															className="shrink-0 opacity-60"
-															size={16}
-															strokeWidth={2}
-															aria-hidden="true"
-														/>
-													),
-													desc: (
-														<ChevronDown
-															className="shrink-0 opacity-60"
-															size={16}
-															strokeWidth={2}
-															aria-hidden="true"
-														/>
-													),
-												}[
-													header.column.getIsSorted() as string
-												] ?? null}
-											</div>
-										) : (
-											flexRender(
-												header.column.columnDef.header,
-												header.getContext()
-											)
-										)}
-									</TableHead>
-								))}
-							</TableRow>
-						))}
-					</TableHeader>
-					<TableBody>
-						{loading ? (
-							<TableSkeleton
-								columns={columns}
-								count={perPage}
-								page={page}
-							/>
-						) : error ? (
-							// Error state
-							<TableRow>
-								<TableCell
-									colSpan={columns.length}
-									className="h-16 text-center text-destructive"
-								>
-									{error}
-								</TableCell>
-							</TableRow>
-						) : table.getRowModel().rows?.length ? (
-							// Data display
-							table.getRowModel().rows.map((row) => (
-								<TableRow key={row.id}>
-									{row.getVisibleCells().map((cell) => (
-										<TableCell
-											key={cell.id}
-											className="py-2"
-										>
-											{flexRender(
-												cell.column.columnDef.cell,
-												cell.getContext()
+												)
 											)}
-										</TableCell>
+										</TableHead>
 									))}
 								</TableRow>
-							))
-						) : (
-							// No results
-							<TableRow>
-								<TableCell
-									colSpan={columns.length}
-									className="h-16 text-center text-muted-foreground"
-								>
-									No results.
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
-				</Table>
+							))}
+						</TableHeader>
+						<TableBody>
+							{loading ? (
+								<TableSkeleton
+									columns={columns}
+									count={perPage}
+									page={page}
+								/>
+							) : error ? (
+								// Error state
+								<TableRow>
+									<TableCell
+										colSpan={columns.length}
+										className="h-16 text-center text-destructive"
+									>
+										{error}
+									</TableCell>
+								</TableRow>
+							) : table.getRowModel().rows?.length ? (
+								// Data display
+								table.getRowModel().rows.map((row) => (
+									<TableRow key={row.id}>
+										{row.getVisibleCells().map((cell) => (
+											<TableCell
+												key={cell.id}
+												className="py-2"
+											>
+												{flexRender(
+													cell.column.columnDef.cell,
+													cell.getContext()
+												)}
+											</TableCell>
+										))}
+									</TableRow>
+								))
+							) : (
+								// No results
+								<TableRow>
+									<TableCell
+										colSpan={columns.length}
+										className="h-16 text-center text-muted-foreground"
+									>
+										No results.
+									</TableCell>
+								</TableRow>
+							)}
+						</TableBody>
+					</Table>
+				</div>
+
+				{/* Table footer with pagination info - only show when data is loaded */}
+				{!loading && !error && apiData && (
+					<TableFooter
+						apiData={apiData}
+						page={page}
+						perPage={perPage}
+					/>
+				)}
 			</div>
 		</div>
 	);

@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ApiResponseSchema, createEmptyResponse } from '@/models/game';
 import type { ApiResponse } from '@/models/game';
 import type { SortingState } from '@tanstack/react-table';
+import { useWebSocketGames } from './use-websocket-games';
 
 interface UseGamesDataProps {
 	initialPage?: number;
 	initialPerPage?: number;
+	enableRealtime?: boolean;
 }
 
 interface UseGamesDataReturn {
@@ -18,14 +20,18 @@ interface UseGamesDataReturn {
 	page: number;
 	perPage: number;
 	sorting: SortingState;
+	newGamesCount: number;
+	connectionStatus: string;
 	setPage: (page: number) => void;
 	setPerPage: (perPage: number) => void;
 	setSorting: (sorting: SortingState) => void;
+	incorporateNewGames: () => void;
 }
 
 export function useGamesData({
 	initialPage = 1,
 	initialPerPage = 10,
+	enableRealtime = true,
 }: UseGamesDataProps = {}): UseGamesDataReturn {
 	const [page, setPage] = useState(initialPage);
 	const [perPage, setPerPage] = useState(initialPerPage);
@@ -40,6 +46,9 @@ export function useGamesData({
 			desc: true,
 		},
 	]);
+
+	// Use the WebSocket hook to get real-time game updates
+	const { newGames, connectionStatus, clearNewGames } = useWebSocketGames();
 
 	// Fetch data from API
 	useEffect(() => {
@@ -108,6 +117,37 @@ export function useGamesData({
 		fetchGames();
 	}, [page, perPage]);
 
+	// Function to incorporate new games into the API data
+	const incorporateNewGames = useCallback(() => {
+		if (newGames.length === 0 || !apiData) return;
+
+		setApiData((prevData) => {
+			if (!prevData) return prevData;
+
+			// Create a new data array with the new games and existing games
+			const updatedData = [...newGames, ...prevData.data];
+
+			// Update the pagination and count info
+			return {
+				...prevData,
+				count: prevData.count + newGames.length,
+				data: updatedData.slice(0, perPage), // Keep only 'perPage' number of games
+				pagination: {
+					...prevData.pagination,
+					total_items:
+						prevData.pagination.total_items + newGames.length,
+					total_pages: Math.ceil(
+						(prevData.pagination.total_items + newGames.length) /
+							perPage
+					),
+				},
+			};
+		});
+
+		// Clear the new games list after incorporating
+		clearNewGames();
+	}, [newGames, apiData, perPage, clearNewGames]);
+
 	return {
 		apiData,
 		loading,
@@ -116,8 +156,11 @@ export function useGamesData({
 		page,
 		perPage,
 		sorting,
+		newGamesCount: enableRealtime ? newGames.length : 0,
+		connectionStatus,
 		setPage,
 		setPerPage,
 		setSorting,
+		incorporateNewGames,
 	};
 }

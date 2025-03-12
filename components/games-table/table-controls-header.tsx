@@ -2,7 +2,12 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { ApiResponse } from '@/models/game';
 import {
 	PaginationProvider,
@@ -11,6 +16,7 @@ import {
 	PageSizeSelector,
 } from './pagination-context';
 import { CopyButton } from '@/components/copy-button';
+import { Wifi, WifiOff } from 'lucide-react';
 
 interface TableControlsHeaderProps {
 	apiData: ApiResponse | null;
@@ -23,6 +29,9 @@ interface TableControlsHeaderProps {
 	onPerPageChange: (value: string) => void;
 	onCopyClick: () => void;
 	disabled?: boolean;
+	showWebSocketStatus?: boolean;
+	connectionStatus?: string;
+	hidePageInfo?: boolean; // New prop to hide page info
 }
 
 export function TableControlsHeader({
@@ -36,6 +45,9 @@ export function TableControlsHeader({
 	onCopyClick,
 	disabled = false,
 	copySuccess,
+	showWebSocketStatus = false,
+	connectionStatus = 'Disconnected',
+	hidePageInfo = false, // Default to showing page info
 }: TableControlsHeaderProps) {
 	// Keep a ref to the provider update function
 	const providerUpdateRef = useRef<((data: ApiResponse) => void) | null>(
@@ -54,6 +66,9 @@ export function TableControlsHeader({
 		disabled ||
 		(apiData && apiData.data.length === 0);
 
+	// Get WebSocket connection status
+	const isConnected = connectionStatus === 'Connected';
+
 	// Update pagination info when apiData changes
 	useEffect(() => {
 		if (apiData && providerUpdateRef.current) {
@@ -71,6 +86,24 @@ export function TableControlsHeader({
 			<Card className="sticky top-0 z-10 mb-4 p-0 shadow-md">
 				<CardContent className="p-3">
 					<div className="flex items-center gap-3">
+						{/* WebSocket status indicator */}
+						{showWebSocketStatus && (
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<div className="flex items-center mr-2">
+										{isConnected ? (
+											<Wifi className="h-5 w-5 text-green-500" />
+										) : (
+											<WifiOff className="h-5 w-5 text-red-500" />
+										)}
+									</div>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>WebSocket: {connectionStatus}</p>
+								</TooltipContent>
+							</Tooltip>
+						)}
+
 						{/* Wrap in PaginationProvider to isolate state updates */}
 						<PaginationProvider
 							initialApiData={apiData}
@@ -86,7 +119,9 @@ export function TableControlsHeader({
 									<PageSizeSelector compact={true} />
 
 									{/* Static page info component that only updates when page info changes */}
-									<PageInfo compact={true} />
+									{!hidePageInfo && (
+										<PageInfo compact={true} />
+									)}
 
 									{/* Navigation section with enhanced copy button */}
 									<div className="flex items-center gap-1">
