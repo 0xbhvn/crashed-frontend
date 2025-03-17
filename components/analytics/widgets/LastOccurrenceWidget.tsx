@@ -1,12 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnalyticsCard } from '../core/AnalyticsCard';
 import { Button } from '@/components/ui/button';
 import { useLastOccurrence } from '@/hooks/analytics/useLastOccurrence';
 import { useAnalytics } from '@/context/analytics-context';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { formatDuration, intervalToDuration } from 'date-fns';
 
 interface LastOccurrenceWidgetProps {
 	className?: string;
@@ -17,6 +19,37 @@ export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 	const { data, isLoading, error } = useLastOccurrence({
 		crashPoint: crashPoint || 2.0,
 	});
+	const [timeAgo, setTimeAgo] = useState<string>('');
+
+	// Update the time ago every second
+	useEffect(() => {
+		if (!data?.game?.beginTime) return;
+
+		const updateTimeAgo = () => {
+			if (data?.game?.beginTime) {
+				const interval = intervalToDuration({
+					start: new Date(data.game.beginTime),
+					end: new Date(),
+				});
+
+				const formatted = formatDuration(interval, {
+					format: ['hours', 'minutes', 'seconds'],
+					delimiter: ', ',
+				});
+
+				setTimeAgo(formatted ? `${formatted} ago` : 'just now');
+			}
+		};
+
+		// Initial update
+		updateTimeAgo();
+
+		// Set up interval to update every second
+		const intervalId = setInterval(updateTimeAgo, 1000);
+
+		// Clean up on unmount or when data changes
+		return () => clearInterval(intervalId);
+	}, [data]);
 
 	const handleCrashPointClick = () => {
 		const currentPoint = crashPoint || 2.0;
@@ -50,6 +83,14 @@ export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 						<span className="text-sm text-muted-foreground">
 							Crash Point
 						</span>
+						{data?.game?.crashPoint && (
+							<Badge
+								variant="outline"
+								className="ml-2"
+							>
+								Exact: {data.game.crashPoint}x
+							</Badge>
+						)}
 					</div>
 					<div className="flex flex-col">
 						<span className="text-sm">
@@ -65,7 +106,7 @@ export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 							) : data.game ? (
 								<span>
 									Game #{data.game.gameId} (
-									{data.game.endTime})
+									{timeAgo || 'calculating...'})
 								</span>
 							) : (
 								<span className="text-muted-foreground">
@@ -81,8 +122,8 @@ export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 								</span>
 							) : !data ? (
 								<span className="text-muted-foreground">-</span>
-							) : data.gamesSince !== undefined ? (
-								<span>{data.gamesSince}</span>
+							) : data.games_since !== undefined ? (
+								<span>{data.games_since}</span>
 							) : (
 								<span className="text-muted-foreground">-</span>
 							)}

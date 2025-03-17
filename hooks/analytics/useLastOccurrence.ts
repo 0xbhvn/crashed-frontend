@@ -16,7 +16,7 @@ export interface LastOccurrenceGame {
 
 export interface LastOccurrenceData {
 	game: LastOccurrenceGame | null;
-	gamesSince: number;
+	games_since: number;
 }
 
 export interface UseLastOccurrenceProps {
