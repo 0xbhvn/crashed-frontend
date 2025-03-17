@@ -3,9 +3,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getApiHeaders } from '@/lib/api-config';
 
+interface GameData {
+	gameId: string;
+	hashValue: string;
+	crashPoint: number;
+	calculatedPoint: number;
+	crashedFloor: number;
+	endTime: string;
+	prepareTime: string;
+	beginTime: string;
+}
+
 interface BatchGameData {
 	current: number;
 	unique: number;
+	currentGame?: GameData | null;
+	uniqueGame?: GameData | null;
 }
 
 interface BatchLastGamesData {
@@ -14,16 +27,7 @@ interface BatchLastGamesData {
 
 // Interface to match the exact API response structure
 interface ApiGameResponse {
-	game: {
-		gameId: string;
-		hashValue: string;
-		crashPoint: number;
-		calculatedPoint: number;
-		crashedFloor: number;
-		endTime: string;
-		prepareTime: string;
-		beginTime: string;
-	} | null;
+	game: GameData | null;
 	games_since: number;
 }
 
@@ -138,9 +142,12 @@ export function useBatchLastGames({
 					}
 				}
 
+				// Store both game data sets separately
 				processedData[value] = {
 					current: minPointEntry?.games_since ?? 0,
 					unique: exactFloorEntry?.games_since ?? 0,
+					currentGame: minPointEntry?.game || null,
+					uniqueGame: exactFloorEntry?.game || null,
 				};
 			}
 

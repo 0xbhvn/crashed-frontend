@@ -3,9 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LastOccurrenceWidget } from '@/components/analytics/widgets/LastOccurrenceWidget';
-import { BatchLastGamesWidget } from '@/components/analytics/widgets/BatchLastGamesWidget';
-import { AnalyticsCard } from '@/components/analytics/core/AnalyticsCard';
+import { AnalyticsTable } from '@/components/analytics/widgets/AnalyticsTable';
 
 export default function AnalyticsPage() {
 	return (
@@ -20,27 +18,7 @@ export default function AnalyticsPage() {
 					</Link>
 				</div>
 
-				<div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-					<LastOccurrenceWidget className="w-full" />
-
-					<BatchLastGamesWidget className="w-full" />
-
-					<AnalyticsCard
-						title="Series Analysis"
-						description="Track series of games without specific crash points"
-						className="w-full"
-					>
-						<p className="text-muted-foreground">Coming soon</p>
-					</AnalyticsCard>
-
-					<AnalyticsCard
-						title="Interval Analysis"
-						description="Analyze crash points across time intervals"
-						className="w-full"
-					>
-						<p className="text-muted-foreground">Coming soon</p>
-					</AnalyticsCard>
-				</div>
+				<AnalyticsTable className="w-full" />
 			</main>
 		</div>
 	);
