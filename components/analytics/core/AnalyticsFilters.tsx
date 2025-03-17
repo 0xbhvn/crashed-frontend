@@ -1,20 +1,11 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAnalytics } from '@/context/analytics-context';
 
 interface AnalyticsFilters {
 	crashPoint?: number;
-	timeRange: string;
-	gameCount: string;
 }
 
 interface AnalyticsFiltersProps {
@@ -35,24 +26,6 @@ export function AnalyticsFilters({
 		setCrashPoint(numValue);
 		onFilterChange?.({
 			crashPoint: numValue,
-			timeRange: '24h',
-			gameCount: '100',
-		});
-	};
-
-	const handleTimeRangeChange = (value: string) => {
-		onFilterChange?.({
-			crashPoint: undefined,
-			timeRange: value,
-			gameCount: '100',
-		});
-	};
-
-	const handleGameCountChange = (value: string) => {
-		onFilterChange?.({
-			crashPoint: undefined,
-			timeRange: '24h',
-			gameCount: value,
 		});
 	};
 
@@ -77,58 +50,6 @@ export function AnalyticsFilters({
 							))}
 						</TabsList>
 					</Tabs>
-				</div>
-
-				<div className="flex flex-col gap-1.5">
-					<label
-						className="text-sm font-medium"
-						htmlFor="time-range"
-					>
-						Time Range
-					</label>
-					<Select
-						defaultValue="24h"
-						onValueChange={handleTimeRangeChange}
-					>
-						<SelectTrigger
-							id="time-range"
-							className="w-28"
-						>
-							<SelectValue placeholder="Select range" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="1h">Last Hour</SelectItem>
-							<SelectItem value="6h">Last 6 Hours</SelectItem>
-							<SelectItem value="24h">Last 24 Hours</SelectItem>
-							<SelectItem value="7d">Last 7 Days</SelectItem>
-						</SelectContent>
-					</Select>
-				</div>
-
-				<div className="flex flex-col gap-1.5">
-					<label
-						className="text-sm font-medium"
-						htmlFor="game-count"
-					>
-						Game Count
-					</label>
-					<Select
-						defaultValue="100"
-						onValueChange={handleGameCountChange}
-					>
-						<SelectTrigger
-							id="game-count"
-							className="w-28"
-						>
-							<SelectValue placeholder="Game count" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="50">50 Games</SelectItem>
-							<SelectItem value="100">100 Games</SelectItem>
-							<SelectItem value="500">500 Games</SelectItem>
-							<SelectItem value="1000">1000 Games</SelectItem>
-						</SelectContent>
-					</Select>
 				</div>
 			</CardContent>
 		</Card>

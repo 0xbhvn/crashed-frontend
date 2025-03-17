@@ -12,6 +12,21 @@ interface BatchLastGamesData {
 	[key: number]: BatchGameData;
 }
 
+// Interface to match the exact API response structure
+interface ApiGameResponse {
+	game: {
+		gameId: string;
+		hashValue: string;
+		crashPoint: number;
+		calculatedPoint: number;
+		crashedFloor: number;
+		endTime: string;
+		prepareTime: string;
+		beginTime: string;
+	} | null;
+	games_since: number;
+}
+
 interface UseBatchLastGamesProps {
 	values: number[];
 	type: 'current' | 'unique';
@@ -75,6 +90,10 @@ export function useBatchLastGames({
 			const minPointsData = await minPointsResponse.json();
 			const exactFloorsData = await exactFloorsResponse.json();
 
+			// Log raw API responses for debugging
+			console.log('Min points raw data:', minPointsData);
+			console.log('Exact floors raw data:', exactFloorsData);
+
 			// Check for error status in the responses
 			if (minPointsData.status === 'error') {
 				throw new Error(
@@ -92,15 +111,40 @@ export function useBatchLastGames({
 			const processedData: BatchLastGamesData = {};
 
 			for (const value of values) {
-				const minValue = value.toString();
-				const exactValue = value.toString();
+				// API might use different format for keys (with .0 suffix for integers)
+				const minKey = value.toString();
+				const exactKey = value.toString();
+
+				// Try possible key formats
+				const minKeysToTry = [minKey, `${value}.0`];
+				const exactKeysToTry = [exactKey, `${value}.0`];
+
+				let minPointEntry: ApiGameResponse | undefined;
+				let exactFloorEntry: ApiGameResponse | undefined;
+
+				// Find the correct key in min points data
+				for (const key of minKeysToTry) {
+					if (minPointsData.data[key]) {
+						minPointEntry = minPointsData.data[key];
+						break;
+					}
+				}
+
+				// Find the correct key in exact floors data
+				for (const key of exactKeysToTry) {
+					if (exactFloorsData.data[key]) {
+						exactFloorEntry = exactFloorsData.data[key];
+						break;
+					}
+				}
 
 				processedData[value] = {
-					current: minPointsData.data[minValue]?.games_since ?? 0,
-					unique: exactFloorsData.data[exactValue]?.games_since ?? 0,
+					current: minPointEntry?.games_since ?? 0,
+					unique: exactFloorEntry?.games_since ?? 0,
 				};
 			}
 
+			console.log('Processed batch data:', processedData);
 			setData(processedData);
 		} catch (err) {
 			console.error('Error fetching batch data:', err);

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AnalyticsCard } from '@/components/analytics/core/AnalyticsCard';
 import { useBatchLastGames } from '@/hooks/analytics/useBatchLastGames';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,9 +8,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
-const CRASH_POINTS = [
-	1, 1.1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 40, 50, 100, 150, 200, 500,
-	1000,
+// Min crash points (current streak) - all values
+const CURRENT_STREAK_POINTS = [
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 40, 50, 100, 150, 200, 500, 1000,
+];
+
+// Exact crash points (unique streak) - only 1-10
+const UNIQUE_STREAK_POINTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+// Union of both sets for API requests
+const ALL_CRASH_POINTS = [
+	...new Set([...CURRENT_STREAK_POINTS, ...UNIQUE_STREAK_POINTS]),
 ];
 
 interface BatchLastGamesWidgetProps {
@@ -20,8 +28,13 @@ interface BatchLastGamesWidgetProps {
 export function BatchLastGamesWidget({ className }: BatchLastGamesWidgetProps) {
 	const [type, setType] = React.useState<'current' | 'unique'>('current');
 	const { data, isLoading, error } = useBatchLastGames({
-		values: CRASH_POINTS,
+		values: ALL_CRASH_POINTS,
 	});
+
+	// Log data when it changes
+	useEffect(() => {
+		console.log('BatchLastGamesWidget data:', data);
+	}, [data]);
 
 	const renderContent = () => {
 		if (error) {
@@ -59,7 +72,7 @@ export function BatchLastGamesWidget({ className }: BatchLastGamesWidgetProps) {
 									No data available
 								</div>
 							) : (
-								CRASH_POINTS.map((point) => (
+								CURRENT_STREAK_POINTS.map((point) => (
 									<div
 										key={point}
 										className="flex justify-between items-center"
@@ -86,7 +99,7 @@ export function BatchLastGamesWidget({ className }: BatchLastGamesWidgetProps) {
 									No data available
 								</div>
 							) : (
-								CRASH_POINTS.map((point) => (
+								UNIQUE_STREAK_POINTS.map((point) => (
 									<div
 										key={point}
 										className="flex justify-between items-center"
