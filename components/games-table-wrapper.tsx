@@ -10,19 +10,29 @@ export default function GamesTableWrapper() {
 
 	// Initialize with default page size
 	const [currentPerPage, setCurrentPerPage] = useState(25);
-	// Initialize with default crash point threshold, load from localStorage if available
-	const [crashPointThreshold, setCrashPointThreshold] = useState(() => {
-		// Try to load from localStorage
-		const saved = localStorage.getItem('crashPointThreshold');
-		return saved ? Number(saved) : 10;
-	});
 
-	// Save crash point threshold to localStorage when it changes
+	// Initialize with default crash point threshold (10)
+	const [crashPointThreshold, setCrashPointThreshold] = useState(10);
+
+	// Load the saved threshold from localStorage on the client side only
 	useEffect(() => {
-		localStorage.setItem(
-			'crashPointThreshold',
-			crashPointThreshold.toString()
-		);
+		// Check if we're in the browser
+		if (typeof window !== 'undefined') {
+			const saved = localStorage.getItem('crashPointThreshold');
+			if (saved) {
+				setCrashPointThreshold(Number(saved));
+			}
+		}
+	}, []);
+
+	// Save crash point threshold to localStorage when it changes (client-side only)
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			localStorage.setItem(
+				'crashPointThreshold',
+				crashPointThreshold.toString()
+			);
+		}
 	}, [crashPointThreshold]);
 
 	// Track if auto-refresh is enabled (default: true)
