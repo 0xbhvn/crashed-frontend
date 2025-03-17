@@ -98,11 +98,6 @@ export function TableFooter({
 		null
 	);
 
-	// If no data yet, render nothing
-	if (!apiData) {
-		return null;
-	}
-
 	// Store the provider's update function
 	const storeProviderUpdate = (updateFn: (apiData: ApiResponse) => void) => {
 		providerUpdateRef.current = updateFn;
@@ -114,6 +109,11 @@ export function TableFooter({
 			providerUpdateRef.current(apiData);
 		}
 	}, [apiData]);
+
+	// If no data yet, render nothing
+	if (!apiData) {
+		return null;
+	}
 
 	return (
 		<div className="overflow-hidden rounded-lg border border-border bg-background">
