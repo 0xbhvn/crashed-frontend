@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { ApiResponse } from '@/models/game';
 import { PaginationProvider, usePaginationContext } from './pagination-context';
@@ -93,15 +93,27 @@ export function TableFooter({
 	perPage,
 	onPageChange = () => {},
 }: TableFooterProps) {
+	// Ref to store the update function
+	const providerUpdateRef = useRef<((apiData: ApiResponse) => void) | null>(
+		null
+	);
+
 	// If no data yet, render nothing
 	if (!apiData) {
 		return null;
 	}
 
-	// Store the callback for provider to use
-	const storeProviderUpdate = () => {
-		// We don't need to update the provider since we're just displaying info
+	// Store the provider's update function
+	const storeProviderUpdate = (updateFn: (apiData: ApiResponse) => void) => {
+		providerUpdateRef.current = updateFn;
 	};
+
+	// Update pagination info when apiData changes
+	useEffect(() => {
+		if (apiData && providerUpdateRef.current) {
+			providerUpdateRef.current(apiData);
+		}
+	}, [apiData]);
 
 	return (
 		<div className="overflow-hidden rounded-lg border border-border bg-background">
