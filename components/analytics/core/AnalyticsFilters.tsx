@@ -13,7 +13,27 @@ interface AnalyticsFiltersProps {
 	className?: string;
 }
 
-const CRASH_POINTS = ['2.0', '3.0', '4.0', '5.0', '10.0'];
+const CRASH_POINTS = [
+	'2.0',
+	'3.0',
+	'4.0',
+	'5.0',
+	'6.0',
+	'7.0',
+	'8.0',
+	'9.0',
+	'10.0',
+	'15.0',
+	'20.0',
+	'30.0',
+	'40.0',
+	'50.0',
+	'100.0',
+	'150.0',
+	'200.0',
+	'500.0',
+	'1000.0',
+];
 
 export function AnalyticsFilters({
 	onFilterChange,
@@ -35,7 +55,7 @@ export function AnalyticsFilters({
 				<div className="flex flex-col gap-1.5">
 					<span className="text-sm font-medium">Crash Point</span>
 					<Tabs
-						defaultValue="2.0"
+						defaultValue="10.0"
 						onValueChange={handleCrashPointChange}
 						aria-label="Select crash point"
 					>

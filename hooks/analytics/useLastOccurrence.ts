@@ -25,7 +25,7 @@ export interface UseLastOccurrenceProps {
 }
 
 export function useLastOccurrence({
-	crashPoint = 2.0,
+	crashPoint = 10.0,
 	enabled = true,
 }: UseLastOccurrenceProps = {}): {
 	data: LastOccurrenceData | null;

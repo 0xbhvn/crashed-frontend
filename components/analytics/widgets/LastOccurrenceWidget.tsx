@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { ChangeEvent } from 'react';
 import { AnalyticsCard } from '../core/AnalyticsCard';
-import { Button } from '@/components/ui/button';
 import { useLastOccurrence } from '@/hooks/analytics/useLastOccurrence';
 import { useAnalytics } from '@/context/analytics-context';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDuration, intervalToDuration } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface LastOccurrenceWidgetProps {
 	className?: string;
@@ -17,7 +18,7 @@ interface LastOccurrenceWidgetProps {
 export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 	const { crashPoint, setCrashPoint } = useAnalytics();
 	const { data, isLoading, error } = useLastOccurrence({
-		crashPoint: crashPoint || 2.0,
+		crashPoint: crashPoint || 10.0,
 	});
 	const [timeAgo, setTimeAgo] = useState<string>('');
 
@@ -51,9 +52,8 @@ export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 		return () => clearInterval(intervalId);
 	}, [data]);
 
-	const handleCrashPointClick = () => {
-		const currentPoint = crashPoint || 2.0;
-		setCrashPoint(currentPoint < 10 ? currentPoint + 1 : 2.0);
+	const handleCrashPointChange = (e: ChangeEvent<HTMLSelectElement>) => {
+		setCrashPoint(Number(e.target.value));
 	};
 
 	const renderContent = () => {
@@ -61,7 +61,7 @@ export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 			return (
 				<Alert
 					variant="destructive"
-					className="mt-4"
+					className="mt-2"
 				>
 					<AlertCircle className="h-4 w-4" />
 					<AlertDescription>{error.message}</AlertDescription>
@@ -70,16 +70,38 @@ export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 		}
 
 		return (
-			<div className="flex flex-col gap-4">
-				<div className="flex flex-col gap-2">
+			<div className="flex flex-col">
+				<div className="flex flex-col gap-1.5">
 					<div className="flex items-center gap-2">
-						<button
-							type="button"
-							onClick={handleCrashPointClick}
-							className="text-lg font-medium hover:text-primary"
+						<select
+							className="h-8 w-fit rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+							value={crashPoint || 10.0}
+							onChange={handleCrashPointChange}
+							aria-label="Crash point"
 						>
-							{crashPoint || 2.0}x
-						</button>
+							{/* Options 1-10 individually */}
+							{Array.from({ length: 10 }, (_, i) => i + 1).map(
+								(value) => (
+									<option
+										key={value}
+										value={value}
+									>
+										{value}x
+									</option>
+								)
+							)}
+							{/* Higher options with larger increments */}
+							{[15, 20, 30, 40, 50, 100, 150, 200, 500, 1000].map(
+								(value) => (
+									<option
+										key={value}
+										value={value}
+									>
+										{value}x
+									</option>
+								)
+							)}
+						</select>
 						<span className="text-sm text-muted-foreground">
 							Crash Point
 						</span>
@@ -92,7 +114,7 @@ export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 							</Badge>
 						)}
 					</div>
-					<div className="flex flex-col">
+					<div className="flex flex-col pt-1">
 						<span className="text-sm">
 							Last:{' '}
 							{isLoading ? (
@@ -138,15 +160,7 @@ export function LastOccurrenceWidget({ className }: LastOccurrenceWidgetProps) {
 		<AnalyticsCard
 			title="Last Occurrence"
 			description="Find when specific crash points last occurred"
-			className={className}
-			footer={
-				<Button
-					variant="outline"
-					size="sm"
-				>
-					View Details
-				</Button>
-			}
+			className={cn('h-auto max-h-[200px]', className)}
 		>
 			{renderContent()}
 		</AnalyticsCard>

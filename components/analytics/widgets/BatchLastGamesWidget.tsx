@@ -10,11 +10,11 @@ import { AlertCircle } from 'lucide-react';
 
 // Min crash points (current streak) - all values
 const CURRENT_STREAK_POINTS = [
-	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 40, 50, 100, 150, 200, 500, 1000,
+	2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 40, 50, 100, 150, 200, 500, 1000,
 ];
 
 // Exact crash points (unique streak) - only 1-10
-const UNIQUE_STREAK_POINTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const UNIQUE_STREAK_POINTS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 // Union of both sets for API requests
 const ALL_CRASH_POINTS = [

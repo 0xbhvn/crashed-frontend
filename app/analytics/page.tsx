@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { AnalyticsFilters } from '@/components/analytics/core/AnalyticsFilters';
 import { LastOccurrenceWidget } from '@/components/analytics/widgets/LastOccurrenceWidget';
 import { BatchLastGamesWidget } from '@/components/analytics/widgets/BatchLastGamesWidget';
 import { AnalyticsCard } from '@/components/analytics/core/AnalyticsCard';
@@ -20,8 +19,6 @@ export default function AnalyticsPage() {
 						<Button variant="outline">Back to Instances</Button>
 					</Link>
 				</div>
-
-				<AnalyticsFilters className="w-full" />
 
 				<div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
 					<LastOccurrenceWidget className="w-full" />
