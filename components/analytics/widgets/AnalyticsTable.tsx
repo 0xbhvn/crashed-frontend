@@ -138,11 +138,19 @@ export function AnalyticsTable({ className }: AnalyticsTableProps) {
 					}
 					className="mb-4"
 				>
-					<TabsList className="grid w-[240px] grid-cols-2">
-						<TabsTrigger value="current">
+					<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
+						<TabsTrigger
+							value="current"
+							className="data-[state=active]:bg-black data-[state=active]:text-white"
+						>
 							Current Streak
 						</TabsTrigger>
-						<TabsTrigger value="unique">Unique Streak</TabsTrigger>
+						<TabsTrigger
+							value="unique"
+							className="data-[state=active]:bg-black data-[state=active]:text-white"
+						>
+							Unique Streak
+						</TabsTrigger>
 					</TabsList>
 				</Tabs>
 
