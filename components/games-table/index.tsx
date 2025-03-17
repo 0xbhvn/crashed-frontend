@@ -280,6 +280,7 @@ export function GamesTable({
 						apiData={apiData}
 						page={page}
 						perPage={perPage}
+						onPageChange={setPage}
 					/>
 				)}
 			</div>
