@@ -9,7 +9,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { useBatchLastGames } from '@/hooks/analytics/useBatchLastGames';
+import { useRealTimeBatchGames } from '@/hooks/analytics/useRealTimeBatchGames';
 import { AnalyticsCard } from '../core/AnalyticsCard';
 import { Badge } from '@/components/ui/badge';
 import { formatDuration, intervalToDuration } from 'date-fns';
@@ -28,7 +28,7 @@ const CURRENT_STREAK_POINTS = [
 ];
 
 // Exact crash points (unique streak) - only 2-10
-const UNIQUE_STREAK_POINTS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+const UNIQUE_STREAK_POINTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 // All crash points for API requests
 const ALL_CRASH_POINTS = [
@@ -47,14 +47,44 @@ export function AnalyticsTable({ className }: AnalyticsTableProps) {
 			? CURRENT_STREAK_POINTS
 			: UNIQUE_STREAK_POINTS;
 
-	// Fetch all data in a single batch request
+	// Fetch data with real-time updates
 	const {
 		data: batchData,
 		isLoading: batchLoading,
 		error: batchError,
-	} = useBatchLastGames({
+	} = useRealTimeBatchGames({
 		values: ALL_CRASH_POINTS,
 	});
+
+	// Skeleton component for loading state
+	const TableSkeleton = () => {
+		return (
+			<>
+				{Array.from({ length: pointsToShow.length }).map((_, index) => (
+					<TableRow
+						key={`skeleton-row-${index}-${selectedType}`}
+						className="h-10"
+					>
+						<TableCell className="py-1">
+							<div className="h-4 w-14 animate-pulse rounded bg-muted" />
+						</TableCell>
+						<TableCell className="py-1">
+							<div className="h-5 w-10 animate-pulse rounded bg-muted" />
+						</TableCell>
+						<TableCell className="py-1">
+							<div className="h-4 w-20 animate-pulse rounded bg-muted" />
+						</TableCell>
+						<TableCell className="py-1">
+							<div className="h-4 w-14 animate-pulse rounded bg-muted" />
+						</TableCell>
+						<TableCell className="py-1">
+							<div className="h-4 w-12 animate-pulse rounded bg-muted" />
+						</TableCell>
+					</TableRow>
+				))}
+			</>
+		);
+	};
 
 	// Update time ago strings every second
 	useEffect(() => {
@@ -130,89 +160,92 @@ export function AnalyticsTable({ className }: AnalyticsTableProps) {
 
 		return (
 			<div className="w-full">
-				<Tabs
-					defaultValue="current"
-					value={selectedType}
-					onValueChange={(value) =>
-						setSelectedType(value as 'current' | 'unique')
-					}
-					className="mb-4"
-				>
-					<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
-						<TabsTrigger
-							value="current"
-							className="data-[state=active]:bg-black data-[state=active]:text-white"
-						>
-							Current Streak
-						</TabsTrigger>
-						<TabsTrigger
-							value="unique"
-							className="data-[state=active]:bg-black data-[state=active]:text-white"
-						>
-							Unique Streak
-						</TabsTrigger>
-					</TabsList>
-				</Tabs>
+				<div className="flex mb-4">
+					<Tabs
+						defaultValue="current"
+						value={selectedType}
+						onValueChange={(value) =>
+							setSelectedType(value as 'current' | 'unique')
+						}
+					>
+						<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
+							<TabsTrigger
+								value="current"
+								className="data-[state=active]:bg-black data-[state=active]:text-white"
+							>
+								Current Streak
+							</TabsTrigger>
+							<TabsTrigger
+								value="unique"
+								className="data-[state=active]:bg-black data-[state=active]:text-white"
+							>
+								Unique Streak
+							</TabsTrigger>
+						</TabsList>
+					</Tabs>
+				</div>
 
 				<div className="rounded-md border">
 					<Table>
 						<TableHeader>
-							<TableRow>
-								<TableHead className="w-[100px]">
+							<TableRow className="h-9">
+								<TableHead className="px-2 py-1.5 w-[100px]">
 									Crash Point
 								</TableHead>
-								<TableHead className="w-[120px]">
+								<TableHead className="px-2 py-1.5 w-[120px]">
 									{selectedType === 'current'
 										? 'Current Streak'
 										: 'Unique Streak'}
 								</TableHead>
-								<TableHead>Time Since</TableHead>
-								<TableHead className="w-[120px]">
+								<TableHead className="px-2 py-1.5">
+									Time Since
+								</TableHead>
+								<TableHead className="px-2 py-1.5 w-[120px]">
 									Last Game
 								</TableHead>
-								<TableHead className="w-[120px]">
+								<TableHead className="px-2 py-1.5 w-[120px]">
 									Exact Crash
 								</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{pointsToShow.map((point) => {
-								const pointData = batchData?.[point];
-								const streakValue =
-									pointData?.[selectedType] ?? 0;
-								const isLoading = batchLoading;
+							{batchLoading && !batchData ? (
+								<TableSkeleton />
+							) : (
+								pointsToShow.map((point) => {
+									const pointData = batchData?.[point];
+									const streakValue =
+										pointData?.[selectedType] ?? 0;
 
-								// Use the appropriate game data based on selected tab
-								const gameData =
-									selectedType === 'current'
-										? pointData?.currentGame
-										: pointData?.uniqueGame;
+									// Use the appropriate game data based on selected tab
+									const gameData =
+										selectedType === 'current'
+											? pointData?.currentGame
+											: pointData?.uniqueGame;
 
-								const exact = gameData?.crashPoint;
+									const exact = gameData?.crashPoint;
 
-								return (
-									<TableRow key={point}>
-										<TableCell className="font-medium">
-											{selectedType === 'current'
-												? `≥ ${point}${
-														point ===
-														Math.floor(point)
-															? '.0'
-															: ''
-												  }`
-												: `= ${point}${
-														point ===
-														Math.floor(point)
-															? '.0'
-															: ''
-												  }`}
-										</TableCell>
-										<TableCell>
-											{isLoading ? (
-												<span className="text-muted-foreground">
-													Loading...
-												</span>
-											) : (
+									return (
+										<TableRow
+											key={point}
+											className="h-10"
+										>
+											<TableCell className="font-medium">
+												{selectedType === 'current'
+													? `≥ ${point}${
+															point ===
+															Math.floor(point)
+																? '.0'
+																: ''
+													  }`
+													: `= ${point}${
+															point ===
+															Math.floor(point)
+																? '.0'
+																: ''
+													  }`}
+											</TableCell>
+											<TableCell>
 												<Badge
 													className={cn(
 														'px-2.5 py-0.5 font-semibold',
@@ -227,53 +260,41 @@ export function AnalyticsTable({ className }: AnalyticsTableProps) {
 												>
 													{streakValue}
 												</Badge>
-											)}
-										</TableCell>
-										<TableCell>
-											{isLoading ? (
-												<span className="text-muted-foreground">
-													Loading...
-												</span>
-											) : !gameData ? (
-												<span className="text-muted-foreground">
-													No data
-												</span>
-											) : (
-												timeAgoMap[point] ||
-												'calculating...'
-											)}
-										</TableCell>
-										<TableCell>
-											{isLoading ? (
-												<span className="text-muted-foreground">
-													Loading...
-												</span>
-											) : !gameData ? (
-												<span className="text-muted-foreground">
-													-
-												</span>
-											) : (
-												`#${gameData.gameId}`
-											)}
-										</TableCell>
-										<TableCell>
-											{isLoading ? (
-												<span className="text-muted-foreground">
-													Loading...
-												</span>
-											) : !gameData ? (
-												<span className="text-muted-foreground">
-													-
-												</span>
-											) : (
-												<span className="font-medium">
-													{exact?.toFixed(2)}x
-												</span>
-											)}
-										</TableCell>
-									</TableRow>
-								);
-							})}
+											</TableCell>
+											<TableCell>
+												{!gameData ? (
+													<span className="text-muted-foreground">
+														No data
+													</span>
+												) : (
+													timeAgoMap[point] ||
+													'calculating...'
+												)}
+											</TableCell>
+											<TableCell>
+												{!gameData ? (
+													<span className="text-muted-foreground">
+														-
+													</span>
+												) : (
+													<span>{`#${gameData.gameId}`}</span>
+												)}
+											</TableCell>
+											<TableCell>
+												{!gameData ? (
+													<span className="text-muted-foreground">
+														-
+													</span>
+												) : (
+													<span>
+														{exact?.toFixed(2)}x
+													</span>
+												)}
+											</TableCell>
+										</TableRow>
+									);
+								})
+							)}
 						</TableBody>
 					</Table>
 				</div>

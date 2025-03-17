@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+	createContext,
+	useContext,
+	useState,
+	useEffect,
+	useRef,
+} from 'react';
 import type { ReactNode } from 'react';
 import { useWebSocketGames } from '@/hooks/use-websocket-games';
 import type { Game } from '@/models/game';
@@ -32,14 +38,33 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 	// Keep track of all processed games for analysis
 	const [processedGames, setProcessedGames] = useState<Game[]>([]);
 
+	// Keep track of last processed game ID to prevent duplicate processing
+	const lastProcessedGameIdRef = useRef<string | null>(null);
+
 	// Process new games as they arrive
 	useEffect(() => {
 		if (newGames.length > 0) {
 			// Get the latest game (first in the array)
 			const latest = newGames[0];
 
-			// Update latest game state
-			setLatestGame(latest);
+			// Skip if we've already processed this game
+			if (lastProcessedGameIdRef.current === latest.gameId) {
+				return;
+			}
+
+			// Only log in development when console is open
+			if (
+				process.env.NODE_ENV === 'development' &&
+				typeof window !== 'undefined' &&
+				window.console &&
+				console.debug
+			) {
+				console.debug(`WebSocket game received: ${latest.gameId}`);
+			}
+
+			// Update latest game state - ensure a new object is created to trigger re-render
+			setLatestGame({ ...latest });
+			lastProcessedGameIdRef.current = latest.gameId;
 
 			// Add to processed games list
 			setProcessedGames((prev) => {
@@ -48,7 +73,7 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 					(game) => game.gameId === latest.gameId
 				);
 				if (!exists) {
-					return [latest, ...prev];
+					return [latest, ...prev.slice(0, 19)]; // Keep only the 20 most recent
 				}
 				return prev;
 			});

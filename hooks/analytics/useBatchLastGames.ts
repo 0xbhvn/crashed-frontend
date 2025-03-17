@@ -169,5 +169,5 @@ export function useBatchLastGames({
 		fetchData();
 	}, [fetchData]);
 
-	return { data, isLoading, error };
+	return { data, isLoading, error, fetchData };
 }
