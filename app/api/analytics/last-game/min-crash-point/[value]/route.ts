@@ -4,9 +4,10 @@ import { getApiUrl, getApiHeaders } from '@/lib/api-config';
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { value: string } }
+	context: { params: Promise<{ value: string }> }
 ) {
 	try {
+		const params = await context.params;
 		const value = params.value;
 
 		// Construct the API URL
