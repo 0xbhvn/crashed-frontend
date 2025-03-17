@@ -40,6 +40,9 @@ interface TableControlsHeaderProps {
 	onAutoRefreshToggle?: () => void;
 	newGamesCount?: number;
 	onRefreshClick?: () => void;
+	// New props for crash point threshold
+	crashPointThreshold?: number;
+	onCrashPointThresholdChange?: (threshold: number) => void;
 }
 
 export function TableControlsHeader({
@@ -61,6 +64,9 @@ export function TableControlsHeader({
 	onAutoRefreshToggle = () => {},
 	newGamesCount = 0,
 	onRefreshClick = () => {},
+	// New crash point threshold props
+	crashPointThreshold = 10,
+	onCrashPointThresholdChange = () => {},
 }: TableControlsHeaderProps) {
 	// Keep a ref to the provider update function
 	const providerUpdateRef = useRef<((data: ApiResponse) => void) | null>(
@@ -93,6 +99,45 @@ export function TableControlsHeader({
 	if (!apiData) {
 		return null;
 	}
+
+	// Add a component for the crash point threshold selector
+	const CrashPointThresholdSelector = () => {
+		return (
+			<div className="flex-initial ml-2">
+				<select
+					className="h-8 w-fit rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+					value={crashPointThreshold}
+					onChange={(e) =>
+						onCrashPointThresholdChange(Number(e.target.value))
+					}
+					aria-label="Crash point threshold"
+				>
+					{/* Options 1-10 individually */}
+					{Array.from({ length: 10 }, (_, i) => i + 1).map(
+						(value) => (
+							<option
+								key={value}
+								value={value}
+							>
+								CP ≥ {value}
+							</option>
+						)
+					)}
+					{/* Higher options with larger increments */}
+					{[15, 20, 30, 40, 50, 100, 150, 200, 500, 1000].map(
+						(value) => (
+							<option
+								key={value}
+								value={value}
+							>
+								CP ≥ {value}
+							</option>
+						)
+					)}
+				</select>
+			</div>
+		);
+	};
 
 	return (
 		<TooltipProvider>
@@ -197,7 +242,11 @@ export function TableControlsHeader({
 							<div className="flex-1">
 								<div className="flex items-center justify-between gap-2">
 									{/* Static page size selector component */}
-									<PageSizeSelector compact={true} />
+									<div className="flex items-center">
+										<PageSizeSelector compact={true} />
+										{/* Add the crash point threshold selector next to page size */}
+										<CrashPointThresholdSelector />
+									</div>
 
 									{/* Static page info component that only updates when page info changes */}
 									{!hidePageInfo && (

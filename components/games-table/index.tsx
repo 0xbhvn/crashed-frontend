@@ -10,7 +10,11 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import type { SortingState, OnChangeFn } from '@tanstack/react-table';
+import type {
+	SortingState,
+	OnChangeFn,
+	TableState,
+} from '@tanstack/react-table';
 import {
 	flexRender,
 	getCoreRowModel,
@@ -33,6 +37,13 @@ export interface GamesTableProps {
 	onAutoRefreshToggle?: () => void;
 	newGamesCount?: number;
 	onRefreshClick?: () => void;
+	crashPointThreshold?: number;
+	onCrashPointThresholdChange?: (threshold: number) => void;
+}
+
+// Extend TableState type to include crashPointThreshold
+interface ExtendedTableState extends TableState {
+	crashPointThreshold?: number;
 }
 
 export function GamesTable({
@@ -42,6 +53,8 @@ export function GamesTable({
 	onAutoRefreshToggle = () => {},
 	newGamesCount = 0,
 	onRefreshClick = () => {},
+	crashPointThreshold = 10,
+	onCrashPointThresholdChange = () => {},
 }: GamesTableProps) {
 	// Use the passed hook
 	const {
@@ -78,7 +91,8 @@ export function GamesTable({
 		enableSortingRemoval: false,
 		state: {
 			sorting,
-		},
+			crashPointThreshold,
+		} as ExtendedTableState,
 		manualPagination: true, // We're handling pagination outside of the table
 		// Force re-calculation of data when it changes
 		defaultColumn: {
@@ -145,6 +159,8 @@ export function GamesTable({
 				onAutoRefreshToggle={onAutoRefreshToggle}
 				newGamesCount={newGamesCount}
 				onRefreshClick={onRefreshClick}
+				crashPointThreshold={crashPointThreshold}
+				onCrashPointThresholdChange={onCrashPointThresholdChange}
 			/>
 
 			<div className="space-y-4 flex flex-col">

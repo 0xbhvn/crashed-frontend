@@ -10,6 +10,20 @@ export default function GamesTableWrapper() {
 
 	// Initialize with default page size
 	const [currentPerPage, setCurrentPerPage] = useState(25);
+	// Initialize with default crash point threshold, load from localStorage if available
+	const [crashPointThreshold, setCrashPointThreshold] = useState(() => {
+		// Try to load from localStorage
+		const saved = localStorage.getItem('crashPointThreshold');
+		return saved ? Number(saved) : 10;
+	});
+
+	// Save crash point threshold to localStorage when it changes
+	useEffect(() => {
+		localStorage.setItem(
+			'crashPointThreshold',
+			crashPointThreshold.toString()
+		);
+	}, [crashPointThreshold]);
 
 	// Track if auto-refresh is enabled (default: true)
 	const [autoRefresh, setAutoRefresh] = useState(true);
@@ -96,12 +110,13 @@ export default function GamesTableWrapper() {
 	return (
 		<div className="flex flex-col gap-4 w-full">
 			<GamesTable
-				gamesDataHook={gamesDataHook} // Pass the entire hook instance
-				// Pass auto-refresh props to be used in TableControlsHeader
+				gamesDataHook={gamesDataHook}
 				autoRefreshEnabled={autoRefresh}
 				onAutoRefreshToggle={handleAutoRefreshToggle}
 				newGamesCount={newGamesCount}
 				onRefreshClick={handleRefresh}
+				crashPointThreshold={crashPointThreshold}
+				onCrashPointThresholdChange={setCrashPointThreshold}
 			/>
 		</div>
 	);

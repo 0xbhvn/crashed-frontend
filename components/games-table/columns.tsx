@@ -4,6 +4,11 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { Game } from '@/models/game';
 import { formatDate, calculateDuration } from '@/utils/date-utils';
 
+// Define an interface for the extended table state
+interface ExtendedTableState {
+	crashPointThreshold?: number;
+}
+
 // Column definitions with robust error handling
 export const columns: ColumnDef<Game>[] = [
 	{
@@ -21,7 +26,11 @@ export const columns: ColumnDef<Game>[] = [
 	{
 		header: 'Crash Point',
 		accessorKey: 'crashPoint',
-		cell: ({ row }) => {
+		cell: ({ row, table }) => {
+			// Get the crash point threshold from table state
+			const state = table.getState() as ExtendedTableState;
+			const threshold = state.crashPointThreshold ?? 10; // Default to 10 if not provided
+
 			// Safely parse the value
 			const rawValue = row.getValue('crashPoint');
 
@@ -57,7 +66,7 @@ export const columns: ColumnDef<Game>[] = [
 				<div
 					className={cn(
 						'rounded font-semibold px-2 py-0.5 inline-block',
-						value < 10
+						value < threshold
 							? 'bg-red-600/20 text-red-600 dark:bg-red-800/30 dark:text-red-400'
 							: 'bg-green-600/20 text-green-600 dark:bg-green-800/30 dark:text-green-400'
 					)}
