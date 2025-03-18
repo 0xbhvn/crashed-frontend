@@ -2,13 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getApiHeaders } from '@/lib/api-config';
-import type { OccurrencesData, OccurrenceData } from './analytics-types';
+import type {
+	OccurrencesData,
+	OccurrenceData,
+	OccurrenceComparisonData,
+} from './analytics-types';
 
 interface UseOccurrenceAnalysisProps {
 	values: number[];
 	analyzeBy: 'games' | 'time';
 	limit?: number;
 	hours?: number;
+	comparison?: boolean;
 }
 
 export function useOccurrenceAnalysis({
@@ -16,6 +21,7 @@ export function useOccurrenceAnalysis({
 	analyzeBy = 'games',
 	limit = 2000,
 	hours = 24,
+	comparison = false,
 }: UseOccurrenceAnalysisProps) {
 	const [data, setData] = useState<OccurrencesData | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +45,9 @@ export function useOccurrenceAnalysis({
 
 			// Set parameters based on analysis type
 			const params =
-				analyzeBy === 'games' ? { values, limit } : { values, hours };
+				analyzeBy === 'games'
+					? { values, limit, comparison }
+					: { values, hours, comparison };
 
 			// Prepare headers - only include timezone for time-based queries
 			const headers = { ...getApiHeaders() } as Record<string, string>;
@@ -98,9 +106,12 @@ export function useOccurrenceAnalysis({
 
 			// Normalize all keys to be consistent
 			const normalizeKeys = (
-				data: Record<string, OccurrenceData>
-			): Record<string, OccurrenceData> => {
-				const result: Record<string, OccurrenceData> = {};
+				data: Record<string, OccurrenceData | OccurrenceComparisonData>
+			): Record<string, OccurrenceData | OccurrenceComparisonData> => {
+				const result: Record<
+					string,
+					OccurrenceData | OccurrenceComparisonData
+				> = {};
 				// Convert keys from the API response to match our format
 				for (const key of Object.keys(data || {})) {
 					// Strip any .0 suffix for consistency
@@ -147,7 +158,7 @@ export function useOccurrenceAnalysis({
 		} finally {
 			setIsLoading(false);
 		}
-	}, [values, analyzeBy, limit, hours]);
+	}, [values, analyzeBy, limit, hours, comparison]);
 
 	useEffect(() => {
 		fetchData();

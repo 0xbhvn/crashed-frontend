@@ -14,9 +14,15 @@ import { AnalyticsCard } from '../core/AnalyticsCard';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import {
+	AlertCircle,
+	ArrowDownIcon,
+	ArrowUpIcon,
+	ArrowDownUpIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import type { OccurrenceComparisonData } from '@/hooks/analytics/analytics-types';
 
 interface OccurrencesTableProps {
 	className?: string;
@@ -117,7 +123,21 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 		analyzeBy,
 		limit,
 		hours,
+		comparison: true,
 	});
+
+	// Function to check if the data is comparison data
+	const isComparisonData = (
+		data: unknown
+	): data is OccurrenceComparisonData => {
+		return (
+			data !== null &&
+			typeof data === 'object' &&
+			'current_period' in data &&
+			'previous_period' in data &&
+			'comparison' in data
+		);
+	};
 
 	// Skeleton component for loading state
 	const TableSkeleton = () => {
@@ -136,6 +156,12 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 						</TableCell>
 						<TableCell className="py-1">
 							<div className="h-5 w-12 animate-pulse rounded bg-muted" />
+						</TableCell>
+						<TableCell className="py-1">
+							<div className="h-5 w-16 animate-pulse rounded bg-muted" />
+						</TableCell>
+						<TableCell className="py-1">
+							<div className="h-5 w-16 animate-pulse rounded bg-muted" />
 						</TableCell>
 					</TableRow>
 				))}
@@ -161,11 +187,37 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 			return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'; // Below threshold
 		}
 
-		if (Math.abs(percentage - threshold) < 0.05) {
+		if (Math.abs(percentage - threshold) < 0.01) {
 			return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'; // At threshold
 		}
 
 		return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'; // Above threshold
+	};
+
+	// Function to get comparison badge color based on change percentage
+	const getComparisonBadgeColor = (changePercent: number) => {
+		if (changePercent > 0) {
+			return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'; // Positive change
+		}
+		if (changePercent < 0) {
+			return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'; // Negative change
+		}
+		return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'; // No change
+	};
+
+	// Get change indicator symbol
+	const getChangeSymbol = (change: number) => {
+		if (change > 0) return '+';
+		if (change < 0) return ''; // minus sign is already included in negative number
+		return '±'; // for zero change
+	};
+
+	// Get percentage change icon
+	const getPercentChangeIcon = (changePercent: number) => {
+		if (changePercent > 0) return <ArrowUpIcon className="mr-1 h-3 w-3" />;
+		if (changePercent < 0)
+			return <ArrowDownIcon className="mr-1 h-3 w-3" />;
+		return <ArrowDownUpIcon className="mr-1 h-3 w-3" />; // for zero change
 	};
 
 	// Render content
@@ -215,31 +267,25 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 							<Input
 								id="limit"
 								type="number"
-								className="h-8 text-sm text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 								value={limitInput}
 								onChange={handleLimitInputChange}
 								onBlur={applyLimitChange}
 								onKeyDown={(e) =>
 									handleKeyDown(e, applyLimitChange)
 								}
-								min={100}
-								max={10000}
-								step={100}
 							/>
 						) : (
 							<Input
 								id="hours"
 								type="number"
-								className="h-8 text-sm text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 								value={hoursInput}
 								onChange={handleHoursInputChange}
 								onBlur={applyHoursChange}
 								onKeyDown={(e) =>
 									handleKeyDown(e, applyHoursChange)
 								}
-								min={1}
-								max={168}
-								step={1}
 							/>
 						)}
 
@@ -275,11 +321,19 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 								<TableHead className="px-2 py-1.5 w-[120px]">
 									Crash Point
 								</TableHead>
-								<TableHead className="px-2 py-1.5 w-[120px]">
+								<TableHead className="px-2 py-1.5 w-[80px]">
 									Occurrences
+								</TableHead>
+								<TableHead className="px-2 py-1.5 w-[120px]">
+									Change
 								</TableHead>
 								<TableHead className="px-2 py-1.5 w-[100px]">
 									Percentage
+								</TableHead>
+								<TableHead className="px-2 py-1.5 w-[120px]">
+									{analyzeBy === 'games'
+										? '% Change'
+										: '% Diff'}
 								</TableHead>
 							</TableRow>
 						</TableHeader>
@@ -295,14 +349,165 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 											: point.toString();
 
 									// Get the data for the selected type (current or unique)
-									const typeData =
+									const dataItem =
 										occurrencesData?.[pointKey]?.[
 											selectedType
 										];
 
-									const count = typeData?.count ?? 0;
+									if (!dataItem) {
+										return (
+											<TableRow
+												key={pointKey}
+												className="h-10"
+											>
+												<TableCell className="font-medium">
+													{selectedType === 'current'
+														? `≥ ${point}${
+																point ===
+																Math.floor(
+																	point
+																)
+																	? '.0'
+																	: ''
+														  }`
+														: `= ${point}${
+																point ===
+																Math.floor(
+																	point
+																)
+																	? '.0'
+																	: ''
+														  }`}
+												</TableCell>
+												<TableCell>0</TableCell>
+												<TableCell className="text-center">
+													-
+												</TableCell>
+												<TableCell>
+													<Badge
+														className={cn(
+															'px-2 py-0.5 text-xs font-semibold',
+															getPercentageBadgeColor(
+																0,
+																point,
+																selectedType
+															)
+														)}
+													>
+														0.00%
+													</Badge>
+												</TableCell>
+												<TableCell>-</TableCell>
+											</TableRow>
+										);
+									}
+
+									// Comparison data handling
+									if (isComparisonData(dataItem)) {
+										const currentData =
+											dataItem.current_period;
+										const comparison = dataItem.comparison;
+
+										return (
+											<TableRow
+												key={pointKey}
+												className="h-10"
+											>
+												<TableCell className="font-medium">
+													{selectedType === 'current'
+														? `≥ ${point}${
+																point ===
+																Math.floor(
+																	point
+																)
+																	? '.0'
+																	: ''
+														  }`
+														: `= ${point}${
+																point ===
+																Math.floor(
+																	point
+																)
+																	? '.0'
+																	: ''
+														  }`}
+												</TableCell>
+												<TableCell>
+													{currentData.count}
+												</TableCell>
+												<TableCell>
+													<Badge
+														className={cn(
+															'px-2 py-0.5 text-xs font-semibold',
+															comparison.count_diff >
+																0
+																? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+																: comparison.count_diff <
+																  0
+																? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+																: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+														)}
+													>
+														{getChangeSymbol(
+															comparison.count_diff
+														)}
+														{comparison.count_diff}
+													</Badge>
+												</TableCell>
+												<TableCell>
+													<Badge
+														className={cn(
+															'px-2 py-0.5 text-xs font-semibold',
+															getPercentageBadgeColor(
+																currentData.percentage,
+																point,
+																selectedType
+															)
+														)}
+													>
+														{currentData.percentage.toFixed(
+															2
+														)}
+														%
+													</Badge>
+												</TableCell>
+												<TableCell>
+													<Badge
+														className={cn(
+															'px-2 py-0.5 text-xs font-semibold',
+															getComparisonBadgeColor(
+																analyzeBy ===
+																	'games'
+																	? comparison.count_percent_change
+																	: comparison.percentage_diff
+															)
+														)}
+													>
+														<span className="flex items-center">
+															{getPercentChangeIcon(
+																analyzeBy ===
+																	'games'
+																	? comparison.count_percent_change
+																	: comparison.percentage_diff
+															)}
+															{Math.abs(
+																analyzeBy ===
+																	'games'
+																	? comparison.count_percent_change
+																	: comparison.percentage_diff
+															).toFixed(2)}
+															%
+														</span>
+													</Badge>
+												</TableCell>
+											</TableRow>
+										);
+									}
+
+									// Regular data handling (non-comparison)
+									const count = dataItem?.count ?? 0;
 									const percentage =
-										typeData?.percentage ?? 0;
+										dataItem?.percentage ?? 0;
 
 									return (
 										<TableRow
@@ -325,6 +530,7 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 													  }`}
 											</TableCell>
 											<TableCell>{count}</TableCell>
+											<TableCell>-</TableCell>
 											<TableCell>
 												<Badge
 													className={cn(
@@ -339,6 +545,7 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 													{percentage.toFixed(2)}%
 												</Badge>
 											</TableCell>
+											<TableCell>-</TableCell>
 										</TableRow>
 									);
 								})

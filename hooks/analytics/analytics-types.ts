@@ -41,15 +41,26 @@ export interface OccurrenceData {
 	end_time?: string;
 }
 
+// New interface for comparison data
+export interface OccurrenceComparisonData {
+	current_period: OccurrenceData;
+	previous_period: OccurrenceData;
+	comparison: {
+		count_diff: number;
+		percentage_diff: number;
+		count_percent_change: number;
+	};
+}
+
 export interface BatchOccurrencesData {
-	[key: string]: OccurrenceData;
+	[key: string]: OccurrenceData | OccurrenceComparisonData;
 }
 
 // Combined occurrences data structure (for both current and unique)
 export interface OccurrencesData {
 	[key: string]: {
-		current?: OccurrenceData;
-		unique?: OccurrenceData;
+		current?: OccurrenceData | OccurrenceComparisonData;
+		unique?: OccurrenceData | OccurrenceComparisonData;
 	};
 }
 
