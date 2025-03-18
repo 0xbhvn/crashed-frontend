@@ -17,7 +17,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-// import { format } from 'date-fns';
 
 interface OccurrencesTableProps {
 	className?: string;
@@ -98,123 +97,6 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 		return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'; // Common
 	};
 
-	// Render the analysis mode selector
-	const renderAnalysisSelector = () => {
-		return (
-			<div className="flex flex-col md:flex-row gap-3 items-start md:items-center mb-4">
-				<Tabs
-					defaultValue="games"
-					value={analyzeBy}
-					onValueChange={(value) =>
-						setAnalyzeBy(value as 'games' | 'time')
-					}
-				>
-					<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
-						<TabsTrigger
-							value="games"
-							className="data-[state=active]:bg-black data-[state=active]:text-white"
-						>
-							Games
-						</TabsTrigger>
-						<TabsTrigger
-							value="time"
-							className="data-[state=active]:bg-black data-[state=active]:text-white"
-						>
-							Time
-						</TabsTrigger>
-					</TabsList>
-				</Tabs>
-
-				{analyzeBy === 'games' ? (
-					<div className="flex items-center gap-2">
-						<label
-							htmlFor="limit"
-							className="text-sm"
-						>
-							Last
-						</label>
-						<Input
-							id="limit"
-							type="number"
-							className="w-24 h-8 text-sm"
-							value={limit}
-							onChange={(e) => setLimit(Number(e.target.value))}
-							min={100}
-							max={10000}
-							step={100}
-						/>
-						<span className="text-sm">games</span>
-					</div>
-				) : (
-					<div className="flex items-center gap-2">
-						<label
-							htmlFor="hours"
-							className="text-sm"
-						>
-							Last
-						</label>
-						<Input
-							id="hours"
-							type="number"
-							className="w-24 h-8 text-sm"
-							value={hours}
-							onChange={(e) => setHours(Number(e.target.value))}
-							min={1}
-							max={168}
-							step={1}
-						/>
-						<span className="text-sm">hours</span>
-					</div>
-				)}
-			</div>
-		);
-	};
-
-	// // Get the time range string if available
-	// const getTimeRangeString = () => {
-	// 	if (!occurrencesData || Object.keys(occurrencesData).length === 0)
-	// 		return '';
-
-	// 	// Get the first item in the data for the time range
-	// 	const firstKey = Object.keys(occurrencesData)[0];
-	// 	const firstItem = occurrencesData[firstKey]?.[selectedType];
-
-	// 	if (!firstItem) return '';
-
-	// 	// Handle both time and games analysis
-	// 	if (analyzeBy === 'time') {
-	// 		const startTime = firstItem.start_time
-	// 			? new Date(firstItem.start_time)
-	// 			: null;
-	// 		const endTime = firstItem.end_time
-	// 			? new Date(firstItem.end_time)
-	// 			: null;
-
-	// 		if (startTime && endTime) {
-	// 			return `(${format(startTime, 'MMM d, h:mm a')} - ${format(
-	// 				endTime,
-	// 				'MMM d, h:mm a'
-	// 			)})`;
-	// 		}
-	// 	} else {
-	// 		const firstGameTime = firstItem.first_game_time
-	// 			? new Date(firstItem.first_game_time)
-	// 			: null;
-	// 		const lastGameTime = firstItem.last_game_time
-	// 			? new Date(firstItem.last_game_time)
-	// 			: null;
-
-	// 		if (firstGameTime && lastGameTime) {
-	// 			return `(${format(firstGameTime, 'MMM d, h:mm a')} - ${format(
-	// 				lastGameTime,
-	// 				'MMM d, h:mm a'
-	// 			)})`;
-	// 		}
-	// 	}
-
-	// 	return '';
-	// };
-
 	// Render content
 	const renderContent = () => {
 		if (occurrencesError) {
@@ -233,9 +115,7 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 
 		return (
 			<div className="w-full">
-				{renderAnalysisSelector()}
-
-				<div className="flex mb-4">
+				<div className="flex justify-between items-center mb-4">
 					<Tabs
 						defaultValue="current"
 						value={selectedType}
@@ -258,11 +138,78 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 							</TabsTrigger>
 						</TabsList>
 					</Tabs>
-				</div>
 
-				{/* <div className="text-xs text-muted-foreground mb-2">
-					{getTimeRangeString()}
-				</div> */}
+					<div className="flex items-center gap-3">
+						<Tabs
+							defaultValue="games"
+							value={analyzeBy}
+							onValueChange={(value) =>
+								setAnalyzeBy(value as 'games' | 'time')
+							}
+						>
+							<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
+								<TabsTrigger
+									value="games"
+									className="data-[state=active]:bg-black data-[state=active]:text-white"
+								>
+									Games
+								</TabsTrigger>
+								<TabsTrigger
+									value="time"
+									className="data-[state=active]:bg-black data-[state=active]:text-white"
+								>
+									Time
+								</TabsTrigger>
+							</TabsList>
+						</Tabs>
+
+						{analyzeBy === 'games' ? (
+							<div className="flex items-center gap-2">
+								<label
+									htmlFor="limit"
+									className="text-sm"
+								>
+									Last
+								</label>
+								<Input
+									id="limit"
+									type="number"
+									className="w-24 h-8 text-sm"
+									value={limit}
+									onChange={(e) =>
+										setLimit(Number(e.target.value))
+									}
+									min={100}
+									max={10000}
+									step={100}
+								/>
+								<span className="text-sm">games</span>
+							</div>
+						) : (
+							<div className="flex items-center gap-2">
+								<label
+									htmlFor="hours"
+									className="text-sm"
+								>
+									Last
+								</label>
+								<Input
+									id="hours"
+									type="number"
+									className="w-24 h-8 text-sm"
+									value={hours}
+									onChange={(e) =>
+										setHours(Number(e.target.value))
+									}
+									min={1}
+									max={168}
+									step={1}
+								/>
+								<span className="text-sm">hours</span>
+							</div>
+						)}
+					</div>
+				</div>
 
 				<div className="rounded-md border">
 					<Table>
