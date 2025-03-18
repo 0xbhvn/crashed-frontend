@@ -201,7 +201,7 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 							<Input
 								id="limit"
 								type="number"
-								className="h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								className="h-8 text-sm text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 								value={limitInput}
 								onChange={handleLimitInputChange}
 								onBlur={applyLimitChange}
@@ -216,7 +216,7 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 							<Input
 								id="hours"
 								type="number"
-								className="h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								className="h-8 text-sm text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 								value={hoursInput}
 								onChange={handleHoursInputChange}
 								onBlur={applyHoursChange}
