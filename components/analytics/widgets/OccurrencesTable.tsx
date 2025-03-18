@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
 	Table,
 	TableBody,
@@ -42,7 +42,64 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 	);
 	const [analyzeBy, setAnalyzeBy] = useState<'games' | 'time'>('games');
 	const [limit, setLimit] = useState(2000);
+	const [limitInput, setLimitInput] = useState(limit.toString());
 	const [hours, setHours] = useState(24);
+	const [hoursInput, setHoursInput] = useState(hours.toString());
+
+	// Update input values when limit/hours change externally
+	useEffect(() => {
+		setLimitInput(limit.toString());
+	}, [limit]);
+
+	useEffect(() => {
+		setHoursInput(hours.toString());
+	}, [hours]);
+
+	// Handle limit input changes
+	const handleLimitInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		// Just update the input value, don't update limit yet
+		setLimitInput(e.target.value);
+	};
+
+	// Apply limit change
+	const applyLimitChange = () => {
+		const newLimit = Number.parseInt(limitInput, 10);
+		// Ensure limit is within valid range and is a number
+		if (!Number.isNaN(newLimit) && newLimit >= 100 && newLimit <= 10000) {
+			setLimit(newLimit);
+		} else {
+			// Reset to current limit if invalid
+			setLimitInput(limit.toString());
+		}
+	};
+
+	// Handle hours input changes
+	const handleHoursInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		// Just update the input value, don't update hours yet
+		setHoursInput(e.target.value);
+	};
+
+	// Apply hours change
+	const applyHoursChange = () => {
+		const newHours = Number.parseInt(hoursInput, 10);
+		// Ensure hours is within valid range and is a number
+		if (!Number.isNaN(newHours) && newHours >= 1 && newHours <= 168) {
+			setHours(newHours);
+		} else {
+			// Reset to current hours if invalid
+			setHoursInput(hours.toString());
+		}
+	};
+
+	// Handle key down for both inputs
+	const handleKeyDown = (
+		e: React.KeyboardEvent<HTMLInputElement>,
+		applyFn: () => void
+	) => {
+		if (e.key === 'Enter') {
+			applyFn();
+		}
+	};
 
 	// Get the current points to display based on selected tab
 	const pointsToShow =
@@ -174,10 +231,12 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 								<Input
 									id="limit"
 									type="number"
-									className="w-24 h-8 text-sm"
-									value={limit}
-									onChange={(e) =>
-										setLimit(Number(e.target.value))
+									className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+									value={limitInput}
+									onChange={handleLimitInputChange}
+									onBlur={applyLimitChange}
+									onKeyDown={(e) =>
+										handleKeyDown(e, applyLimitChange)
 									}
 									min={100}
 									max={10000}
@@ -196,10 +255,12 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 								<Input
 									id="hours"
 									type="number"
-									className="w-24 h-8 text-sm"
-									value={hours}
-									onChange={(e) =>
-										setHours(Number(e.target.value))
+									className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+									value={hoursInput}
+									onChange={handleHoursInputChange}
+									onBlur={applyHoursChange}
+									onKeyDown={(e) =>
+										handleKeyDown(e, applyHoursChange)
 									}
 									min={1}
 									max={168}
