@@ -144,14 +144,28 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 	};
 
 	// Function to get badge color based on percentage
-	const getPercentageBadgeColor = (percentage: number) => {
-		if (percentage < 10) {
-			return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'; // Rare
+	const getPercentageBadgeColor = (
+		percentage: number,
+		point: number,
+		type: 'current' | 'unique'
+	) => {
+		// For Exact Value tab, always use blue
+		if (type === 'unique') {
+			return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
 		}
-		if (percentage < 30) {
-			return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'; // Uncommon
+
+		// For Above Value tab
+		const threshold = 100 / point;
+
+		if (percentage < threshold) {
+			return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'; // Below threshold
 		}
-		return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'; // Common
+
+		if (Math.abs(percentage - threshold) < 0.05) {
+			return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'; // At threshold
+		}
+
+		return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'; // Above threshold
 	};
 
 	// Render content
@@ -316,11 +330,13 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 													className={cn(
 														'px-2 py-0.5 text-xs font-semibold',
 														getPercentageBadgeColor(
-															percentage
+															percentage,
+															point,
+															selectedType
 														)
 													)}
 												>
-													{percentage.toFixed(1)}%
+													{percentage.toFixed(2)}%
 												</Badge>
 											</TableCell>
 										</TableRow>
