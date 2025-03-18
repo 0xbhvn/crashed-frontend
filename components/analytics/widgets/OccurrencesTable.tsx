@@ -197,6 +197,38 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 					</Tabs>
 
 					<div className="flex items-center gap-3">
+						{analyzeBy === 'games' ? (
+							<Input
+								id="limit"
+								type="number"
+								className="h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								value={limitInput}
+								onChange={handleLimitInputChange}
+								onBlur={applyLimitChange}
+								onKeyDown={(e) =>
+									handleKeyDown(e, applyLimitChange)
+								}
+								min={100}
+								max={10000}
+								step={100}
+							/>
+						) : (
+							<Input
+								id="hours"
+								type="number"
+								className="h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								value={hoursInput}
+								onChange={handleHoursInputChange}
+								onBlur={applyHoursChange}
+								onKeyDown={(e) =>
+									handleKeyDown(e, applyHoursChange)
+								}
+								min={1}
+								max={168}
+								step={1}
+							/>
+						)}
+
 						<Tabs
 							defaultValue="games"
 							value={analyzeBy}
@@ -215,60 +247,10 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 									value="time"
 									className="data-[state=active]:bg-black data-[state=active]:text-white"
 								>
-									Time
+									Hours
 								</TabsTrigger>
 							</TabsList>
 						</Tabs>
-
-						{analyzeBy === 'games' ? (
-							<div className="flex items-center gap-2">
-								<label
-									htmlFor="limit"
-									className="text-sm"
-								>
-									Last
-								</label>
-								<Input
-									id="limit"
-									type="number"
-									className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-									value={limitInput}
-									onChange={handleLimitInputChange}
-									onBlur={applyLimitChange}
-									onKeyDown={(e) =>
-										handleKeyDown(e, applyLimitChange)
-									}
-									min={100}
-									max={10000}
-									step={100}
-								/>
-								<span className="text-sm">games</span>
-							</div>
-						) : (
-							<div className="flex items-center gap-2">
-								<label
-									htmlFor="hours"
-									className="text-sm"
-								>
-									Last
-								</label>
-								<Input
-									id="hours"
-									type="number"
-									className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-									value={hoursInput}
-									onChange={handleHoursInputChange}
-									onBlur={applyHoursChange}
-									onKeyDown={(e) =>
-										handleKeyDown(e, applyHoursChange)
-									}
-									min={1}
-									max={168}
-									step={1}
-								/>
-								<span className="text-sm">hours</span>
-							</div>
-						)}
 					</div>
 				</div>
 
