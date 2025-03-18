@@ -18,7 +18,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface AnalyticsTableProps {
+interface LastGamesTableProps {
 	className?: string;
 }
 
@@ -35,7 +35,7 @@ const ALL_CRASH_POINTS = [
 	...new Set([...CURRENT_STREAK_POINTS, ...UNIQUE_STREAK_POINTS]),
 ];
 
-export function AnalyticsTable({ className }: AnalyticsTableProps) {
+export function LastGamesTable({ className }: LastGamesTableProps) {
 	const [selectedType, setSelectedType] = useState<'current' | 'unique'>(
 		'current'
 	);
@@ -173,13 +173,13 @@ export function AnalyticsTable({ className }: AnalyticsTableProps) {
 								value="current"
 								className="data-[state=active]:bg-black data-[state=active]:text-white"
 							>
-								Current Streak
+								Above Value
 							</TabsTrigger>
 							<TabsTrigger
 								value="unique"
 								className="data-[state=active]:bg-black data-[state=active]:text-white"
 							>
-								Unique Streak
+								Exact Value
 							</TabsTrigger>
 						</TabsList>
 					</Tabs>
@@ -194,8 +194,8 @@ export function AnalyticsTable({ className }: AnalyticsTableProps) {
 								</TableHead>
 								<TableHead className="px-2 py-1.5 w-[120px]">
 									{selectedType === 'current'
-										? 'Current Streak'
-										: 'Unique Streak'}
+										? 'Streak Count'
+										: 'Streak Count'}
 								</TableHead>
 								<TableHead className="px-2 py-1.5">
 									Time Since
@@ -304,8 +304,8 @@ export function AnalyticsTable({ className }: AnalyticsTableProps) {
 
 	return (
 		<AnalyticsCard
-			title="Crash Point Analytics"
-			description="Analysis of crash points across multiple values"
+			title="Last Games Analysis"
+			description="Recent games meeting crash point thresholds"
 			className={className}
 		>
 			{renderContent()}

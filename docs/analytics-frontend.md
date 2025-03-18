@@ -51,29 +51,30 @@ We'll utilize the existing tech stack with the following key libraries:
       PieChart.tsx               # Reusable pie chart component
       
     /widgets
-      LastOccurrenceWidget.tsx   # Widget for "Last Game With Crash Points"
+      LastGamesWidget.tsx        # Widget for "Last Games" (formerly "Last Game With Crash Points")
       OccurrenceWidget.tsx       # Widget for "Crash Point Occurrence Analysis"
       SeriesWidget.tsx           # Widget for "Non-occurrence Series Analysis" 
-      IntervalWidget.tsx         # Widget for "Interval Analysis"
+      IntervalsWidget.tsx        # Widget for "Interval Analysis"
       
     /tables
       AnalyticsTable.tsx         # Base table component for analytics data
+      LastGamesTable.tsx         # Table for Last Games data
       OccurrenceTable.tsx        # Table for occurrence data
       SeriesTable.tsx            # Table for series data
-      IntervalTable.tsx          # Table for interval data
+      IntervalsTable.tsx         # Table for interval data
       
   /hooks
-    useLastOccurrence.ts         # Hook for fetching "Last Game" analytics
+    useLastGames.ts              # Hook for fetching "Last Games" analytics
     useOccurrenceAnalysis.ts     # Hook for fetching "Occurrence" analytics
     useSeriesAnalysis.ts         # Hook for fetching "Series" analytics
-    useIntervalAnalysis.ts       # Hook for fetching "Interval" analytics
+    useIntervalsAnalysis.ts      # Hook for fetching "Intervals" analytics
     
   /pages
     index.tsx                    # Dashboard overview with key metrics
-    last-occurrence.tsx          # Page for detailed "Last Game" analytics
+    last-games.tsx               # Page for detailed "Last Games" analytics
     occurrences.tsx              # Page for detailed "Occurrence" analytics
     series.tsx                   # Page for detailed "Series" analytics
-    intervals.tsx                # Page for detailed "Interval" analytics
+    intervals.tsx                # Page for detailed "Intervals" analytics
     
   /utils
     formatters.ts                # Utility functions for formatting data
@@ -89,7 +90,11 @@ The analytics module will feature:
 
 1. **Dashboard Overview**: A main dashboard displaying key widgets from all categories
 2. **Category Pages**: Detailed pages for each analytics category
-3. **Navigation**: Tab-based navigation for switching between categories
+3. **Navigation**: Tab-based navigation for switching between categories:
+   - Last Games (for recent games meeting specific criteria)
+   - Occurrences (for frequency analysis)
+   - Series (for non-occurrence pattern analysis)
+   - Intervals (for time-based distribution analysis)
 4. **Filters**: Consistent filter controls for adjusting time ranges and other parameters
 
 ### Design System
@@ -160,7 +165,7 @@ Comprehensive error handling for all API requests:
 
 ### Phase 2: Feature Implementation (Week 3-5)
 
-1. **Last Occurrence Analytics**
+1. **Last Games Analytics**
    - Implement single and batch query interfaces
    - Create visualization for time since last occurrence
    - Build comparison views for different crash point values
@@ -175,7 +180,7 @@ Comprehensive error handling for all API requests:
    - Create timeline view of non-occurrence series
    - Build detailed series data tables
 
-4. **Interval Analysis**
+4. **Intervals Analysis**
    - Implement time-based and game-set interval components
    - Create charts for visualizing interval patterns
    - Build detailed interval data tables
@@ -208,7 +213,7 @@ The main dashboard will feature:
 - Most important visualizations from each category
 - Navigation to detailed category pages
 
-### Last Occurrence Widget
+### Last Games Widget
 
 This widget will allow users to:
 
@@ -220,16 +225,16 @@ This widget will allow users to:
 Example UI:
 
 ```text
-┌─ Last Occurrence of Crash Points ──────────────┐
-│                                                │
-│  [Input: 2.0] [Add Value] [Remove] [Batch]     │
-│                                                │
-│  2.0x                                          │
-│  Last: Game #12345 (3h 15m ago)               │
-│  Games since: 45                               │
-│                                                │
-│  [View Details]                                │
-└────────────────────────────────────────────────┘
+┌─ Last Games Analysis ────────────────────────────┐
+│                                                  │
+│  [Input: 2.0] [Add Value] [Remove] [Batch]       │
+│                                                  │
+│  2.0x                                            │
+│  Last: Game #12345 (3h 15m ago)                  │
+│  Games since: 45                                 │
+│                                                  │
+│  [View Details]                                  │
+└──────────────────────────────────────────────────┘
 ```
 
 ### Occurrence Analysis Widget
@@ -291,7 +296,7 @@ Example UI:
 └──────────────────────────────────────────────┘
 ```
 
-### Interval Analysis Widget
+### Intervals Analysis Widget
 
 This widget will allow users to:
 
@@ -303,21 +308,21 @@ This widget will allow users to:
 Example UI:
 
 ```text
-┌─ Interval Analysis ────────────────────────────┐
-│                                                │
-│  [Input: 2.0]        [Interval: 10 min ▼]      │
-│  [Last: 24 Hours ▼]                            │
-│                                                │
-│  ┌──────────────────────────────────────────┐  │
-│  │     Line chart of interval patterns      │  │
-│  └──────────────────────────────────────────┘  │
-│                                                │
-│  Peak occurrence:                              │
-│  - 13:00-13:10: 6/10 games (60%)               │
-│  - 15:30-15:40: 5/8 games (62.5%)              │
-│                                                │
-│  [View All Intervals]                          │
-└────────────────────────────────────────────────┘
+┌─ Intervals Analysis ────────────────────────────┐
+│                                                 │
+│  [Input: 2.0]        [Interval: 10 min ▼]       │
+│  [Last: 24 Hours ▼]                             │
+│                                                 │
+│  ┌───────────────────────────────────────────┐  │
+│  │     Line chart of interval patterns       │  │
+│  └───────────────────────────────────────────┘  │
+│                                                 │
+│  Peak occurrence:                               │
+│  - 13:00-13:10: 6/10 games (60%)                │
+│  - 15:30-15:40: 5/8 games (62.5%)               │
+│                                                 │
+│  [View All Intervals]                           │
+└─────────────────────────────────────────────────┘
 ```
 
 ## Testing Strategy
