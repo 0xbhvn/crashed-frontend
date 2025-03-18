@@ -19,10 +19,18 @@ import {
 	ArrowDownIcon,
 	ArrowUpIcon,
 	ArrowDownUpIcon,
+	GitCompareIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import type { OccurrenceComparisonData } from '@/hooks/analytics/analytics-types';
+import { Button } from '@/components/ui/button';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface OccurrencesTableProps {
 	className?: string;
@@ -51,6 +59,7 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 	const [limitInput, setLimitInput] = useState(limit.toString());
 	const [hours, setHours] = useState(24);
 	const [hoursInput, setHoursInput] = useState(hours.toString());
+	const [showComparison, setShowComparison] = useState(false);
 
 	// Update input values when limit/hours change externally
 	useEffect(() => {
@@ -123,7 +132,7 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 		analyzeBy,
 		limit,
 		hours,
-		comparison: true,
+		comparison: showComparison,
 	});
 
 	// Function to check if the data is comparison data
@@ -152,17 +161,21 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 							<div className="h-4 w-14 animate-pulse rounded bg-muted" />
 						</TableCell>
 						<TableCell className="py-1">
-							<div className="h-5 w-16 animate-pulse rounded bg-muted" />
-						</TableCell>
-						<TableCell className="py-1">
 							<div className="h-5 w-12 animate-pulse rounded bg-muted" />
 						</TableCell>
+						{showComparison && (
+							<TableCell className="py-1">
+								<div className="h-5 w-12 animate-pulse rounded bg-muted" />
+							</TableCell>
+						)}
 						<TableCell className="py-1">
 							<div className="h-5 w-16 animate-pulse rounded bg-muted" />
 						</TableCell>
-						<TableCell className="py-1">
-							<div className="h-5 w-16 animate-pulse rounded bg-muted" />
-						</TableCell>
+						{showComparison && (
+							<TableCell className="py-1">
+								<div className="h-5 w-16 animate-pulse rounded bg-muted" />
+							</TableCell>
+						)}
 					</TableRow>
 				))}
 			</>
@@ -239,28 +252,65 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 		return (
 			<div className="w-full">
 				<div className="flex justify-between items-center mb-4">
-					<Tabs
-						defaultValue="current"
-						value={selectedType}
-						onValueChange={(value) =>
-							setSelectedType(value as 'current' | 'unique')
-						}
-					>
-						<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
-							<TabsTrigger
-								value="current"
-								className="data-[state=active]:bg-black data-[state=active]:text-white"
-							>
-								Above Value
-							</TabsTrigger>
-							<TabsTrigger
-								value="unique"
-								className="data-[state=active]:bg-black data-[state=active]:text-white"
-							>
-								Exact Value
-							</TabsTrigger>
-						</TabsList>
-					</Tabs>
+					<div className="flex items-center gap-3">
+						<Tabs
+							defaultValue="current"
+							value={selectedType}
+							onValueChange={(value) =>
+								setSelectedType(value as 'current' | 'unique')
+							}
+						>
+							<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
+								<TabsTrigger
+									value="current"
+									className="data-[state=active]:bg-black data-[state=active]:text-white"
+								>
+									Above Value
+								</TabsTrigger>
+								<TabsTrigger
+									value="unique"
+									className="data-[state=active]:bg-black data-[state=active]:text-white"
+								>
+									Exact Value
+								</TabsTrigger>
+							</TabsList>
+						</Tabs>
+
+						{/* Comparison Toggle */}
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<div className="flex items-center border border-border rounded-md h-8 px-2">
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={() =>
+												setShowComparison(
+													!showComparison
+												)
+											}
+											className="h-6 w-6 p-0"
+										>
+											<GitCompareIcon
+												className={cn(
+													'h-4 w-4',
+													showComparison
+														? 'text-green-500'
+														: 'text-muted-foreground'
+												)}
+											/>
+										</Button>
+									</div>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>
+										Comparison Mode:{' '}
+										{showComparison ? 'ON' : 'OFF'}
+									</p>
+								</TooltipContent>
+							</Tooltip>
+						</TooltipProvider>
+					</div>
 
 					<div className="flex items-center gap-3">
 						{analyzeBy === 'games' ? (
@@ -324,17 +374,21 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 								<TableHead className="px-2 py-1.5 w-[80px]">
 									Occurrences
 								</TableHead>
-								<TableHead className="px-2 py-1.5 w-[120px]">
-									Change
-								</TableHead>
+								{showComparison && (
+									<TableHead className="px-2 py-1.5 w-[80px]">
+										Change
+									</TableHead>
+								)}
 								<TableHead className="px-2 py-1.5 w-[100px]">
 									Percentage
 								</TableHead>
-								<TableHead className="px-2 py-1.5 w-[120px]">
-									{analyzeBy === 'games'
-										? '% Change'
-										: '% Diff'}
-								</TableHead>
+								{showComparison && (
+									<TableHead className="px-2 py-1.5 w-[120px]">
+										{analyzeBy === 'games'
+											? '% Change'
+											: '% Diff'}
+									</TableHead>
+								)}
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -380,9 +434,9 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 														  }`}
 												</TableCell>
 												<TableCell>0</TableCell>
-												<TableCell className="text-center">
-													-
-												</TableCell>
+												{showComparison && (
+													<TableCell>-</TableCell>
+												)}
 												<TableCell>
 													<Badge
 														className={cn(
@@ -397,7 +451,9 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 														0.00%
 													</Badge>
 												</TableCell>
-												<TableCell>-</TableCell>
+												{showComparison && (
+													<TableCell>-</TableCell>
+												)}
 											</TableRow>
 										);
 									}
@@ -435,25 +491,29 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 												<TableCell>
 													{currentData.count}
 												</TableCell>
-												<TableCell>
-													<Badge
-														className={cn(
-															'px-2 py-0.5 text-xs font-semibold',
-															comparison.count_diff >
-																0
-																? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-																: comparison.count_diff <
-																  0
-																? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-																: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-														)}
-													>
-														{getChangeSymbol(
-															comparison.count_diff
-														)}
-														{comparison.count_diff}
-													</Badge>
-												</TableCell>
+												{showComparison && (
+													<TableCell>
+														<Badge
+															className={cn(
+																'px-2 py-0.5 text-xs font-semibold',
+																comparison.count_diff >
+																	0
+																	? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+																	: comparison.count_diff <
+																	  0
+																	? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+																	: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+															)}
+														>
+															{getChangeSymbol(
+																comparison.count_diff
+															)}
+															{
+																comparison.count_diff
+															}
+														</Badge>
+													</TableCell>
+												)}
 												<TableCell>
 													<Badge
 														className={cn(
@@ -471,83 +531,95 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 														%
 													</Badge>
 												</TableCell>
-												<TableCell>
-													<Badge
-														className={cn(
-															'px-2 py-0.5 text-xs font-semibold',
-															getComparisonBadgeColor(
-																analyzeBy ===
-																	'games'
-																	? comparison.count_percent_change
-																	: comparison.percentage_diff
-															)
-														)}
-													>
-														<span className="flex items-center">
-															{getPercentChangeIcon(
-																analyzeBy ===
-																	'games'
-																	? comparison.count_percent_change
-																	: comparison.percentage_diff
+												{showComparison && (
+													<TableCell>
+														<Badge
+															className={cn(
+																'px-2 py-0.5 text-xs font-semibold',
+																getComparisonBadgeColor(
+																	analyzeBy ===
+																		'games'
+																		? comparison.count_percent_change
+																		: comparison.percentage_diff
+																)
 															)}
-															{Math.abs(
-																analyzeBy ===
-																	'games'
-																	? comparison.count_percent_change
-																	: comparison.percentage_diff
-															).toFixed(2)}
-															%
-														</span>
-													</Badge>
-												</TableCell>
+														>
+															<span className="flex items-center">
+																{getPercentChangeIcon(
+																	analyzeBy ===
+																		'games'
+																		? comparison.count_percent_change
+																		: comparison.percentage_diff
+																)}
+																{Math.abs(
+																	analyzeBy ===
+																		'games'
+																		? comparison.count_percent_change
+																		: comparison.percentage_diff
+																).toFixed(2)}
+																%
+															</span>
+														</Badge>
+													</TableCell>
+												)}
 											</TableRow>
 										);
 									}
 
 									// Regular data handling (non-comparison)
-									const count = dataItem?.count ?? 0;
-									const percentage =
-										dataItem?.percentage ?? 0;
+									if (!isComparisonData(dataItem)) {
+										const count = dataItem?.count ?? 0;
+										const percentage =
+											dataItem?.percentage ?? 0;
 
-									return (
-										<TableRow
-											key={pointKey}
-											className="h-10"
-										>
-											<TableCell className="font-medium">
-												{selectedType === 'current'
-													? `≥ ${point}${
-															point ===
-															Math.floor(point)
-																? '.0'
-																: ''
-													  }`
-													: `= ${point}${
-															point ===
-															Math.floor(point)
-																? '.0'
-																: ''
-													  }`}
-											</TableCell>
-											<TableCell>{count}</TableCell>
-											<TableCell>-</TableCell>
-											<TableCell>
-												<Badge
-													className={cn(
-														'px-2 py-0.5 text-xs font-semibold',
-														getPercentageBadgeColor(
-															percentage,
-															point,
-															selectedType
-														)
-													)}
-												>
-													{percentage.toFixed(2)}%
-												</Badge>
-											</TableCell>
-											<TableCell>-</TableCell>
-										</TableRow>
-									);
+										return (
+											<TableRow
+												key={pointKey}
+												className="h-10"
+											>
+												<TableCell className="font-medium">
+													{selectedType === 'current'
+														? `≥ ${point}${
+																point ===
+																Math.floor(
+																	point
+																)
+																	? '.0'
+																	: ''
+														  }`
+														: `= ${point}${
+																point ===
+																Math.floor(
+																	point
+																)
+																	? '.0'
+																	: ''
+														  }`}
+												</TableCell>
+												<TableCell>{count}</TableCell>
+												{showComparison && (
+													<TableCell>-</TableCell>
+												)}
+												<TableCell>
+													<Badge
+														className={cn(
+															'px-2 py-0.5 text-xs font-semibold',
+															getPercentageBadgeColor(
+																percentage,
+																point,
+																selectedType
+															)
+														)}
+													>
+														{percentage.toFixed(2)}%
+													</Badge>
+												</TableCell>
+												{showComparison && (
+													<TableCell>-</TableCell>
+												)}
+											</TableRow>
+										);
+									}
 								})
 							)}
 						</TableBody>
