@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LastGamesTable } from '@/components/analytics/widgets/LastGamesTable';
+import { OccurrencesTable } from '@/components/analytics/widgets/OccurrencesTable';
 
 export default function AnalyticsPage() {
 	const [activeTab, setActiveTab] = useState<string>('streaks');
@@ -64,9 +65,7 @@ export default function AnalyticsPage() {
 						<LastGamesTable className="w-full" />
 					)}
 					{activeTab === 'occurrences' && (
-						<div className="w-full text-center p-12 border rounded-md">
-							Occurrences view coming soon
-						</div>
+						<OccurrencesTable className="w-full" />
 					)}
 					{activeTab === 'charts' && (
 						<div className="w-full text-center p-12 border rounded-md">

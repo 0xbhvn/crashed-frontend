@@ -25,3 +25,12 @@ export function getApiHeaders(): HeadersInit {
 		'X-Timezone': TIMEZONE,
 	};
 }
+
+/**
+ * Get API headers without timezone - for endpoints that don't need timezone
+ */
+export function getApiHeadersWithoutTimezone(): HeadersInit {
+	return {
+		'Content-Type': 'application/json',
+	};
+}

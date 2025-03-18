@@ -30,6 +30,29 @@ export interface ApiGameResponse {
 	games_since: number;
 }
 
+// Occurrences API data structures
+export interface OccurrenceData {
+	count: number;
+	total_games: number;
+	percentage: number;
+	first_game_time?: string;
+	last_game_time?: string;
+	start_time?: string;
+	end_time?: string;
+}
+
+export interface BatchOccurrencesData {
+	[key: string]: OccurrenceData;
+}
+
+// Combined occurrences data structure (for both current and unique)
+export interface OccurrencesData {
+	[key: string]: {
+		current?: OccurrenceData;
+		unique?: OccurrenceData;
+	};
+}
+
 // Shared game processing utility
 export function isGameAboveCrashPoint(
 	game: GameData,
