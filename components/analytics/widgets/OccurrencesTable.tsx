@@ -246,8 +246,6 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 									const count = typeData?.count ?? 0;
 									const percentage =
 										typeData?.percentage ?? 0;
-									const totalGames =
-										typeData?.total_games ?? 0;
 
 									return (
 										<TableRow
@@ -269,9 +267,7 @@ export function OccurrencesTable({ className }: OccurrencesTableProps) {
 																: ''
 													  }`}
 											</TableCell>
-											<TableCell>
-												{count} / {totalGames}
-											</TableCell>
+											<TableCell>{count}</TableCell>
 											<TableCell>
 												<Badge
 													className={cn(
