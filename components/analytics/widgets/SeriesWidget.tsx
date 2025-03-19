@@ -27,7 +27,6 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
 	type ChartConfig,
@@ -66,7 +65,11 @@ export function SeriesWidget({
 	const [hoursInput, setHoursInput] = React.useState(hours.toString());
 	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('games');
 
-	// Update input values when limit/hours change externally
+	// Update input values when external changes occur
+	React.useEffect(() => {
+		setInputValue(value.toString());
+	}, [value]);
+
 	React.useEffect(() => {
 		setLimitInput(limit.toString());
 	}, [limit]);
@@ -74,6 +77,24 @@ export function SeriesWidget({
 	React.useEffect(() => {
 		setHoursInput(hours.toString());
 	}, [hours]);
+
+	// Handle crash value input changes
+	const handleValueInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		// Just update the input value, don't update value yet
+		setInputValue(e.target.value);
+	};
+
+	// Apply crash value change
+	const applyValueChange = () => {
+		const parsedValue = Number.parseFloat(inputValue);
+		if (!Number.isNaN(parsedValue) && parsedValue > 0) {
+			setValue(parsedValue);
+			refreshData(); // Refresh data when value changes
+		} else {
+			// Reset to current value if invalid
+			setInputValue(value.toString());
+		}
+	};
 
 	// Handle limit input changes
 	const handleLimitInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,7 +132,7 @@ export function SeriesWidget({
 		}
 	};
 
-	// Handle key down for both inputs
+	// Handle key down for inputs
 	const handleKeyDown = (
 		e: React.KeyboardEvent<HTMLInputElement>,
 		applyFn: () => void
@@ -129,14 +150,6 @@ export function SeriesWidget({
 		hours,
 		sortBy,
 	});
-
-	const handleValueChange = () => {
-		const parsedValue = Number.parseFloat(inputValue);
-		if (!Number.isNaN(parsedValue) && parsedValue > 0) {
-			setValue(parsedValue);
-			refreshData(); // Refresh data when value changes
-		}
-	};
 
 	// Format data for the chart
 	const chartData = React.useMemo(() => {
@@ -184,26 +197,28 @@ export function SeriesWidget({
 						Series of games without crash point {value}x or higher
 					</CardDescription>
 				</div>
-				<div className="flex items-center space-x-2">
-					<Input
-						type="number"
-						value={inputValue}
-						onChange={(e) => setInputValue(e.target.value)}
-						className="w-20"
-						step="0.1"
-						min="1"
-					/>
-					<Button
-						variant="outline"
-						onClick={handleValueChange}
-					>
-						Apply
-					</Button>
-				</div>
 			</CardHeader>
 			<CardContent>
 				<div className="flex justify-between items-center mb-4">
 					<div className="flex items-center gap-3">
+						<div className="flex items-center text-sm text-muted-foreground">
+							<span className="mr-2">Value</span>
+							<div className="w-16">
+								<Input
+									type="number"
+									value={inputValue}
+									onChange={handleValueInputChange}
+									onBlur={applyValueChange}
+									onKeyDown={(e) =>
+										handleKeyDown(e, applyValueChange)
+									}
+									min="1"
+									step="0.1"
+									aria-label="Crash point value"
+									className="text-center h-7 px-2 py-1 [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								/>
+							</div>
+						</div>
 						<Select
 							value={sortBy}
 							onValueChange={(value) =>
