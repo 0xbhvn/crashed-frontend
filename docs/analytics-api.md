@@ -114,6 +114,7 @@ These endpoints will analyze how frequently specific crash points occur:
     - Parameters:
       - `value` (float): Minimum crash point to count
       - `limit` (int, optional): Number of games to analyze (default: 100)
+      - `comparison` (boolean, optional): Whether to include comparison data (default: false)
     - Headers:
       - `X-Timezone` (optional): Timezone for datetime values (e.g., 'Asia/Kolkata')
   
@@ -122,6 +123,7 @@ These endpoints will analyze how frequently specific crash points occur:
     - Parameters:
       - `value` (float): Minimum crash point to count
       - `hours` (int, optional): Hours to look back (default: 1)
+      - `comparison` (boolean, optional): Whether to include comparison data (default: false)
     - Headers:
       - `X-Timezone` (optional): Timezone for datetime values (e.g., 'Asia/Kolkata')
 
@@ -131,6 +133,7 @@ These endpoints will analyze how frequently specific crash points occur:
     - Parameters:
       - `value` (int): Exact floor value to count
       - `limit` (int, optional): Number of games to analyze (default: 100)
+      - `comparison` (boolean, optional): Whether to include comparison data (default: false)
     - Headers:
       - `X-Timezone` (optional): Timezone for datetime values (e.g., 'Asia/Kolkata')
   
@@ -139,6 +142,7 @@ These endpoints will analyze how frequently specific crash points occur:
     - Parameters:
       - `value` (int): Exact floor value to count
       - `hours` (int, optional): Hours to look back (default: 1)
+      - `comparison` (boolean, optional): Whether to include comparison data (default: false)
     - Headers:
       - `X-Timezone` (optional): Timezone for datetime values (e.g., 'Asia/Kolkata')
 
@@ -148,6 +152,7 @@ These endpoints will analyze how frequently specific crash points occur:
     - Request Body:
       - `values` (List[float]): List of minimum crash points to count
       - `limit` (int, optional): Number of games to analyze (default: 100)
+      - `comparison` (boolean, optional): Whether to include comparison data (default: false)
     - Headers:
       - `X-Timezone` (optional): Timezone for datetime values (e.g., 'Asia/Kolkata')
   
@@ -156,6 +161,7 @@ These endpoints will analyze how frequently specific crash points occur:
     - Request Body:
       - `values` (List[float]): List of minimum crash points to count
       - `hours` (int, optional): Hours to look back (default: 1)
+      - `comparison` (boolean, optional): Whether to include comparison data (default: false)
     - Headers:
       - `X-Timezone` (optional): Timezone for datetime values (e.g., 'Asia/Kolkata')
 
@@ -165,6 +171,7 @@ These endpoints will analyze how frequently specific crash points occur:
     - Request Body:
       - `values` (List[int]): List of floor values to count
       - `limit` (int, optional): Number of games to analyze (default: 100)
+      - `comparison` (boolean, optional): Whether to include comparison data (default: false)
     - Headers:
       - `X-Timezone` (optional): Timezone for datetime values (e.g., 'Asia/Kolkata')
   
@@ -173,6 +180,7 @@ These endpoints will analyze how frequently specific crash points occur:
     - Request Body:
       - `values` (List[int]): List of floor values to count
       - `hours` (int, optional): Hours to look back (default: 1)
+      - `comparison` (boolean, optional): Whether to include comparison data (default: false)
     - Headers:
       - `X-Timezone` (optional): Timezone for datetime values (e.g., 'Asia/Kolkata')
 
@@ -187,6 +195,35 @@ Each endpoint returns:
         "percentage": 15.0,
         "first_game_time/start_time": "2024-03-20T10:00:00+05:30",
         "last_game_time/end_time": "2024-03-20T11:00:00+05:30"
+    }
+}
+```
+
+When comparison data is requested, endpoints return:
+
+```json
+{
+    "status": "success",
+    "data": {
+        "current_period": {
+            "count": 15,
+            "total_games": 100,
+            "percentage": 15.0,
+            "first_game_time/start_time": "2024-03-20T10:00:00+05:30",
+            "last_game_time/end_time": "2024-03-20T11:00:00+05:30"
+        },
+        "previous_period": {
+            "count": 12,
+            "total_games": 100,
+            "percentage": 12.0,
+            "first_game_time/start_time": "2024-03-19T10:00:00+05:30",
+            "last_game_time/end_time": "2024-03-19T11:00:00+05:30"
+        },
+        "comparison": {
+            "count_diff": 3,
+            "count_percent_change": 25.0,
+            "percentage_diff": 3.0
+        }
     }
 }
 ```

@@ -59,13 +59,13 @@ We'll utilize the existing tech stack with the following key libraries:
     /tables
       AnalyticsTable.tsx         # Base table component for analytics data
       LastGamesTable.tsx         # Table for Last Games data
-      OccurrenceTable.tsx        # Table for occurrence data
+      OccurrenceTable.tsx        # Table for occurrence data including comparison mode
       SeriesTable.tsx            # Table for series data
       IntervalsTable.tsx         # Table for interval data
       
   /hooks
     useLastGames.ts              # Hook for fetching "Last Games" analytics
-    useOccurrenceAnalysis.ts     # Hook for fetching "Occurrence" analytics
+    useOccurrenceAnalysis.ts     # Hook for fetching "Occurrence" analytics including comparison data
     useSeriesAnalysis.ts         # Hook for fetching "Series" analytics
     useIntervalsAnalysis.ts      # Hook for fetching "Intervals" analytics
     
@@ -245,26 +245,36 @@ This widget will allow users to:
 - Choose between game count or time duration modes
 - View occurrence statistics with percentage visualization
 - Compare multiple values with bar charts
+- Toggle comparison mode to view period-over-period changes
+- Analyze different comparison metrics based on analysis type (games vs. time)
 
 Example UI:
 
 ```text
-┌─ Crash Point Occurrence Analysis ─────────────┐
-│                                               │
-│  [Input: 2.0] [Add Value]      [Time ▼]       │
-│  [Last: 100 Games ▼]                          │
-│                                               │
-│  ┌─────────────────────────────────────────┐  │
-│  │         Bar chart visualization         │  │
-│  └─────────────────────────────────────────┘  │
-│                                               │
-│  2.0x: 25/100 (25.0%)                         │
-│  First: 2024-03-20 10:00                      │
-│  Last: 2024-03-20 11:00                       │
-│                                               │
-│  [View Details]                               │
-└───────────────────────────────────────────────┘
+┌─ Crash Point Occurrence Analysis ─────────────────────────┐
+│                                                           │
+│  [Above Value ▼][Exact Value]   [Compare Icon Toggle]     │
+│  [Input: 2.0] [Add Value]       [Games ▼][Hours]          │
+│                                                           │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │                  Table with columns:                 │  │
+│  │  Crash Point | Occurrences | Change | % | % Change   │  │
+│  │     2.0      |     25      |   +3   | 25%|  +13.6%   │  │
+│  │     3.0      |     15      |   -2   | 15%|   -11.8%  │  │
+│  └─────────────────────────────────────────────────────┘  │
+│                                                           │
+│  Comparison shows change between current and previous     │
+│  Game counts or time periods with color-coded indicators  │
+│                                                           │
+│  [View Details]                                           │
+└───────────────────────────────────────────────────────────┘
 ```
+
+Advanced features:
+- Game-based analysis uses count_percent_change for comparison
+- Time-based analysis uses percentage_diff for comparison
+- Comparison toggle allows switching between normal and comparison views
+- Data visualization uses color-coded badges to indicate positive/negative changes
 
 ### Series Analysis Widget
 
