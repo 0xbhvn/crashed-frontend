@@ -461,7 +461,9 @@ export function SeriesWidget({
 
 						<div className="mt-6">
 							<h4 className="text-sm font-medium mb-2">
-								Longest series without {value}x or higher:
+								{sortBy === 'length'
+									? `Longest series without ${value}x or higher:`
+									: `Most recent series without ${value}x or higher:`}
 							</h4>
 							<ul className="space-y-2">
 								{topSeries.map((series) => (
