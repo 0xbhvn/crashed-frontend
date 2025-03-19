@@ -85,14 +85,33 @@ export function SeriesWidget({
 	const chartData = React.useMemo(() => {
 		if (!data || data.length === 0) return [];
 
-		return data.map((series, index) => ({
+		// For time sorting: Latest on the right
+		// For length sorting: Highest on the left
+		let formattedData = data.map((series, index) => ({
 			id: index + 1,
 			seriesId: `${series.start_game_id}-${series.end_game_id}`,
 			length: series.length,
 			startTime: new Date(series.start_time),
 			endTime: new Date(series.end_time),
 		}));
-	}, [data]);
+
+		// When sorting by time, the API already returns in chronological order
+		// We need to reverse it so latest appears on the right side
+		if (sortBy === 'time') {
+			formattedData = formattedData.reverse();
+		}
+		// For length sorting, highest should be on the left
+		// The API might already sort by length, but we'll ensure it here
+		else if (sortBy === 'length') {
+			formattedData.sort((a, b) => b.length - a.length);
+		}
+
+		// Re-assign IDs after sorting
+		return formattedData.map((item, index) => ({
+			...item,
+			id: index + 1,
+		}));
+	}, [data, sortBy]);
 
 	// Get the top series for display
 	const topSeries = React.useMemo(() => {
