@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
 	type ChartConfig,
 	ChartContainer,
@@ -52,22 +52,79 @@ interface SeriesWidgetProps {
 }
 
 export function SeriesWidget({
-	defaultValue = 2.0,
+	defaultValue = 10.0,
 	className,
 }: SeriesWidgetProps) {
 	const [value, setValue] = React.useState<number>(defaultValue);
 	const [inputValue, setInputValue] = React.useState<string>(
 		defaultValue.toString()
 	);
-	const [sortBy, setSortBy] = React.useState<'time' | 'length'>('length');
-	const [isTimeMode, setIsTimeMode] = React.useState<boolean>(false);
-	const [limit, setLimit] = React.useState<number>(1000);
+	const [sortBy, setSortBy] = React.useState<'time' | 'length'>('time');
+	const [limit, setLimit] = React.useState<number>(2000);
+	const [limitInput, setLimitInput] = React.useState(limit.toString());
 	const [hours, setHours] = React.useState<number>(24);
+	const [hoursInput, setHoursInput] = React.useState(hours.toString());
+	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('games');
+
+	// Update input values when limit/hours change externally
+	React.useEffect(() => {
+		setLimitInput(limit.toString());
+	}, [limit]);
+
+	React.useEffect(() => {
+		setHoursInput(hours.toString());
+	}, [hours]);
+
+	// Handle limit input changes
+	const handleLimitInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		// Just update the input value, don't update limit yet
+		setLimitInput(e.target.value);
+	};
+
+	// Apply limit change
+	const applyLimitChange = () => {
+		const newLimit = Number.parseInt(limitInput, 10);
+		// Ensure limit is within valid range and is a number
+		if (!Number.isNaN(newLimit) && newLimit >= 100 && newLimit <= 10000) {
+			setLimit(newLimit);
+		} else {
+			// Reset to current limit if invalid
+			setLimitInput(limit.toString());
+		}
+	};
+
+	// Handle hours input changes
+	const handleHoursInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		// Just update the input value, don't update hours yet
+		setHoursInput(e.target.value);
+	};
+
+	// Apply hours change
+	const applyHoursChange = () => {
+		const newHours = Number.parseInt(hoursInput, 10);
+		// Ensure hours is within valid range and is a number
+		if (!Number.isNaN(newHours) && newHours >= 1 && newHours <= 168) {
+			setHours(newHours);
+		} else {
+			// Reset to current hours if invalid
+			setHoursInput(hours.toString());
+		}
+	};
+
+	// Handle key down for both inputs
+	const handleKeyDown = (
+		e: React.KeyboardEvent<HTMLInputElement>,
+		applyFn: () => void
+	) => {
+		if (e.key === 'Enter') {
+			applyFn();
+		}
+	};
 
 	// Use real-time hook to fetch series data
 	const { data, isLoading, error, refreshData } = useRealTimeSeriesAnalysis({
 		value,
-		analyzeBy: isTimeMode ? 'time' : 'games',
+		analyzeBy,
 		limit,
 		hours,
 		sortBy,
@@ -145,25 +202,8 @@ export function SeriesWidget({
 				</div>
 			</CardHeader>
 			<CardContent>
-				<Tabs
-					defaultValue="games"
-					className="mt-2"
-				>
-					<div className="flex items-center justify-between mb-4">
-						<TabsList>
-							<TabsTrigger
-								value="games"
-								onClick={() => setIsTimeMode(false)}
-							>
-								Games
-							</TabsTrigger>
-							<TabsTrigger
-								value="time"
-								onClick={() => setIsTimeMode(true)}
-							>
-								Time
-							</TabsTrigger>
-						</TabsList>
+				<div className="flex justify-between items-center mb-4">
+					<div className="flex items-center gap-3">
 						<Select
 							value={sortBy}
 							onValueChange={(value) =>
@@ -184,65 +224,57 @@ export function SeriesWidget({
 						</Select>
 					</div>
 
-					<TabsContent
-						value="games"
-						className="mt-0"
-					>
-						<div className="flex items-center mb-4">
-							<span className="mr-2 text-sm">Last</span>
-							<Select
-								value={limit.toString()}
-								onValueChange={(value) =>
-									setLimit(Number.parseInt(value, 10))
+					<div className="flex items-center gap-3">
+						{analyzeBy === 'games' ? (
+							<Input
+								id="limit"
+								type="number"
+								className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								value={limitInput}
+								onChange={handleLimitInputChange}
+								onBlur={applyLimitChange}
+								onKeyDown={(e) =>
+									handleKeyDown(e, applyLimitChange)
 								}
-							>
-								<SelectTrigger className="w-28">
-									<SelectValue placeholder="Limit" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="100">
-										100 games
-									</SelectItem>
-									<SelectItem value="500">
-										500 games
-									</SelectItem>
-									<SelectItem value="1000">
-										1000 games
-									</SelectItem>
-									<SelectItem value="5000">
-										5000 games
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</TabsContent>
+							/>
+						) : (
+							<Input
+								id="hours"
+								type="number"
+								className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								value={hoursInput}
+								onChange={handleHoursInputChange}
+								onBlur={applyHoursChange}
+								onKeyDown={(e) =>
+									handleKeyDown(e, applyHoursChange)
+								}
+							/>
+						)}
 
-					<TabsContent
-						value="time"
-						className="mt-0"
-					>
-						<div className="flex items-center mb-4">
-							<span className="mr-2 text-sm">Last</span>
-							<Select
-								value={hours.toString()}
-								onValueChange={(value) =>
-									setHours(Number.parseInt(value, 10))
-								}
-							>
-								<SelectTrigger className="w-28">
-									<SelectValue placeholder="Hours" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="1">1 hour</SelectItem>
-									<SelectItem value="6">6 hours</SelectItem>
-									<SelectItem value="12">12 hours</SelectItem>
-									<SelectItem value="24">24 hours</SelectItem>
-									<SelectItem value="48">48 hours</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</TabsContent>
-				</Tabs>
+						<Tabs
+							defaultValue="games"
+							value={analyzeBy}
+							onValueChange={(value) =>
+								setAnalyzeBy(value as 'games' | 'time')
+							}
+						>
+							<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
+								<TabsTrigger
+									value="games"
+									className="data-[state=active]:bg-black data-[state=active]:text-white"
+								>
+									Games
+								</TabsTrigger>
+								<TabsTrigger
+									value="time"
+									className="data-[state=active]:bg-black data-[state=active]:text-white"
+								>
+									Hours
+								</TabsTrigger>
+							</TabsList>
+						</Tabs>
+					</div>
+				</div>
 
 				{isLoading && (
 					<div className="space-y-3">
@@ -273,11 +305,14 @@ export function SeriesWidget({
 
 				{!isLoading && !error && chartData.length > 0 && (
 					<>
-						<div className="w-full min-h-[300px]">
+						<div
+							className="w-full"
+							style={{ minHeight: '350px' }}
+						>
 							<ChartContainer config={chartConfig}>
 								<ResponsiveContainer
 									width="100%"
-									height="100%"
+									height={350}
 								>
 									<BarChart
 										data={chartData}
@@ -285,7 +320,7 @@ export function SeriesWidget({
 											top: 20,
 											right: 30,
 											left: 20,
-											bottom: 5,
+											bottom: 20,
 										}}
 									>
 										<CartesianGrid
