@@ -414,11 +414,6 @@ export function SeriesWidget({
 													<div className="border-border/50 bg-background rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
 														<div className="p-2 space-y-1">
 															<p className="text-sm font-medium">
-																Series #
-																{item.id}
-															</p>
-															<p className="text-xs">
-																Length:{' '}
 																{item.length}{' '}
 																games
 															</p>
