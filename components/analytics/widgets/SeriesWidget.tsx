@@ -11,6 +11,7 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts';
+import { ArrowDownWideNarrow, Clock } from 'lucide-react';
 
 import {
 	Card,
@@ -19,15 +20,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
 	type ChartConfig,
 	ChartContainer,
@@ -142,6 +143,11 @@ export function SeriesWidget({
 		}
 	};
 
+	// Toggle sort mode
+	const toggleSortMode = () => {
+		setSortBy(sortBy === 'time' ? 'length' : 'time');
+	};
+
 	// Use real-time hook to fetch series data
 	const { data, isLoading, error, refreshData } = useRealTimeSeriesAnalysis({
 		value,
@@ -219,24 +225,32 @@ export function SeriesWidget({
 								/>
 							</div>
 						</div>
-						<Select
-							value={sortBy}
-							onValueChange={(value) =>
-								setSortBy(value as 'time' | 'length')
-							}
-						>
-							<SelectTrigger className="w-36">
-								<SelectValue placeholder="Sort by" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="length">
-									Sort by length
-								</SelectItem>
-								<SelectItem value="time">
-									Sort by time
-								</SelectItem>
-							</SelectContent>
-						</Select>
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<div className="flex items-center border border-border rounded-md h-8 px-2">
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={toggleSortMode}
+											className="h-6 w-6 p-0"
+										>
+											{sortBy === 'time' ? (
+												<Clock className="h-4 w-4 text-muted-foreground" />
+											) : (
+												<ArrowDownWideNarrow className="h-4 w-4 text-muted-foreground" />
+											)}
+										</Button>
+									</div>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>
+										Sort by:{' '}
+										{sortBy === 'time' ? 'Time' : 'Length'}
+									</p>
+								</TooltipContent>
+							</Tooltip>
+						</TooltipProvider>
 					</div>
 
 					<div className="flex items-center gap-3">
@@ -343,10 +357,38 @@ export function SeriesWidget({
 											vertical={false}
 										/>
 										<XAxis
-											dataKey="id"
+											dataKey={
+												sortBy === 'time'
+													? 'startTime'
+													: 'id'
+											}
 											tickLine={false}
 											axisLine={false}
 											tickMargin={8}
+											tickFormatter={(value) => {
+												if (
+													sortBy === 'time' &&
+													value instanceof Date
+												) {
+													return format(
+														value,
+														'HH:mm'
+													);
+												}
+												return sortBy === 'length'
+													? ''
+													: value;
+											}}
+											label={
+												sortBy === 'time'
+													? {
+															value: 'Time',
+															position:
+																'insideBottom',
+															offset: -10,
+													  }
+													: undefined
+											}
 										/>
 										<YAxis
 											tickLine={false}
