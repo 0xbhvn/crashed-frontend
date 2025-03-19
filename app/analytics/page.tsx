@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LastGamesTable } from '@/components/analytics/widgets/LastGamesTable';
 import { OccurrencesTable } from '@/components/analytics/widgets/OccurrencesTable';
+import { SeriesWidget } from '@/components/analytics/widgets/SeriesWidget';
 
 export default function AnalyticsPage() {
 	const [activeTab, setActiveTab] = useState<string>('streaks');
@@ -38,7 +39,7 @@ export default function AnalyticsPage() {
 								Occurrences
 							</TabsTrigger>
 							<TabsTrigger
-								value="charts"
+								value="series"
 								className="data-[state=active]:bg-black data-[state=active]:text-white text-sm"
 							>
 								Series
@@ -67,11 +68,7 @@ export default function AnalyticsPage() {
 					{activeTab === 'occurrences' && (
 						<OccurrencesTable className="w-full" />
 					)}
-					{activeTab === 'charts' && (
-						<div className="w-full text-center p-12 border rounded-md">
-							Series view coming soon
-						</div>
-					)}
+					{activeTab === 'series' && <SeriesWidget />}
 					{activeTab === 'interval' && (
 						<div className="w-full text-center p-12 border rounded-md">
 							Intervals view coming soon
