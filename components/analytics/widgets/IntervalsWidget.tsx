@@ -385,7 +385,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 										</TableHead>
 									);
 								})}
-								<TableHead className="text-center whitespace-nowrap bg-muted/20">
+								<TableHead className="text-center whitespace-nowrap bg-muted/30 font-bold border-l-2 border-l-muted-foreground/20 pl-4">
 									Hour Total
 								</TableHead>
 							</TableRow>
@@ -441,7 +441,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 												</TableCell>
 											);
 										})}
-										<TableCell className="text-center bg-muted/20">
+										<TableCell className="text-center bg-muted/30 border-l-2 border-l-muted-foreground/20 pl-4">
 											{formatHourTotal(hourKey)}
 										</TableCell>
 									</TableRow>
@@ -473,28 +473,31 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		);
 
 		return (
-			<div className="flex items-stretch w-full divide-x divide-border">
-				{/* Left side - Count (larger) */}
-				<div className="flex-1 flex items-center justify-center text-2xl">
-					{hourTotal.count}
-				</div>
-
-				{/* Right side - Percentage and Total */}
-				<div className="flex-1 flex flex-col items-center divide-y divide-border">
-					{/* Top - Percentage */}
-					<div className="py-1 w-full flex justify-center">
-						<Badge
-							className={`px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}
-						>
-							{hourTotal.percentage.toFixed(1)}%
-						</Badge>
+			<div className="flex flex-col w-full">
+				{/* Content - Same layout as interval cells */}
+				<div className="flex items-stretch w-full divide-x divide-border">
+					{/* Left side - Count (larger) */}
+					<div className="flex-1 flex items-center justify-center text-2xl font-medium">
+						{hourTotal.count}
 					</div>
 
-					{/* Bottom - Total games */}
-					<div className="py-1 w-full flex justify-center">
-						<span className="text-xs text-muted-foreground">
-							{hourTotal.totalGames}
-						</span>
+					{/* Right side - Percentage and Total */}
+					<div className="flex-1 flex flex-col items-center divide-y divide-border">
+						{/* Top - Percentage */}
+						<div className="py-1 w-full flex justify-center">
+							<Badge
+								className={`px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}
+							>
+								{hourTotal.percentage.toFixed(1)}%
+							</Badge>
+						</div>
+
+						{/* Bottom - Total games */}
+						<div className="py-1 w-full flex justify-center">
+							<span className="text-xs text-muted-foreground">
+								{hourTotal.totalGames}
+							</span>
+						</div>
 					</div>
 				</div>
 			</div>
