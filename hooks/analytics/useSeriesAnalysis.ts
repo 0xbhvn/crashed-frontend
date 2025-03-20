@@ -9,6 +9,14 @@ export interface SeriesData {
 	start_time: string;
 	end_time: string;
 	length: number;
+	follow_streak?: {
+		count: number;
+		games: {
+			game_id: string;
+			crash_point: number;
+			time: string;
+		}[];
+	};
 }
 
 export interface SeriesAnalysisResponse {
