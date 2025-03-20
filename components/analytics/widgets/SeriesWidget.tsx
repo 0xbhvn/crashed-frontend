@@ -227,7 +227,7 @@ export function SeriesWidget({
 				<div className="flex justify-between items-center mb-4">
 					<div className="flex items-center gap-3">
 						<div className="flex items-center text-sm text-muted-foreground">
-							<span className="mr-2">Value</span>
+							<span className="mr-2">Crash Point</span>
 							<div className="w-16">
 								<Input
 									type="number"

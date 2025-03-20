@@ -52,6 +52,15 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		hours,
 	});
 
+	// Calculate the interval columns to display based on selected interval
+	const intervalColumns = useMemo(() => {
+		const columns: number[] = [];
+		for (let i = selectedInterval; i <= 60; i += selectedInterval) {
+			columns.push(i);
+		}
+		return columns;
+	}, [selectedInterval]);
+
 	// Convert interval data into a grid format for easier rendering
 	const gridData = useMemo<IntervalGridData>(() => {
 		if (!intervalsData || intervalsData.length === 0) return {};
@@ -191,12 +200,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 			<div className="w-full">
 				<div className="flex flex-col sm:flex-row mb-4 gap-4 justify-between">
 					<div className="flex items-center gap-2">
-						<label
-							htmlFor="value-input"
-							className="text-sm font-medium"
-						>
-							Crash Point:
-						</label>
+						<span className="text-sm font-medium">Crash Point</span>
 						<div className="flex items-center">
 							<Input
 								id="value-input"
@@ -207,7 +211,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 								onKeyDown={(e) =>
 									handleKeyDown(e, applyValueChange)
 								}
-								className="w-20 h-8"
+								className="w-20 h-8 text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 								min="1"
 								step="0.1"
 							/>
@@ -216,12 +220,9 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 
 					<div className="flex items-center gap-3">
 						<div className="flex items-center gap-2">
-							<label
-								htmlFor="hours-input"
-								className="text-sm font-medium whitespace-nowrap"
-							>
-								Hours:
-							</label>
+							<span className="text-sm font-medium whitespace-nowrap">
+								Hours
+							</span>
 							<div className="flex items-center">
 								<Input
 									id="hours-input"
@@ -232,7 +233,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 									onKeyDown={(e) =>
 										handleKeyDown(e, applyHoursChange)
 									}
-									className="w-16 h-8"
+									className="w-16 h-8 text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 									min="1"
 									max="72"
 								/>
@@ -241,7 +242,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 
 						<div className="flex items-center gap-2">
 							<span className="text-sm font-medium whitespace-nowrap">
-								Interval:
+								Interval
 							</span>
 							<div className="flex gap-1">
 								{INTERVAL_DURATIONS.map((duration) => (
@@ -273,7 +274,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 								<TableHead className="w-20 text-center border-r">
 									Hour
 								</TableHead>
-								{INTERVAL_DURATIONS.map((duration) => (
+								{intervalColumns.map((duration) => (
 									<TableHead
 										key={duration}
 										className={cn(
@@ -292,7 +293,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 							{isLoading && hourLabels.length === 0 ? (
 								<TableRow>
 									<TableCell
-										colSpan={INTERVAL_DURATIONS.length + 1}
+										colSpan={intervalColumns.length + 1}
 										className="h-24 text-center"
 									>
 										<div className="flex flex-col items-center justify-center gap-2">
@@ -306,7 +307,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 							) : hourLabels.length === 0 ? (
 								<TableRow>
 									<TableCell
-										colSpan={INTERVAL_DURATIONS.length + 1}
+										colSpan={intervalColumns.length + 1}
 										className="h-24 text-center"
 									>
 										<div className="text-muted-foreground">
@@ -320,22 +321,15 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 										<TableCell className="font-medium text-center border-r">
 											{formatHourLabel(hourKey)}
 										</TableCell>
-										{INTERVAL_DURATIONS.map((duration) => {
-											// Find the appropriate interval data based on duration
-											const intervalKeys = Object.keys(
-												gridData[hourKey] || {}
-											);
-											const matchingKey =
-												intervalKeys.find((key) => {
-													const minute =
-														Number.parseInt(
-															key,
-															10
-														);
-													return (
-														minute % duration === 0
-													);
-												});
+										{intervalColumns.map((duration) => {
+											// Find the appropriate interval data
+											const targetMinute = duration % 60;
+											const minuteKey =
+												targetMinute === 0
+													? '00'
+													: targetMinute
+															.toString()
+															.padStart(2, '0');
 
 											return (
 												<TableCell
@@ -348,15 +342,11 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 															: ''
 													)}
 												>
-													{matchingKey
-														? formatIntervalData(
-																gridData[
-																	hourKey
-																][matchingKey]
-														  )
-														: formatIntervalData(
-																undefined
-														  )}
+													{formatIntervalData(
+														gridData[hourKey]?.[
+															minuteKey
+														]
+													)}
 												</TableCell>
 											);
 										})}
