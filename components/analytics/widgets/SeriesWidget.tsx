@@ -11,8 +11,9 @@ import {
 	XAxis,
 	YAxis,
 	ReferenceLine,
+	LabelList,
 } from 'recharts';
-import { ArrowDownWideNarrow, Clock } from 'lucide-react';
+import { ArrowDownWideNarrow, Clock, Circle, CircleOff } from 'lucide-react';
 
 import {
 	Card,
@@ -68,6 +69,120 @@ interface SeriesWidgetProps {
 	className?: string;
 }
 
+// Memoized circle component to prevent unnecessary re-renders
+const FollowCircle = React.memo(
+	({
+		cx,
+		cy,
+		r,
+		fill,
+		keyValue,
+	}: {
+		cx: number;
+		cy: number;
+		r: number;
+		fill: string;
+		keyValue: string;
+	}) => (
+		<circle
+			key={keyValue}
+			cx={cx}
+			cy={cy}
+			r={r}
+			fill={fill}
+		/>
+	),
+	// Custom comparison function to only re-render when props actually change
+	(prevProps, nextProps) => {
+		return (
+			prevProps.cx === nextProps.cx &&
+			prevProps.cy === nextProps.cy &&
+			prevProps.r === nextProps.r &&
+			prevProps.fill === nextProps.fill &&
+			prevProps.keyValue === nextProps.keyValue
+		);
+	}
+);
+FollowCircle.displayName = 'FollowCircle';
+
+// Memoized follow streak label component
+const FollowStreakLabel = React.memo((props: Record<string, unknown>) => {
+	const { x, y, value, width, index } = props as {
+		x?: number | string;
+		y?: number | string;
+		value?: number | string;
+		width?: number | string;
+		index?: number;
+	};
+
+	// Return null if values aren't valid
+	if (
+		x === undefined ||
+		y === undefined ||
+		value === undefined ||
+		value === null
+	) {
+		return null;
+	}
+
+	// Convert to number and validate
+	const numValue = Number(value);
+	if (Number.isNaN(numValue) || numValue <= 0) {
+		return null;
+	}
+
+	// Get bar width - ensure we have a stable width
+	const barWidth = Number(width || 20);
+
+	// Calculate circle properties
+	// Make circles 40% of bar width
+	const circleSize = barWidth * 0.4;
+
+	// Center the circle horizontally
+	const xCenter = barWidth / 2;
+
+	// Display all circles - no limit
+	const displayCount = Math.floor(numValue);
+
+	// Use an optimization to prevent recreating the array on every render
+	const indexVal = index || 0;
+	const circleElements = Array.from({ length: displayCount }).map((_, i) => {
+		// Spacing based on circle size for consistent stacking
+		// Push all circles higher by adding a constant offset
+		const yPos = -(i * (circleSize * 2 + 2)) - 2;
+		const circleKey = `follow-circle-${indexVal}-${i}`;
+
+		return (
+			<FollowCircle
+				key={circleKey}
+				keyValue={circleKey}
+				cx={xCenter}
+				cy={yPos}
+				r={circleSize}
+				fill="currentColor"
+			/>
+		);
+	});
+
+	return (
+		<g
+			transform={`translate(${x}, ${Number(y) - circleSize})`}
+			className="text-foreground"
+		>
+			{/* Render stacked circles */}
+			{circleElements}
+		</g>
+	);
+});
+FollowStreakLabel.displayName = 'FollowStreakLabel';
+
+// Define a proper interface for the game objects
+interface GameObject {
+	game_id: string;
+	crash_point?: number;
+	time?: string;
+}
+
 export function SeriesWidget({
 	defaultValue = 10.0,
 	className,
@@ -77,12 +192,13 @@ export function SeriesWidget({
 		defaultValue.toString()
 	);
 	const [sortBy, setSortBy] = React.useState<'time' | 'length'>('time');
-	const [limit, setLimit] = React.useState<number>(2000);
+	const [limit, setLimit] = React.useState<number>(1000);
 	const [limitInput, setLimitInput] = React.useState(limit.toString());
-	const [hours, setHours] = React.useState<number>(24);
+	const [hours, setHours] = React.useState<number>(12);
 	const [hoursInput, setHoursInput] = React.useState(hours.toString());
 	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('games');
 	const [pulseClass, setPulseClass] = React.useState<string>('');
+	const [showCircles, setShowCircles] = React.useState<boolean>(false);
 
 	// Inject pulse animation CSS
 	React.useEffect(() => {
@@ -181,6 +297,11 @@ export function SeriesWidget({
 		setSortBy(sortBy === 'time' ? 'length' : 'time');
 	};
 
+	// Toggle circles visibility
+	const toggleCirclesVisibility = () => {
+		setShowCircles(!showCircles);
+	};
+
 	// Use real-time hook to fetch series data
 	const { data, isLoading, error, refreshData } = useRealTimeSeriesAnalysis({
 		value,
@@ -202,6 +323,17 @@ export function SeriesWidget({
 			length: series.length,
 			startTime: new Date(series.start_time),
 			endTime: new Date(series.end_time),
+			// Include follow streak count and games if available
+			followCount: series.follow_streak?.count || 0,
+			// Process the game objects to extract ID and crash point
+			followGames:
+				series.follow_streak?.games?.map((game) =>
+					typeof game === 'object' && game !== null
+						? `#${game.game_id || 'unknown'}@${
+								game.crash_point?.toFixed(2) || '?.??'
+						  }x`
+						: String(game)
+				) || [],
 		}));
 
 		// When sorting by time, the API already returns in chronological order
@@ -308,8 +440,36 @@ export function SeriesWidget({
 								</TooltipTrigger>
 								<TooltipContent>
 									<p>
-										Sort by:{' '}
+										Sort By:{' '}
 										{sortBy === 'time' ? 'Time' : 'Length'}
+									</p>
+								</TooltipContent>
+							</Tooltip>
+						</TooltipProvider>
+
+						{/* Add new toggle for circles visibility */}
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<div className="flex items-center border border-border rounded-md h-8 px-2">
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={toggleCirclesVisibility}
+											className="h-6 w-6 p-0"
+										>
+											{showCircles ? (
+												<Circle className="h-4 w-4 text-muted-foreground" />
+											) : (
+												<CircleOff className="h-4 w-4 text-muted-foreground" />
+											)}
+										</Button>
+									</div>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>
+										Follow Circles:{' '}
+										{showCircles ? 'ON' : 'OFF'}
 									</p>
 								</TooltipContent>
 							</Tooltip>
@@ -511,6 +671,94 @@ export function SeriesWidget({
 																	'MMM d, yyyy HH:mm'
 																)}
 															</p>
+															{item.followCount >
+																0 && (
+																<>
+																	<p className="text-xs mt-1">
+																		Followed
+																		by:{' '}
+																		<span className="font-medium">
+																			{
+																				item.followCount
+																			}
+																		</span>{' '}
+																		{item.followCount ===
+																		1
+																			? 'game'
+																			: 'games'}{' '}
+																		above{' '}
+																		{value}x
+																	</p>
+																	{/* Show the actual games that followed only if circles are visible */}
+																	{showCircles &&
+																		item.followGames &&
+																		item
+																			.followGames
+																			.length >
+																			0 && (
+																			<div className="text-xs mt-2 border-t border-border/30 pt-1.5">
+																				<div className="font-medium mb-1">
+																					Games
+																					that
+																					followed{' '}
+																					{
+																						value
+																					}
+																					x:
+																				</div>
+																				<div className="rounded overflow-hidden border border-border/30">
+																					<table className="w-full">
+																						<tbody>
+																							{item.followGames.map(
+																								(
+																									game: string,
+																									i: number
+																								) => {
+																									// Extract game ID and crash point from the string format "#GAMEID@CRASHPOINTx"
+																									const parts =
+																										game.split(
+																											'@'
+																										);
+																									const gameId =
+																										parts[0];
+																									const crashPoint =
+																										parts.length >
+																										1
+																											? parts[1]
+																											: '';
+
+																									return (
+																										<tr
+																											key={`tooltip-game-${item.seriesId}-${i}`}
+																											className={
+																												i %
+																													2 ===
+																												0
+																													? 'bg-muted/30'
+																													: ''
+																											}
+																										>
+																											<td className="px-2 py-1">
+																												{
+																													gameId
+																												}
+																											</td>
+																											<td className="px-2 py-1 text-right font-medium">
+																												{
+																													crashPoint
+																												}
+																											</td>
+																										</tr>
+																									);
+																								}
+																							)}
+																						</tbody>
+																					</table>
+																				</div>
+																			</div>
+																		)}
+																</>
+															)}
 														</div>
 													</div>
 												);
@@ -559,6 +807,19 @@ export function SeriesWidget({
 													/>
 												);
 											})}
+											{/* Conditionally render label list based on showCircles state */}
+											{showCircles && (
+												<LabelList
+													dataKey="followCount"
+													position="top"
+													offset={10}
+													content={(props) => (
+														<FollowStreakLabel
+															{...props}
+														/>
+													)}
+												/>
+											)}
 										</Bar>
 									</BarChart>
 								</ResponsiveContainer>
@@ -584,6 +845,9 @@ export function SeriesWidget({
 											<th className="text-left font-medium pb-2">
 												End Game
 											</th>
+											<th className="text-left font-medium pb-2">
+												Follow Streak
+											</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -600,6 +864,151 @@ export function SeriesWidget({
 												</td>
 												<td className="py-2">
 													#{series.end_game_id}
+												</td>
+												<td className="py-2">
+													{series.follow_streak
+														?.count ? (
+														<TooltipProvider>
+															<Tooltip>
+																<TooltipTrigger
+																	asChild
+																>
+																	<div className="font-medium">
+																		{
+																			series
+																				.follow_streak
+																				.count
+																		}
+																	</div>
+																</TooltipTrigger>
+																<TooltipContent>
+																	<p className="text-xs">
+																		<span className="font-medium">
+																			{
+																				series
+																					.follow_streak
+																					.count
+																			}
+																		</span>{' '}
+																		{series
+																			.follow_streak
+																			.count ===
+																		1
+																			? 'game'
+																			: 'games'}{' '}
+																		followed
+																	</p>
+																	{/* Only show games list if circles are visible */}
+																	{showCircles &&
+																		series
+																			.follow_streak
+																			.games &&
+																		series
+																			.follow_streak
+																			.games
+																			.length >
+																			0 && (
+																			<div className="text-xs mt-2 border-t border-border/30 pt-1.5">
+																				<div className="font-medium mb-1">
+																					Games
+																					that
+																					followed{' '}
+																					{
+																						value
+																					}
+																					x:
+																				</div>
+																				<div className="rounded overflow-hidden border border-border/30">
+																					<table className="w-full">
+																						<tbody>
+																							{series.follow_streak.games.map(
+																								(
+																									game:
+																										| string
+																										| GameObject,
+																									i: number
+																								) => {
+																									// Format the game information
+																									let gameId: string;
+																									let crashPoint: string;
+
+																									if (
+																										typeof game ===
+																											'object' &&
+																										game !==
+																											null
+																									) {
+																										gameId = `#${
+																											game.game_id ||
+																											'unknown'
+																										}`;
+																										crashPoint = `${
+																											game.crash_point?.toFixed(
+																												2
+																											) ||
+																											'?.??'
+																										}x`;
+																									} else {
+																										// Handle string format which should be "#GAMEID@CRASHPOINTx"
+																										const parts =
+																											String(
+																												game
+																											).split(
+																												'@'
+																											);
+																										gameId =
+																											parts[0];
+																										crashPoint =
+																											parts.length >
+																											1
+																												? parts[1]
+																												: '';
+																									}
+
+																									return (
+																										<tr
+																											key={
+																												typeof game ===
+																													'object' &&
+																												game?.game_id
+																													? `table-game-${game.game_id}`
+																													: `table-game-${series.end_game_id}-${i}`
+																											}
+																											className={
+																												i %
+																													2 ===
+																												0
+																													? 'bg-muted/30'
+																													: ''
+																											}
+																										>
+																											<td className="px-2 py-1">
+																												{
+																													gameId
+																												}
+																											</td>
+																											<td className="px-2 py-1 text-right font-medium">
+																												{
+																													crashPoint
+																												}
+																											</td>
+																										</tr>
+																									);
+																								}
+																							)}
+																						</tbody>
+																					</table>
+																				</div>
+																			</div>
+																		)}
+																</TooltipContent>
+															</Tooltip>
+														</TooltipProvider>
+													) : (
+														<span className="text-muted-foreground">
+															None
+														</span>
+													)}
 												</td>
 											</tr>
 										))}
