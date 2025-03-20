@@ -441,18 +441,36 @@ export function SeriesWidget({
 											}}
 										/>
 										<Bar dataKey="length">
-											{chartData.map((entry) => (
-												<Cell
-													key={`cell-${entry.seriesId}`}
-													fill={`hsl(${
-														220 -
-														Math.min(
-															entry.length * 2,
-															160
-														)
-													}, 100%, 50%)`}
-												/>
-											))}
+											{chartData.map((entry) => {
+												// Calculate ratio relative to the value
+												const ratio =
+													entry.length / value;
+
+												// Map to different color spectrums based on ratio
+												let hue: number;
+
+												if (ratio < 1) {
+													// Below crash value: Blue to Green (240-120)
+													// At ratio=0: Blue (240)
+													// At ratio=1: Green (120)
+													hue = 240 - ratio * 120;
+												} else {
+													// At or above crash value: Yellow to Red (60-0)
+													// At ratio=1: Yellow (60)
+													// At ratio=3 or higher: Red (0)
+													hue = Math.max(
+														60 - (ratio - 1) * 30,
+														0
+													);
+												}
+
+												return (
+													<Cell
+														key={`cell-${entry.seriesId}`}
+														fill={`hsl(${hue}, 90%, 50%)`}
+													/>
+												);
+											})}
 										</Bar>
 									</BarChart>
 								</ResponsiveContainer>
