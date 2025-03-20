@@ -8,6 +8,7 @@ import { LastGamesTable } from '@/components/analytics/widgets/LastGamesTable';
 import { OccurrencesTable } from '@/components/analytics/widgets/OccurrencesTable';
 import { SeriesWidget } from '@/components/analytics/widgets/SeriesWidget';
 import { IntervalsWidget } from '@/components/analytics/widgets/IntervalsWidget';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AnalyticsPage() {
 	const [activeTab, setActiveTab] = useState<string>('streaks');
@@ -54,12 +55,12 @@ export default function AnalyticsPage() {
 						</TabsList>
 					</Tabs>
 
-					<Link
-						href="/"
-						className="order-2 sm:order-3"
-					>
-						<Button variant="outline">Back to Instances</Button>
-					</Link>
+					<div className="flex items-center gap-4 order-2 sm:order-3">
+						<ThemeToggle />
+						<Link href="/">
+							<Button variant="outline">Back to Instances</Button>
+						</Link>
+					</div>
 				</div>
 
 				<div className="w-full">

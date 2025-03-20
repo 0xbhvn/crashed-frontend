@@ -3,6 +3,7 @@
 import GamesTableWrapper from '@/components/games-table-wrapper';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Home() {
 	return (
@@ -12,9 +13,12 @@ export default function Home() {
 					<h1 className="text-2xl font-bold text-center">
 						Crash Instances
 					</h1>
-					<Link href="/analytics">
-						<Button variant="outline">Analytics</Button>
-					</Link>
+					<div className="flex items-center gap-4">
+						<ThemeToggle />
+						<Link href="/analytics">
+							<Button variant="outline">Analytics</Button>
+						</Link>
+					</div>
 				</div>
 				<div className="w-full">
 					<GamesTableWrapper />

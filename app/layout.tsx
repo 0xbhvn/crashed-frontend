@@ -4,6 +4,7 @@ import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner';
+import { ThemeProvider } from '@/providers/theme-provider';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -26,19 +27,22 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html
-			lang="en"
-			className="dark"
-		>
+		<html lang="en">
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				{children}
-				<Toaster
-					position="top-right"
-					closeButton
-					richColors
-				/>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="dark"
+					enableSystem
+				>
+					{children}
+					<Toaster
+						position="top-right"
+						closeButton
+						richColors
+					/>
+				</ThemeProvider>
 				<Analytics />
 				<SpeedInsights />
 			</body>
