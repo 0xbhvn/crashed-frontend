@@ -2,7 +2,7 @@
 
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Monitor } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
 	Tooltip,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 
 export function ThemeToggle() {
-	const { theme, setTheme } = useTheme();
+	const { theme, setTheme, systemTheme } = useTheme();
 	const [isMounted, setIsMounted] = useState(false);
 
 	// Avoid hydration mismatch
@@ -21,7 +21,13 @@ export function ThemeToggle() {
 	}, []);
 
 	const toggleTheme = () => {
-		setTheme(theme === 'dark' ? 'light' : 'dark');
+		if (theme === 'system') {
+			setTheme('light');
+		} else if (theme === 'light') {
+			setTheme('dark');
+		} else {
+			setTheme('system');
+		}
 	};
 
 	if (!isMounted) {
@@ -39,7 +45,9 @@ export function ThemeToggle() {
 							onClick={toggleTheme}
 							className="h-6 w-6 p-0"
 						>
-							{theme === 'dark' ? (
+							{theme === 'system' ? (
+								<Monitor className="h-4 w-4 text-muted-foreground" />
+							) : theme === 'dark' ? (
 								<Moon className="h-4 w-4 text-muted-foreground" />
 							) : (
 								<Sun className="h-4 w-4 text-muted-foreground" />
@@ -48,7 +56,13 @@ export function ThemeToggle() {
 					</div>
 				</TooltipTrigger>
 				<TooltipContent>
-					<p>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</p>
+					<p>
+						{theme === 'system'
+							? `Using system theme (${systemTheme})`
+							: theme === 'dark'
+							? 'Switch to system theme'
+							: 'Switch to dark mode'}
+					</p>
 				</TooltipContent>
 			</Tooltip>
 		</TooltipProvider>
