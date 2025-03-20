@@ -161,7 +161,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 	const formatHourLabel = (hourKey: string) => {
 		try {
 			const date = parseISO(`${hourKey}:00:00`);
-			return format(date, 'MMM dd, HH:00');
+			return format(date, 'MMM dd, h a');
 		} catch {
 			return hourKey;
 		}
@@ -299,7 +299,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 													: ''
 											)}
 										>
-											{startMinute}:00 to {endMinute}:00
+											{startMinute}-{endMinute}
 										</TableHead>
 									);
 								})}
