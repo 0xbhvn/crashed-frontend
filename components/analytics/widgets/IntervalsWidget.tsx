@@ -246,6 +246,41 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
 	};
 
+	// Calculate totals for each hour
+	const hourTotals = useMemo(() => {
+		type HourTotalType = {
+			count: number;
+			totalGames: number;
+			percentage: number;
+		};
+
+		const totals: Record<string, HourTotalType> = {};
+
+		// Calculate totals for each hour
+		for (const hourKey of Object.keys(gridData)) {
+			const hourData = gridData[hourKey];
+			let hourCount = 0;
+			let hourTotalGames = 0;
+
+			// Sum up all intervals in this hour
+			for (const interval of Object.values(hourData)) {
+				if (interval) {
+					hourCount += interval.count;
+					hourTotalGames += interval.total_games;
+				}
+			}
+
+			totals[hourKey] = {
+				count: hourCount,
+				totalGames: hourTotalGames,
+				percentage:
+					hourTotalGames > 0 ? (hourCount / hourTotalGames) * 100 : 0,
+			};
+		}
+
+		return totals;
+	}, [gridData]);
+
 	// Render content
 	const renderContent = () => {
 		if (error) {
@@ -350,13 +385,16 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 										</TableHead>
 									);
 								})}
+								<TableHead className="text-center whitespace-nowrap bg-muted/20">
+									Hour Total
+								</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 							{isLoading && hourLabels.length === 0 ? (
 								<TableRow>
 									<TableCell
-										colSpan={intervalColumns.length + 1}
+										colSpan={intervalColumns.length + 2}
 										className="h-24 text-center"
 									>
 										<div className="flex flex-col items-center justify-center gap-2">
@@ -370,7 +408,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 							) : hourLabels.length === 0 ? (
 								<TableRow>
 									<TableCell
-										colSpan={intervalColumns.length + 1}
+										colSpan={intervalColumns.length + 2}
 										className="h-24 text-center"
 									>
 										<div className="text-muted-foreground">
@@ -403,11 +441,61 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 												</TableCell>
 											);
 										})}
+										<TableCell className="text-center bg-muted/20">
+											{formatHourTotal(hourKey)}
+										</TableCell>
 									</TableRow>
 								))
 							)}
 						</TableBody>
 					</Table>
+				</div>
+			</div>
+		);
+	};
+
+	// Format hour total data
+	const formatHourTotal = (hourKey: string) => {
+		const hourTotal = hourTotals[hourKey];
+
+		if (!hourTotal || hourTotal.totalGames === 0) {
+			return (
+				<div className="text-center text-muted-foreground text-sm">
+					-
+				</div>
+			);
+		}
+
+		// Get the badge color based on percentage
+		const badgeColorClass = getPercentageBadgeColor(
+			hourTotal.percentage,
+			value
+		);
+
+		return (
+			<div className="flex items-stretch w-full divide-x divide-border">
+				{/* Left side - Count (larger) */}
+				<div className="flex-1 flex items-center justify-center text-2xl">
+					{hourTotal.count}
+				</div>
+
+				{/* Right side - Percentage and Total */}
+				<div className="flex-1 flex flex-col items-center divide-y divide-border">
+					{/* Top - Percentage */}
+					<div className="py-1 w-full flex justify-center">
+						<Badge
+							className={`px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}
+						>
+							{hourTotal.percentage.toFixed(1)}%
+						</Badge>
+					</div>
+
+					{/* Bottom - Total games */}
+					<div className="py-1 w-full flex justify-center">
+						<span className="text-xs text-muted-foreground">
+							{hourTotal.totalGames}
+						</span>
+					</div>
 				</div>
 			</div>
 		);
