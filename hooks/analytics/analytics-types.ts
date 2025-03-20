@@ -79,6 +79,7 @@ export interface IntervalData {
 	count: number;
 	total_games: number;
 	percentage: number;
+	interval_minutes: number;
 }
 
 // Organized grid data for intervals

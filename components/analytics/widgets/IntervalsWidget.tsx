@@ -52,34 +52,37 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		hours,
 	});
 
-	// Calculate the interval columns to display based on selected interval
-	const intervalColumns = useMemo(() => {
-		const columns: number[] = [];
-		for (let i = selectedInterval; i <= 60; i += selectedInterval) {
-			columns.push(i);
-		}
-		return columns;
-	}, [selectedInterval]);
-
 	// Convert interval data into a grid format for easier rendering
 	const gridData = useMemo<IntervalGridData>(() => {
 		if (!intervalsData || intervalsData.length === 0) return {};
 
 		const grid: IntervalGridData = {};
 
+		// Process each interval from the API response
 		for (const interval of intervalsData) {
 			try {
-				// Extract the hour part from interval_start
+				// Extract date parts from interval_start
 				const startDate = parseISO(interval.interval_start);
-				const hourKey = format(startDate, 'yyyy-MM-dd HH');
-				const intervalKey = format(startDate, 'mm');
 
-				// Initialize hour object if it doesn't exist
+				// Format the hour key as YYYY-MM-DD HH for row identification
+				const hourKey = format(startDate, 'yyyy-MM-dd HH');
+
+				// Extract minute part to determine which column this belongs to
+				const startMinute = Number.parseInt(
+					format(startDate, 'mm'),
+					10
+				);
+
+				// Map the minute to the correct column (e.g., 00-10, 10-20, etc.)
+				// Column keys are the starting minute: "00", "10", "20", etc.
+				const intervalKey = startMinute.toString().padStart(2, '0');
+
+				// Initialize hour row if it doesn't exist
 				if (!grid[hourKey]) {
 					grid[hourKey] = {};
 				}
 
-				// Store interval data
+				// Store interval data in the grid
 				grid[hourKey][intervalKey] = interval;
 			} catch (err) {
 				console.error('Error processing interval:', err);
@@ -88,6 +91,15 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 
 		return grid;
 	}, [intervalsData]);
+
+	// Calculate the interval columns to display based on selected interval
+	const intervalColumns = useMemo(() => {
+		const columns: number[] = [];
+		for (let i = 0; i < 60; i += selectedInterval) {
+			columns.push(i);
+		}
+		return columns;
+	}, [selectedInterval]);
 
 	// Handle value input change
 	const handleValueInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,7 +161,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 	const formatHourLabel = (hourKey: string) => {
 		try {
 			const date = parseISO(`${hourKey}:00:00`);
-			return format(date, 'HH:00');
+			return format(date, 'MMM dd, HH:00');
 		} catch {
 			return hourKey;
 		}
@@ -274,19 +286,23 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 								<TableHead className="w-20 text-center border-r">
 									Hour
 								</TableHead>
-								{intervalColumns.map((duration) => (
-									<TableHead
-										key={duration}
-										className={cn(
-											'text-center',
-											duration === selectedInterval
-												? 'bg-muted'
-												: ''
-										)}
-									>
-										{duration}m
-									</TableHead>
-								))}
+								{intervalColumns.map((startMinute) => {
+									const endMinute =
+										startMinute + selectedInterval;
+									return (
+										<TableHead
+											key={startMinute}
+											className={cn(
+												'text-center whitespace-nowrap',
+												startMinute === 0
+													? 'bg-muted'
+													: ''
+											)}
+										>
+											{startMinute}:00 to {endMinute}:00
+										</TableHead>
+									);
+								})}
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -321,30 +337,25 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 										<TableCell className="font-medium text-center border-r">
 											{formatHourLabel(hourKey)}
 										</TableCell>
-										{intervalColumns.map((duration) => {
-											// Find the appropriate interval data
-											const targetMinute = duration % 60;
-											const minuteKey =
-												targetMinute === 0
-													? '00'
-													: targetMinute
-															.toString()
-															.padStart(2, '0');
+										{intervalColumns.map((startMinute) => {
+											// Format the minute as a padded string to use as key in grid data
+											const intervalKey = startMinute
+												.toString()
+												.padStart(2, '0');
 
 											return (
 												<TableCell
-													key={`${hourKey}-${duration}`}
+													key={`${hourKey}-${startMinute}`}
 													className={cn(
 														'text-center',
-														duration ===
-															selectedInterval
+														startMinute === 0
 															? 'bg-muted/50'
 															: ''
 													)}
 												>
 													{formatIntervalData(
 														gridData[hourKey]?.[
-															minuteKey
+															intervalKey
 														]
 													)}
 												</TableCell>

@@ -36,7 +36,7 @@ The project utilizes the following key libraries:
       /series              # Series analysis endpoints
     /games                 # Games data API routes
 
-/components
+  /components
   /analytics               # Analytics-specific components
     /core                  # Core analytics components
       AnalyticsCard.tsx    # Card component for analytics widgets
@@ -52,8 +52,8 @@ The project utilizes the following key libraries:
 
 /context
   analytics-context.tsx    # Analytics state management
-
-/hooks
+      
+  /hooks
   /analytics               # Analytics-specific hooks
     analytics-types.ts     # Type definitions for analytics
     useBatchLastGames.ts   # Hook for batch last games data
@@ -72,8 +72,8 @@ The project utilizes the following key libraries:
 
 /models
   game.ts                  # Game data models and schemas
-
-/utils
+    
+  /utils
   date-utils.ts            # Date formatting utilities
 ```
 
