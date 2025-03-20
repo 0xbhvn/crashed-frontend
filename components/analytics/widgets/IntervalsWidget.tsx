@@ -17,7 +17,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type {
 	IntervalData,
 	IntervalGridData,
@@ -153,17 +152,6 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		return Object.keys(gridData).sort((a, b) => b.localeCompare(a)); // Sort in descending order
 	}, [gridData]);
 
-	// Get percentage badge color based on value
-	const getPercentageBadgeColor = (percentage: number) => {
-		if (percentage >= 60) {
-			return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-		}
-		if (percentage >= 30) {
-			return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-		}
-		return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-	};
-
 	// Format hour label for display
 	const formatHourLabel = (hourKey: string) => {
 		try {
@@ -184,10 +172,13 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 			);
 		}
 
+		// Get the badge color based on percentage
+		const badgeColorClass = getPercentageBadgeColor(data.percentage, value);
+
 		return (
 			<div className="flex items-stretch w-full divide-x divide-border">
 				{/* Left side - Count (larger) */}
-				<div className="flex-1 flex items-center justify-center text-xl">
+				<div className="flex-1 flex items-center justify-center text-2xl">
 					{data.count}
 				</div>
 
@@ -196,10 +187,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 					{/* Top - Percentage */}
 					<div className="py-1 w-full flex justify-center">
 						<Badge
-							className={cn(
-								'px-2 py-0.5 text-xs font-semibold',
-								getPercentageBadgeColor(data.percentage)
-							)}
+							className={`px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}
 						>
 							{data.percentage.toFixed(1)}%
 						</Badge>
@@ -214,6 +202,28 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 				</div>
 			</div>
 		);
+	};
+
+	// Get percentage badge color based on value and crash point
+	const getPercentageBadgeColor = (
+		percentage: number,
+		crashValue: number
+	) => {
+		// Calculate the borderline percentage (yellow) based on crash value
+		const borderlinePercentage = 100 / crashValue;
+
+		// If we're very close to the borderline (within 1%), use yellow
+		if (Math.abs(percentage - borderlinePercentage) < 1) {
+			return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+		}
+
+		// If below the borderline, use red (worse than expected)
+		if (percentage < borderlinePercentage) {
+			return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+		}
+
+		// If above the borderline, use green (better than expected)
+		return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
 	};
 
 	// Render content
