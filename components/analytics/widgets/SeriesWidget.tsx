@@ -69,6 +69,13 @@ interface SeriesWidgetProps {
 	className?: string;
 }
 
+// Define proper payload interface
+interface FollowStreakPayload {
+	seriesId?: string;
+	id?: number;
+	[key: string]: unknown;
+}
+
 // Memoized circle component to prevent unnecessary re-renders
 const FollowCircle = React.memo(
 	({
@@ -105,75 +112,123 @@ const FollowCircle = React.memo(
 );
 FollowCircle.displayName = 'FollowCircle';
 
-// Memoized follow streak label component
-const FollowStreakLabel = React.memo((props: Record<string, unknown>) => {
-	const { x, y, value, width, index } = props as {
-		x?: number | string;
-		y?: number | string;
-		value?: number | string;
-		width?: number | string;
-		index?: number;
-	};
+// Memoized follow streak label component with optimized circle generation
+const FollowStreakLabel = React.memo(
+	(props: Record<string, unknown>) => {
+		const { x, y, value, width, index, payload, showCircles } = props as {
+			x?: number | string;
+			y?: number | string;
+			value?: number | string;
+			width?: number | string;
+			index?: number;
+			payload?: FollowStreakPayload;
+			showCircles?: boolean;
+		};
 
-	// Return null if values aren't valid
-	if (
-		x === undefined ||
-		y === undefined ||
-		value === undefined ||
-		value === null
-	) {
-		return null;
-	}
+		// Create a stable reference for the component instance - MUST be before any conditional returns
+		// This is the key optimization: only recreate circles if the data ID changes
+		const stableRef = React.useRef<{
+			lastDataId: string;
+			circleElements: React.ReactNode[];
+		}>({ lastDataId: '', circleElements: [] });
 
-	// Convert to number and validate
-	const numValue = Number(value);
-	if (Number.isNaN(numValue) || numValue <= 0) {
-		return null;
-	}
+		// Return null if values aren't valid or circles should be hidden
+		if (
+			x === undefined ||
+			y === undefined ||
+			value === undefined ||
+			value === null ||
+			!showCircles
+		) {
+			return null;
+		}
 
-	// Get bar width - ensure we have a stable width
-	const barWidth = Number(width || 20);
+		// Convert to number and validate
+		const numValue = Number(value);
+		if (Number.isNaN(numValue) || numValue <= 0) {
+			return null;
+		}
 
-	// Calculate circle properties
-	// Make circles 40% of bar width
-	const circleSize = barWidth * 0.4;
+		// Get bar width - ensure we have a stable width
+		const barWidth = Number(width || 20);
 
-	// Center the circle horizontally
-	const xCenter = barWidth / 2;
+		// Calculate circle properties
+		// Make circles 40% of bar width
+		const circleSize = barWidth * 0.4;
 
-	// Display all circles - no limit
-	const displayCount = Math.floor(numValue);
+		// Center the circle horizontally
+		const xCenter = barWidth / 2;
 
-	// Use an optimization to prevent recreating the array on every render
-	const indexVal = index || 0;
-	const circleElements = Array.from({ length: displayCount }).map((_, i) => {
-		// Spacing based on circle size for consistent stacking
-		// Push all circles higher by adding a constant offset
-		const yPos = -(i * (circleSize * 2 + 2)) - 2;
-		const circleKey = `follow-circle-${indexVal}-${i}`;
+		// Display all circles - no limit
+		const displayCount = Math.floor(numValue);
+
+		// Get stable data identifier from payload
+		const dataId = payload?.seriesId || `data-${index || 0}`;
+
+		// Only regenerate circles if the dataId has changed or first render
+		if (stableRef.current.lastDataId !== dataId) {
+			stableRef.current.lastDataId = dataId;
+			stableRef.current.circleElements = Array.from({
+				length: displayCount,
+			}).map((_, i) => {
+				const yPos = -(i * (circleSize * 2 + 2)) - 5;
+				const circleKey = `follow-circle-${dataId}-${i}`;
+
+				return (
+					<FollowCircle
+						key={circleKey}
+						keyValue={circleKey}
+						cx={xCenter}
+						cy={yPos}
+						r={circleSize}
+						fill="currentColor"
+					/>
+				);
+			});
+		}
 
 		return (
-			<FollowCircle
-				key={circleKey}
-				keyValue={circleKey}
-				cx={xCenter}
-				cy={yPos}
-				r={circleSize}
-				fill="currentColor"
-			/>
+			<g
+				transform={`translate(${x}, ${Number(y) - circleSize})`}
+				className="text-foreground"
+			>
+				{stableRef.current.circleElements}
+			</g>
 		);
-	});
+	},
+	// Very strict comparison function
+	(prevProps, nextProps) => {
+		const prev = prevProps as {
+			x?: number | string;
+			y?: number | string;
+			value?: number | string;
+			width?: number | string;
+			payload?: FollowStreakPayload;
+			showCircles?: boolean;
+		};
+		const next = nextProps as {
+			x?: number | string;
+			y?: number | string;
+			value?: number | string;
+			width?: number | string;
+			payload?: FollowStreakPayload;
+			showCircles?: boolean;
+		};
 
-	return (
-		<g
-			transform={`translate(${x}, ${Number(y) - circleSize})`}
-			className="text-foreground"
-		>
-			{/* Render stacked circles */}
-			{circleElements}
-		</g>
-	);
-});
+		// If showCircles changed, we need to re-render
+		if (prev.showCircles !== next.showCircles) {
+			return false;
+		}
+
+		// Skip updates entirely for the same data point
+		if (prev.payload?.seriesId === next.payload?.seriesId) {
+			return true; // Prevent update
+		}
+
+		// If the position changed but not the content, allow the update
+		return prev.value === next.value && prev.width === next.width;
+	}
+);
 FollowStreakLabel.displayName = 'FollowStreakLabel';
 
 // Define a proper interface for the game objects
@@ -816,6 +871,9 @@ export function SeriesWidget({
 													content={(props) => (
 														<FollowStreakLabel
 															{...props}
+															showCircles={
+																showCircles
+															}
 														/>
 													)}
 												/>

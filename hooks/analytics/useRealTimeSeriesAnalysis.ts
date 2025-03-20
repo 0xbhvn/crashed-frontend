@@ -55,8 +55,34 @@ export function useRealTimeSeriesAnalysis({
 	// Update local data with API data, preserving UI state
 	useEffect(() => {
 		if (apiData && localData) {
-			// Only update if data has actually changed
-			if (JSON.stringify(apiData) !== JSON.stringify(localData)) {
+			// Use a more careful comparison approach that doesn't trigger unnecessary updates
+			const hasDataChanged = (() => {
+				// Different lengths mean the data definitely changed
+				if (apiData.length !== localData.length) return true;
+
+				// Compare only essential properties that would affect rendering
+				// This prevents circle flicker from irrelevant property changes
+				for (let i = 0; i < apiData.length; i++) {
+					const apiItem = apiData[i];
+					const localItem = localData[i];
+
+					// Compare only the properties that would visually affect the chart
+					if (
+						apiItem.start_game_id !== localItem.start_game_id ||
+						apiItem.end_game_id !== localItem.end_game_id ||
+						apiItem.length !== localItem.length ||
+						apiItem.follow_streak?.count !==
+							localItem.follow_streak?.count
+					) {
+						return true;
+					}
+				}
+
+				return false;
+			})();
+
+			// Only update if meaningful data has changed
+			if (hasDataChanged) {
 				setLocalData(apiData);
 			}
 		}
