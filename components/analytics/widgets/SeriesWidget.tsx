@@ -10,6 +10,7 @@ import {
 	ResponsiveContainer,
 	XAxis,
 	YAxis,
+	ReferenceLine,
 } from 'recharts';
 import { ArrowDownWideNarrow, Clock } from 'lucide-react';
 
@@ -191,8 +192,26 @@ export function SeriesWidget({
 
 	// Get the top series for display
 	const topSeries = React.useMemo(() => {
-		return data?.slice(0, 3) || [];
+		return data?.slice(0, 5) || [];
 	}, [data]);
+
+	// Calculate median length for the reference line
+	const medianLength = React.useMemo(() => {
+		if (!chartData || chartData.length === 0) return 0;
+
+		// Sort lengths and find median
+		const sortedLengths = [...chartData]
+			.map((item) => item.length)
+			.sort((a, b) => a - b);
+		const middle = Math.floor(sortedLengths.length / 2);
+
+		// If even number of items, take average of middle two
+		if (sortedLengths.length % 2 === 0) {
+			return (sortedLengths[middle - 1] + sortedLengths[middle]) / 2;
+		}
+		// If odd number of items, take middle item
+		return sortedLengths[middle];
+	}, [chartData]);
 
 	return (
 		<Card className={cn('w-full', className)}>
@@ -401,6 +420,19 @@ export function SeriesWidget({
 												position: 'insideLeft',
 											}}
 										/>
+										<ReferenceLine
+											y={medianLength}
+											stroke="#888"
+											strokeDasharray="3 3"
+											label={{
+												value: `Median: ${Math.round(
+													medianLength
+												)}`,
+												position: 'insideTopRight',
+												fill: '#888',
+												fontSize: 12,
+											}}
+										/>
 										<ChartTooltip
 											content={(props) => {
 												if (
@@ -483,18 +515,41 @@ export function SeriesWidget({
 									? `Longest series without ${value}x or higher:`
 									: `Most recent series without ${value}x or higher:`}
 							</h4>
-							<ul className="space-y-2">
-								{topSeries.map((series) => (
-									<li
-										key={`series-${series.start_game_id}-${series.end_game_id}`}
-										className="text-sm"
-									>
-										- {series.length} games (Game #
-										{series.start_game_id} to #
-										{series.end_game_id})
-									</li>
-								))}
-							</ul>
+							<div className="overflow-x-auto">
+								<table className="w-1/2 text-sm">
+									<thead>
+										<tr className="border-b">
+											<th className="text-left font-medium pb-2">
+												Length
+											</th>
+											<th className="text-left font-medium pb-2">
+												Start Game
+											</th>
+											<th className="text-left font-medium pb-2">
+												End Game
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{topSeries.map((series) => (
+											<tr
+												key={`series-${series.start_game_id}-${series.end_game_id}`}
+												className="border-b border-border/30 hover:bg-muted/30"
+											>
+												<td className="py-2">
+													{series.length} games
+												</td>
+												<td className="py-2">
+													#{series.start_game_id}
+												</td>
+												<td className="py-2">
+													#{series.end_game_id}
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
 						</div>
 					</>
 				)}
