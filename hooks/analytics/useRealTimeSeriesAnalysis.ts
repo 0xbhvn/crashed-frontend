@@ -21,6 +21,8 @@ export function useRealTimeSeriesAnalysis({
 }: UseRealTimeSeriesAnalysisProps) {
 	// Keep local copy of data to prevent loading states
 	const [localData, setLocalData] = useState<SeriesData[]>([]);
+	// Keep track of total occurrences
+	const [totalOccurrences, setTotalOccurrences] = useState<number>(0);
 
 	// Track the last game we processed
 	const lastProcessedGameRef = useRef<string | null>(null);
@@ -84,6 +86,12 @@ export function useRealTimeSeriesAnalysis({
 			// Only update if meaningful data has changed
 			if (hasDataChanged) {
 				setLocalData(apiData);
+
+				// Calculate total occurrences when data changes
+				const newTotalOccurrences = apiData.reduce((sum, series) => {
+					return sum + (series.follow_streak?.count || 0);
+				}, 0);
+				setTotalOccurrences(newTotalOccurrences);
 			}
 		}
 	}, [apiData, localData]);
@@ -119,6 +127,7 @@ export function useRealTimeSeriesAnalysis({
 
 	return {
 		data: localData,
+		totalOccurrences,
 		isLoading: apiLoading && localData.length === 0, // Only show loading on initial load
 		error: apiError,
 		refreshData: fetchData,

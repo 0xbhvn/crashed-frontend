@@ -13,7 +13,7 @@ import {
 	ReferenceLine,
 	LabelList,
 } from 'recharts';
-import { ArrowDownWideNarrow, Clock, Circle, CircleOff } from 'lucide-react';
+import { ArrowDownWideNarrow, Clock, Eye, EyeOff } from 'lucide-react';
 
 import {
 	Card,
@@ -313,6 +313,7 @@ export function SeriesWidget({
 		// Ensure limit is within valid range and is a number
 		if (!Number.isNaN(newLimit) && newLimit >= 100 && newLimit <= 10000) {
 			setLimit(newLimit);
+			refreshData(); // Refresh data when limit changes
 		} else {
 			// Reset to current limit if invalid
 			setLimitInput(limit.toString());
@@ -331,6 +332,7 @@ export function SeriesWidget({
 		// Ensure hours is within valid range and is a number
 		if (!Number.isNaN(newHours) && newHours >= 1 && newHours <= 168) {
 			setHours(newHours);
+			refreshData(); // Refresh data when hours changes
 		} else {
 			// Reset to current hours if invalid
 			setHoursInput(hours.toString());
@@ -350,6 +352,7 @@ export function SeriesWidget({
 	// Toggle sort mode
 	const toggleSortMode = () => {
 		setSortBy(sortBy === 'time' ? 'length' : 'time');
+		refreshData(); // Refresh data when sort mode changes
 	};
 
 	// Toggle circles visibility
@@ -358,13 +361,14 @@ export function SeriesWidget({
 	};
 
 	// Use real-time hook to fetch series data
-	const { data, isLoading, error, refreshData } = useRealTimeSeriesAnalysis({
-		value,
-		analyzeBy,
-		limit,
-		hours,
-		sortBy,
-	});
+	const { data, isLoading, error, refreshData, totalOccurrences } =
+		useRealTimeSeriesAnalysis({
+			value,
+			analyzeBy,
+			limit,
+			hours,
+			sortBy,
+		});
 
 	// Format data for the chart
 	const chartData = React.useMemo(() => {
@@ -453,6 +457,16 @@ export function SeriesWidget({
 						Series of games without crash point {value}x or higher
 					</CardDescription>
 				</div>
+				{!isLoading && !error && data && (
+					<div className="flex items-center bg-muted px-3 py-1 rounded-md">
+						<span className="text-sm font-medium mr-1">
+							Total {value}x occurrences:
+						</span>
+						<span className="text-sm font-bold">
+							{totalOccurrences}
+						</span>
+					</div>
+				)}
 			</CardHeader>
 			<CardContent>
 				<div className="flex justify-between items-center mb-4">
@@ -514,9 +528,9 @@ export function SeriesWidget({
 											className="h-6 w-6 p-0"
 										>
 											{showCircles ? (
-												<Circle className="h-4 w-4 text-muted-foreground" />
+												<Eye className="h-4 w-4 text-muted-foreground" />
 											) : (
-												<CircleOff className="h-4 w-4 text-muted-foreground" />
+												<EyeOff className="h-4 w-4 text-muted-foreground" />
 											)}
 										</Button>
 									</div>
@@ -561,9 +575,11 @@ export function SeriesWidget({
 						<Tabs
 							defaultValue="games"
 							value={analyzeBy}
-							onValueChange={(value) =>
-								setAnalyzeBy(value as 'games' | 'time')
-							}
+							onValueChange={(value) => {
+								setAnalyzeBy(value as 'games' | 'time');
+								// Refresh data when switching between games/time tabs
+								refreshData();
+							}}
 						>
 							<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
 								<TabsTrigger
