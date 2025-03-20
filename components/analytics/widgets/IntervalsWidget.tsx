@@ -292,12 +292,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 									return (
 										<TableHead
 											key={startMinute}
-											className={cn(
-												'text-center whitespace-nowrap',
-												startMinute === 0
-													? 'bg-muted'
-													: ''
-											)}
+											className="text-center whitespace-nowrap"
 										>
 											{startMinute}-{endMinute}
 										</TableHead>
@@ -346,12 +341,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 											return (
 												<TableCell
 													key={`${hourKey}-${startMinute}`}
-													className={cn(
-														'text-center',
-														startMinute === 0
-															? 'bg-muted/50'
-															: ''
-													)}
+													className="text-center"
 												>
 													{formatIntervalData(
 														gridData[hourKey]?.[
