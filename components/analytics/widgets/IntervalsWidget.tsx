@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
 	Table,
@@ -162,6 +162,18 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		}
 	};
 
+	// State to keep track of current time
+	const [currentTime, setCurrentTime] = useState(new Date());
+
+	// Update current time every second
+	useEffect(() => {
+		const interval = setInterval(() => {
+			setCurrentTime(new Date());
+		}, 1000);
+
+		return () => clearInterval(interval);
+	}, []);
+
 	// Format interval data for display
 	const formatIntervalData = (data: IntervalData | undefined) => {
 		if (!data) {
@@ -172,13 +184,21 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 			);
 		}
 
+		// Check if this interval is currently active
+		const isCurrentInterval =
+			data.interval_end && new Date(data.interval_end) > currentTime;
+
 		// Get the badge color based on percentage
 		const badgeColorClass = getPercentageBadgeColor(data.percentage, value);
 
 		return (
 			<div className="flex items-stretch w-full divide-x divide-border">
 				{/* Left side - Count (larger) */}
-				<div className="flex-1 flex items-center justify-center text-2xl">
+				<div
+					className={`flex-1 flex items-center justify-center text-2xl ${
+						isCurrentInterval ? 'animate-pulse text-primary' : ''
+					}`}
+				>
 					{data.count}
 				</div>
 
