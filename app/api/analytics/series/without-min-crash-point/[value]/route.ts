@@ -4,10 +4,11 @@ import { getApiUrl, getApiHeadersWithoutTimezone } from '@/lib/api-config';
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { value: string } }
+	context: { params: Promise<{ value: string }> }
 ) {
 	try {
 		// Extract path parameter
+		const params = await context.params;
 		const { value } = params;
 
 		// Extract query parameters
