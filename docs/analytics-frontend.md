@@ -1,369 +1,225 @@
-# Crash Game Analytics Frontend Implementation Plan
+# Crash Game Analytics Frontend Implementation
 
 ## Overview
 
-This document outlines the frontend implementation plan for the BC Crash Game Analytics features. Based on the backend API documentation, we'll create a comprehensive analytics dashboard that allows users to visualize game patterns, track performance metrics, and make data-driven decisions.
-
-## Goals and User Stories
-
-### Primary Goals
-
-- Provide intuitive visualization of game analytics data
-- Enable users to identify patterns in crash points
-- Support data exploration across different time frames
-- Present analytics in a user-friendly, accessible format
-
-### User Stories
-
-1. As a user, I want to see when the last occurrence of a specific crash point value happened
-2. As a user, I want to analyze how frequently certain crash points occur
-3. As a user, I want to identify patterns of non-occurrence for specific crash points
-4. As a user, I want to examine crash point distributions across different time intervals
+This document outlines the current implementation of the BC Crash Game Analytics features. The frontend provides a comprehensive analytics dashboard that allows users to visualize game patterns, track performance metrics, and make data-driven decisions.
 
 ## Technical Architecture
 
 ### Libraries and Dependencies
 
-We'll utilize the existing tech stack with the following key libraries:
+The project utilizes the following key libraries:
 
 | Category | Libraries |
 |----------|-----------|
-| **Core** | React, Next.js, TypeScript |
-| **UI Components** | ShadCN UI (for consistency with existing UI) |
-| **Data Visualization** | Recharts (for charts), React-Table (for data tables) |
-| **State Management** | React Query (for API data fetching and caching) |
-| **Form Handling** | React Hook Form, Zod (for validation) |
-| **Utilities** | date-fns (for date manipulation), clsx/tailwind-merge (for styling) |
+| **Core** | React, Next.js 15.2.1, TypeScript |
+| **UI Components** | ShadCN UI (customized) |
+| **Data Visualization** | Recharts (for charts), Tanstack React Table (for data tables) |
+| **Data Fetching** | Custom hooks for API integration |
+| **Real-time Updates** | react-use-websocket |
+| **Form Management** | Native form handling with controlled components |
+| **Utilities** | date-fns, clsx/tailwind-merge, zod (for validation) |
+| **UI Enhancements** | Framer Motion, Sonner (toast notifications) |
+| **Theming** | next-themes |
 
-### Component Structure
-
-```text
-/analytics
-  /components
-    /core
-      AnalyticsLayout.tsx        # Layout wrapper for all analytics pages
-      AnalyticsCard.tsx          # Card component for displaying analytics widgets
-      AnalyticsFilters.tsx       # Common filters for all analytics (time range, etc.)
-      
-    /charts
-      BarChart.tsx               # Reusable bar chart component
-      LineChart.tsx              # Reusable line chart component
-      PieChart.tsx               # Reusable pie chart component
-      
-    /widgets
-      LastGamesWidget.tsx        # Widget for "Last Games" (formerly "Last Game With Crash Points")
-      OccurrenceWidget.tsx       # Widget for "Crash Point Occurrence Analysis"
-      SeriesWidget.tsx           # Widget for "Non-occurrence Series Analysis" 
-      IntervalsWidget.tsx        # Widget for "Interval Analysis"
-      
-    /tables
-      AnalyticsTable.tsx         # Base table component for analytics data
-      LastGamesTable.tsx         # Table for Last Games data
-      OccurrenceTable.tsx        # Table for occurrence data including comparison mode
-      SeriesTable.tsx            # Table for series data
-      IntervalsTable.tsx         # Table for interval data
-      
-  /hooks
-    useLastGames.ts              # Hook for fetching "Last Games" analytics
-    useOccurrenceAnalysis.ts     # Hook for fetching "Occurrence" analytics including comparison data
-    useSeriesAnalysis.ts         # Hook for fetching "Series" analytics
-    useIntervalsAnalysis.ts      # Hook for fetching "Intervals" analytics
-    
-  /pages
-    index.tsx                    # Dashboard overview with key metrics
-    last-games.tsx               # Page for detailed "Last Games" analytics
-    occurrences.tsx              # Page for detailed "Occurrence" analytics
-    series.tsx                   # Page for detailed "Series" analytics
-    intervals.tsx                # Page for detailed "Intervals" analytics
-    
-  /utils
-    formatters.ts                # Utility functions for formatting data
-    calculators.ts               # Utility functions for additional calculations
-    constants.ts                 # Constants used across the analytics module
-```
-
-## UI/UX Design Approach
-
-### Layout and Navigation
-
-The analytics module will feature:
-
-1. **Dashboard Overview**: A main dashboard displaying key widgets from all categories
-2. **Category Pages**: Detailed pages for each analytics category
-3. **Navigation**: Tab-based navigation for switching between categories:
-   - Last Games (for recent games meeting specific criteria)
-   - Occurrences (for frequency analysis)
-   - Series (for non-occurrence pattern analysis)
-   - Intervals (for time-based distribution analysis)
-4. **Filters**: Consistent filter controls for adjusting time ranges and other parameters
-
-### Design System
-
-We'll follow the existing design system using ShadCN components with:
-
-- **Cards**: Each analytics widget will be contained in a card with a consistent header/body structure
-- **Tables**: Data-dense tables with sorting, pagination, and expandable rows where appropriate
-- **Charts**: Interactive charts with tooltips, legends, and responsive behavior
-- **Form Controls**: Consistent form elements for filters and user inputs
-
-### Responsive Considerations
-
-- Desktop: Multi-column grid layout for dashboard widgets
-- Tablet: Two-column grid with reorganized widgets
-- Mobile: Single column with collapsible sections
-
-## Data Fetching Strategy
-
-We'll implement a robust data fetching strategy using React Query:
-
-```typescript
-// Example hook for occurrence analysis
-export function useOccurrenceAnalysis(
-  params: OccurrenceAnalysisParams,
-  options?: UseQueryOptions<OccurrenceAnalysisData>
-) {
-  return useQuery(
-    ['occurrenceAnalysis', params],
-    () => fetchOccurrenceAnalysis(params),
-    {
-      // Default stale time of 5 minutes
-      staleTime: 5 * 60 * 1000,
-      // Default cache time of 10 minutes
-      cacheTime: 10 * 60 * 1000,
-      // Default retry configuration
-      retry: 2,
-      // Allow options override
-      ...options,
-    }
-  );
-}
-```
-
-### Caching Strategy
-
-- Short stale time (5 minutes) to ensure data is refreshed regularly
-- Longer cache time (10 minutes) to prevent unnecessary refetches
-- Manual invalidation when user actions should trigger a refresh
-
-### Error Handling
-
-Comprehensive error handling for all API requests:
-
-1. Connection errors: Retry with exponential backoff
-2. Server errors (5xx): Display error message with retry button
-3. Client errors (4xx): Display appropriate validation errors
-4. Empty data: Show empty state components with helpful messaging
-
-## Implementation Phases
-
-### Phase 1: Core Framework (Week 1-2)
-
-1. Set up project structure and base components
-2. Implement API integration layer with React Query
-3. Create reusable chart and table components
-4. Build analytics layout and navigation
-
-### Phase 2: Feature Implementation (Week 3-5)
-
-1. **Last Games Analytics**
-   - Implement single and batch query interfaces
-   - Create visualization for time since last occurrence
-   - Build comparison views for different crash point values
-
-2. **Occurrence Analysis**
-   - Implement occurrence statistics for various time frames
-   - Create distribution charts for crash point occurrences
-   - Build detailed tables with filtering and sorting
-
-3. **Series Analysis**
-   - Implement series visualization components
-   - Create timeline view of non-occurrence series
-   - Build detailed series data tables
-
-4. **Intervals Analysis**
-   - Implement time-based and game-set interval components
-   - Create charts for visualizing interval patterns
-   - Build detailed interval data tables
-
-### Phase 3: Refinement and Optimization (Week 6-7)
-
-1. Performance optimization
-   - Implement virtualized lists for large datasets
-   - Optimize chart rendering for better performance
-   - Add data pre-processing for complex visualizations
-
-2. UX Enhancements
-   - Add saved filter presets
-   - Implement export functionality (CSV, PNG)
-   - Add user onboarding tooltips for complex features
-
-3. Testing and QA
-   - Comprehensive testing across browsers and devices
-   - User acceptance testing with stakeholders
-   - Bug fixes and final refinements
-
-## Component Details
-
-### Analytics Dashboard
-
-The main dashboard will feature:
-
-- Summary cards with key metrics
-- Quick filters for time range selection
-- Most important visualizations from each category
-- Navigation to detailed category pages
-
-### Last Games Widget
-
-This widget will allow users to:
-
-- Input specific crash point values to query
-- View the last game that met the criteria
-- See how many games have passed since that occurrence
-- Compare multiple values side by side
-
-Example UI:
+### Project Structure
 
 ```text
-┌─ Last Games Analysis ────────────────────────────┐
-│                                                  │
-│  [Input: 2.0] [Add Value] [Remove] [Batch]       │
-│                                                  │
-│  2.0x                                            │
-│  Last: Game #12345 (3h 15m ago)                  │
-│  Games since: 45                                 │
-│                                                  │
-│  [View Details]                                  │
-└──────────────────────────────────────────────────┘
+/app
+  /analytics               # Analytics page routes
+    page.tsx               # Main analytics dashboard
+    layout.tsx             # Analytics layout with provider
+  /api                     # API route handlers
+    /analytics             # Analytics API routes
+      /last-games          # Last games analysis endpoints
+      /occurrences         # Occurrences analysis endpoints
+      /series              # Series analysis endpoints
+    /games                 # Games data API routes
+
+/components
+  /analytics               # Analytics-specific components
+    /core                  # Core analytics components
+      AnalyticsCard.tsx    # Card component for analytics widgets
+      AnalyticsFilters.tsx # Filters for analytics views
+      AnalyticsLayout.tsx  # Layout component for analytics sections
+    /widgets               # Widget components
+      LastGamesTable.tsx   # Table for "Last Games" analytics
+      OccurrencesTable.tsx # Table for "Occurrences" analytics
+      SeriesWidget.tsx     # Widget for "Series" analytics
+  /games-table             # Game table components
+  /ui                      # Shared UI components (ShadCN)
+  /hooks                   # Legacy hooks folder
+
+/context
+  analytics-context.tsx    # Analytics state management
+
+/hooks
+  /analytics               # Analytics-specific hooks
+    analytics-types.ts     # Type definitions for analytics
+    useBatchLastGames.ts   # Hook for batch last games data
+    useOccurrenceAnalysis.ts  # Hook for occurrence analysis
+    useRealTimeBatchGames.ts  # Real-time batch games updates
+    useRealTimeOccurrences.ts # Real-time occurrences updates
+    useRealTimeSeriesAnalysis.ts # Real-time series analysis
+    useSeriesAnalysis.ts   # Hook for series analysis
+  use-games-data.ts        # Hook for fetching games data
+  use-websocket-games.ts   # Hook for WebSocket game updates
+  use-clipboard.ts         # Utility hook for clipboard operations
+
+/lib
+  api-config.ts            # API configuration
+  utils.ts                 # Utility functions
+
+/models
+  game.ts                  # Game data models and schemas
+
+/utils
+  date-utils.ts            # Date formatting utilities
 ```
 
-### Occurrence Analysis Widget
+## Feature Implementation
 
-This widget will allow users to:
+The analytics dashboard is implemented as a single-page application with tab-based navigation between different analytics views. The current implementation includes three main features:
 
-- Select crash point values to analyze
-- Choose between game count or time duration modes
-- View occurrence statistics with percentage visualization
-- Compare multiple values with bar charts
-- Toggle comparison mode to view period-over-period changes
-- Analyze different comparison metrics based on analysis type (games vs. time)
+### 1. Last Games Analytics
 
-Example UI:
+**Implementation:**
 
-```text
-┌─ Crash Point Occurrence Analysis ─────────────────────────┐
-│                                                           │
-│  [Above Value ▼][Exact Value]   [Compare Icon Toggle]     │
-│  [Input: 2.0] [Add Value]       [Games ▼][Hours]          │
-│                                                           │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │                  Table with columns:                 │  │
-│  │  Crash Point | Occurrences | Change | % | % Change   │  │
-│  │     2.0      |     25      |   +3   | 25%|  +13.6%   │  │
-│  │     3.0      |     15      |   -2   | 15%|   -11.8%  │  │
-│  └─────────────────────────────────────────────────────┘  │
-│                                                           │
-│  Comparison shows change between current and previous     │
-│  Game counts or time periods with color-coded indicators  │
-│                                                           │
-│  [View Details]                                           │
-└───────────────────────────────────────────────────────────┘
-```
+- Located in `components/analytics/widgets/LastGamesTable.tsx`
+- Data fetching with `hooks/analytics/useBatchLastGames.ts` and `useRealTimeBatchGames.ts`
+- Shows when specific crash points last occurred and how many games have passed since
+- Supports real-time updates via WebSocket integration
 
-Advanced features:
-- Game-based analysis uses count_percent_change for comparison
-- Time-based analysis uses percentage_diff for comparison
-- Comparison toggle allows switching between normal and comparison views
-- Data visualization uses color-coded badges to indicate positive/negative changes
+**API Routes:**
 
-### Series Analysis Widget
+- `/api/analytics/last-games/exact-floors`
+- `/api/analytics/last-games/min-crash-points`
 
-This widget will allow users to:
+### 2. Occurrences Analytics
 
-- Select a crash point threshold value
-- View series of games without the specified crash point
-- Sort by time or series length
-- Visualize series on a timeline
+**Implementation:**
 
-Example UI:
+- Located in `components/analytics/widgets/OccurrencesTable.tsx`
+- Data fetching with `hooks/analytics/useOccurrenceAnalysis.ts` and `useRealTimeOccurrences.ts`
+- Provides statistics on how frequently specific crash points occur
+- Supports analysis by game count or time period
+- Includes comparison mode to see changes between periods
 
-```text
-┌─ Non-occurrence Series Analysis ─────────────┐
-│                                              │
-│  [Input: 3.0]       [Sort by: Length ▼]      │
-│  [Last: 1000 Games ▼]                        │
-│                                              │
-│  ┌────────────────────────────────────────┐  │
-│  │     Timeline visualization of series   │  │
-│  └────────────────────────────────────────┘  │
-│                                              │
-│  Longest series without 3.0x or higher:      │
-│  - 32 games (Game #1234 to #1265)            │
-│  - 28 games (Game #765 to #792)              │
-│  - 25 games (Game #432 to #456)              │
-│                                              │
-│  [View All Series]                           │
-└──────────────────────────────────────────────┘
-```
+**API Routes:**
 
-### Intervals Analysis Widget
+- `/api/analytics/occurrences/exact-floors`
+- `/api/analytics/occurrences/exact-floors/time`
+- `/api/analytics/occurrences/min-crash-points`
+- `/api/analytics/occurrences/min-crash-points/time`
 
-This widget will allow users to:
+### 3. Series Analytics
 
-- Select crash point threshold values
-- Choose between time intervals or game set intervals
-- View occurrence patterns across intervals
-- Identify hot and cold periods
+**Implementation:**
 
-Example UI:
+- Located in `components/analytics/widgets/SeriesWidget.tsx`
+- Data fetching with `hooks/analytics/useSeriesAnalysis.ts` and `useRealTimeSeriesAnalysis.ts`
+- Analyzes series of games without specific crash points
+- Visualizes series on a timeline chart
+- Supports sorting by time or series length
 
-```text
-┌─ Intervals Analysis ────────────────────────────┐
-│                                                 │
-│  [Input: 2.0]        [Interval: 10 min ▼]       │
-│  [Last: 24 Hours ▼]                             │
-│                                                 │
-│  ┌───────────────────────────────────────────┐  │
-│  │     Line chart of interval patterns       │  │
-│  └───────────────────────────────────────────┘  │
-│                                                 │
-│  Peak occurrence:                               │
-│  - 13:00-13:10: 6/10 games (60%)                │
-│  - 15:30-15:40: 5/8 games (62.5%)               │
-│                                                 │
-│  [View All Intervals]                           │
-└─────────────────────────────────────────────────┘
-```
+**API Routes:**
 
-## Testing Strategy
+- `/api/analytics/series/without-min-crash-point/[value]`
+- `/api/analytics/series/without-min-crash-point/[value]/time`
 
-### Unit Testing
+### Planned Features
 
-- Test all utility functions for data transformation and calculation
-- Test hook behavior with mock API responses
-- Test component rendering with various data scenarios
+The "Intervals" tab is present in the UI but marked as "coming soon," indicating planned future development.
 
-### Integration Testing
+## Data Management
 
-- Test the interaction between components
-- Test API integration with mock servers
-- Test navigation and filter interactions
+### State Management
 
-### End-to-End Testing
+The application uses a combination of:
 
-- Test critical user flows
-- Test data visualization accuracy
-- Test responsive behavior across device sizes
+1. **Context API**: `context/analytics-context.tsx` provides shared state for analytics components
+2. **Custom Hooks**: Encapsulate API fetching logic and state management
+3. **Component State**: Local state for UI-specific concerns
 
-## Accessibility Considerations
+### Data Fetching Strategy
 
-- All components will follow WAI-ARIA guidelines
-- Color schemes will maintain sufficient contrast ratios
-- Interactive elements will be keyboard navigable
-- Charts will have alternative text representations
+The application uses a custom data fetching approach:
+
+1. **API Routes**: Next.js API routes act as proxies to the backend API
+2. **Custom Hooks**: Encapsulate fetch logic with loading, error, and data states
+3. **Real-time Updates**: WebSocket integration for live data updates
+
+### Real-time Updates
+
+Real-time updates are implemented using:
+
+1. **WebSocket Connection**: Via `react-use-websocket`
+2. **Custom Hooks**: `useRealTimeBatchGames.ts`, `useRealTimeOccurrences.ts`, etc.
+3. **Data Merging**: New data is merged with existing data for smooth UI updates
+
+## UI Components
+
+### Layout
+
+The analytics dashboard uses a responsive layout with:
+
+1. **Tab Navigation**: Switch between different analytics features
+2. **Responsive Grid**: Adapts to different screen sizes
+3. **Card-based Widgets**: Each analysis type is presented in card containers
+
+### Data Visualization
+
+Data is presented through:
+
+1. **Tables**: Using Tanstack React Table for sortable, filterable data
+2. **Charts**: Using Recharts for interactive data visualization
+3. **Badges**: Color-coded indicators for data values and trends
+
+### Form Controls
+
+User inputs are managed through:
+
+1. **Filters**: Common filters for crash point values
+2. **Tabs**: To switch between analysis types
+3. **Inputs**: For numeric values and configuration options
+
+## API Integration
+
+### API Routes
+
+The frontend uses Next.js API routes as proxies to the backend:
+
+1. **Route Handlers**: Located in `/app/api/`
+2. **Error Handling**: Consistent error response format
+3. **Request Validation**: Input validation before forwarding to backend
+
+### Backend Communication
+
+The application communicates with the backend through:
+
+1. **HTTP Requests**: For data fetching and configuration
+2. **WebSocket**: For real-time updates
+3. **API Config**: Centralized in `lib/api-config.ts`
+
+## Responsive Design
+
+The application is designed to be responsive across devices:
+
+1. **Fluid Layout**: Adapts to different screen sizes
+2. **Mobile-friendly Controls**: Touch-friendly UI elements
+3. **Responsive Tables**: Tables adapt to smaller screens
+
+## Future Improvements
+
+Based on the codebase analysis, potential improvements include:
+
+1. **Complete Intervals Feature**: Implement the planned intervals analysis
+2. **Enhanced Visualization**: Add more chart types and visualization options
+3. **Performance Optimization**: For handling larger datasets
+4. **Export Functionality**: Allow exporting analytics data
+5. **User Preferences**: Save and load user filter preferences
+6. **More Comparison Options**: Additional comparative analysis tools
 
 ## Conclusion
 
-This implementation plan provides a comprehensive roadmap for developing the Crash Game Analytics frontend. By following this plan, we will create an intuitive, feature-rich analytics dashboard that helps users extract valuable insights from game data.
-
-The modular approach allows for incremental development and testing, ensuring a robust and maintainable codebase. The use of existing libraries and design system components will ensure consistency with the current application while accelerating the development process.
+The Crash Game Analytics frontend provides a comprehensive set of tools for analyzing game patterns and trends. The modular architecture allows for easy maintenance and extension with new features. The use of modern React patterns and libraries ensures a responsive and interactive user experience.
