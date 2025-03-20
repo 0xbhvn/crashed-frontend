@@ -39,6 +39,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useRealTimeSeriesAnalysis } from '@/hooks/analytics/useRealTimeSeriesAnalysis';
 
+// CSS for pulsing effect
+const pulseKeyframes = `
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse-animation {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+`;
+
 // This is our chart configuration
 const chartConfig = {
 	length: {
@@ -66,6 +82,22 @@ export function SeriesWidget({
 	const [hours, setHours] = React.useState<number>(24);
 	const [hoursInput, setHoursInput] = React.useState(hours.toString());
 	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('games');
+	const [pulseClass, setPulseClass] = React.useState<string>('');
+
+	// Inject pulse animation CSS
+	React.useEffect(() => {
+		// Create style element
+		const styleElement = document.createElement('style');
+		styleElement.innerHTML = pulseKeyframes;
+
+		// Add to document head
+		document.head.appendChild(styleElement);
+
+		// Clean up on unmount
+		return () => {
+			document.head.removeChild(styleElement);
+		};
+	}, []);
 
 	// Update input values when external changes occur
 	React.useEffect(() => {
@@ -189,6 +221,18 @@ export function SeriesWidget({
 			id: index + 1,
 		}));
 	}, [data, sortBy]);
+
+	// Update pulse animation class periodically
+	React.useEffect(() => {
+		if (sortBy !== 'time' || !chartData.length) return;
+
+		// Set initial pulse
+		setPulseClass('pulse-animation');
+
+		return () => {
+			setPulseClass('');
+		};
+	}, [sortBy, chartData]);
 
 	// Get the top series for display
 	const topSeries = React.useMemo(() => {
@@ -473,7 +517,7 @@ export function SeriesWidget({
 											}}
 										/>
 										<Bar dataKey="length">
-											{chartData.map((entry) => {
+											{chartData.map((entry, index) => {
 												// Calculate ratio relative to the value
 												const ratio =
 													entry.length / value;
@@ -496,10 +540,22 @@ export function SeriesWidget({
 													);
 												}
 
+												// Check if this is the latest bar when sorted by time (last item)
+												const isLatestBar =
+													sortBy === 'time' &&
+													index ===
+														chartData.length - 1;
+
+												// Apply class for the latest bar if sorting by time
+												const className = isLatestBar
+													? pulseClass
+													: '';
+
 												return (
 													<Cell
 														key={`cell-${entry.seriesId}`}
 														fill={`hsl(${hue}, 90%, 50%)`}
+														className={className}
 													/>
 												);
 											})}
