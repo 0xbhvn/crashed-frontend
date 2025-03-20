@@ -286,19 +286,36 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		const hourTotal = hourTotals[hourKey];
 		if (!hourTotal) return null;
 
+		// Get the badge color based on percentage
+		const badgeColorClass = getPercentageBadgeColor(
+			hourTotal.percentage,
+			value
+		);
+
 		return (
-			<div className="flex flex-col items-center gap-1">
-				<div className="font-medium text-lg">{hourTotal.count}</div>
-				<Badge
-					className={`${getPercentageBadgeColor(
-						hourTotal.percentage,
-						value
-					)}`}
-				>
-					{hourTotal.percentage.toFixed(1)}%
-				</Badge>
-				<div className="text-xs text-muted-foreground">
-					{hourTotal.totalGames} games
+			<div className="flex items-stretch w-full divide-x divide-border">
+				{/* Left side - Count (larger) */}
+				<div className="flex-1 flex items-center justify-center text-2xl font-medium">
+					{hourTotal.count}
+				</div>
+
+				{/* Right side - Percentage and Total */}
+				<div className="flex-1 flex flex-col items-center divide-y divide-border">
+					{/* Top - Percentage */}
+					<div className="py-1 w-full flex justify-center">
+						<Badge
+							className={`px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}
+						>
+							{hourTotal.percentage.toFixed(1)}%
+						</Badge>
+					</div>
+
+					{/* Bottom - Total games */}
+					<div className="py-1 w-full flex justify-center">
+						<span className="text-xs text-muted-foreground">
+							{hourTotal.totalGames}
+						</span>
+					</div>
 				</div>
 			</div>
 		);
