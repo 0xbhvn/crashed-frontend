@@ -5,7 +5,7 @@ import type { IntervalData } from './analytics-types';
 
 interface UseRealTimeIntervalsAnalysisProps {
 	value: number;
-	intervalMinutes: 10 | 20 | 30 | 60;
+	intervalMinutes: 10 | 15 | 30 | 60;
 	hours?: number;
 }
 

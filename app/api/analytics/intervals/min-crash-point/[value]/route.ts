@@ -28,6 +28,22 @@ export async function GET(
 			);
 		}
 
+		// Validate interval minutes
+		const numericInterval = Number.parseInt(intervalMinutes, 10);
+		if (
+			Number.isNaN(numericInterval) ||
+			![10, 15, 30, 60].includes(numericInterval)
+		) {
+			return NextResponse.json(
+				{
+					status: 'error',
+					message:
+						'Invalid request: interval_minutes must be 10, 15, 30, or 60',
+				},
+				{ status: 400 }
+			);
+		}
+
 		// Construct the API URL
 		const backendUrl = getApiUrl(
 			`analytics/intervals/min-crash-point/${value}`

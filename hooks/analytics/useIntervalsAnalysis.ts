@@ -4,7 +4,7 @@ import type { IntervalData } from './analytics-types';
 
 interface UseIntervalsAnalysisProps {
 	value: number;
-	intervalMinutes: 10 | 20 | 30 | 60;
+	intervalMinutes: 10 | 15 | 30 | 60;
 	hours?: number;
 }
 

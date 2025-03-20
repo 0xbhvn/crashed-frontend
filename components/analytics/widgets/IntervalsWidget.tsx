@@ -14,7 +14,7 @@ import { useRealTimeIntervalsAnalysis } from '@/hooks/analytics/useRealTimeInter
 import { AnalyticsCard } from '../core/AnalyticsCard';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import type {
@@ -26,8 +26,8 @@ interface IntervalsWidgetProps {
 	className?: string;
 }
 
-const INTERVAL_DURATIONS = [10, 20, 30, 60] as const;
-type IntervalDuration = (typeof INTERVAL_DURATIONS)[number];
+const INTERVAL_OPTIONS = [10, 15, 30] as const;
+type IntervalDuration = (typeof INTERVAL_OPTIONS)[number];
 
 export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 	// Value for analysis (crash point)
@@ -281,6 +281,29 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		return totals;
 	}, [gridData]);
 
+	// Format hour total
+	const formatHourTotal = (hourKey: string) => {
+		const hourTotal = hourTotals[hourKey];
+		if (!hourTotal) return null;
+
+		return (
+			<div className="flex flex-col items-center gap-1">
+				<div className="font-medium text-lg">{hourTotal.count}</div>
+				<Badge
+					className={`${getPercentageBadgeColor(
+						hourTotal.percentage,
+						value
+					)}`}
+				>
+					{hourTotal.percentage.toFixed(1)}%
+				</Badge>
+				<div className="text-xs text-muted-foreground">
+					{hourTotal.totalGames} games
+				</div>
+			</div>
+		);
+	};
+
 	// Render content
 	const renderContent = () => {
 		if (error) {
@@ -343,25 +366,26 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 							<span className="text-sm font-medium whitespace-nowrap">
 								Interval
 							</span>
-							<div className="flex gap-1">
-								{INTERVAL_DURATIONS.map((duration) => (
-									<Button
-										key={duration}
-										variant={
-											selectedInterval === duration
-												? 'default'
-												: 'outline'
-										}
-										size="sm"
-										onClick={() =>
-											setSelectedInterval(duration)
-										}
-										className="h-8 px-2"
-									>
-										{duration}m
-									</Button>
-								))}
-							</div>
+							<Tabs
+								value={selectedInterval.toString()}
+								onValueChange={(value) =>
+									setSelectedInterval(
+										Number(value) as IntervalDuration
+									)
+								}
+							>
+								<TabsList className="grid w-[180px] grid-cols-3 bg-muted/50 p-0.5">
+									{INTERVAL_OPTIONS.map((duration) => (
+										<TabsTrigger
+											key={duration}
+											value={duration.toString()}
+											className="data-[state=active]:bg-black data-[state=active]:text-white"
+										>
+											{duration}m
+										</TabsTrigger>
+									))}
+								</TabsList>
+							</Tabs>
 						</div>
 					</div>
 				</div>
@@ -454,60 +478,10 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		);
 	};
 
-	// Format hour total data
-	const formatHourTotal = (hourKey: string) => {
-		const hourTotal = hourTotals[hourKey];
-
-		if (!hourTotal || hourTotal.totalGames === 0) {
-			return (
-				<div className="text-center text-muted-foreground text-sm">
-					-
-				</div>
-			);
-		}
-
-		// Get the badge color based on percentage
-		const badgeColorClass = getPercentageBadgeColor(
-			hourTotal.percentage,
-			value
-		);
-
-		return (
-			<div className="flex flex-col w-full">
-				{/* Content - Same layout as interval cells */}
-				<div className="flex items-stretch w-full divide-x divide-border">
-					{/* Left side - Count (larger) */}
-					<div className="flex-1 flex items-center justify-center text-2xl font-medium">
-						{hourTotal.count}
-					</div>
-
-					{/* Right side - Percentage and Total */}
-					<div className="flex-1 flex flex-col items-center divide-y divide-border">
-						{/* Top - Percentage */}
-						<div className="py-1 w-full flex justify-center">
-							<Badge
-								className={`px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}
-							>
-								{hourTotal.percentage.toFixed(1)}%
-							</Badge>
-						</div>
-
-						{/* Bottom - Total games */}
-						<div className="py-1 w-full flex justify-center">
-							<span className="text-xs text-muted-foreground">
-								{hourTotal.totalGames}
-							</span>
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	};
-
 	return (
 		<AnalyticsCard
 			title="Intervals Analysis"
-			description={`Crash points occurrence patterns in time intervals (≥ ${value}x)`}
+			description={`Games with crash point below ${value}x by time interval`}
 			className={className}
 		>
 			{renderContent()}
