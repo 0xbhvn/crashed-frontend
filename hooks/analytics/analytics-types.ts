@@ -71,3 +71,19 @@ export function isGameAboveCrashPoint(
 ): boolean {
 	return game.crashPoint >= crashPoint;
 }
+
+// Interval data structure
+export interface IntervalData {
+	interval_start: string;
+	interval_end: string;
+	count: number;
+	total_games: number;
+	percentage: number;
+}
+
+// Organized grid data for intervals
+export interface IntervalGridData {
+	[hour: string]: {
+		[intervalMinutes: string]: IntervalData;
+	};
+}

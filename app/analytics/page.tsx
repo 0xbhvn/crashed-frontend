@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LastGamesTable } from '@/components/analytics/widgets/LastGamesTable';
 import { OccurrencesTable } from '@/components/analytics/widgets/OccurrencesTable';
 import { SeriesWidget } from '@/components/analytics/widgets/SeriesWidget';
+import { IntervalsWidget } from '@/components/analytics/widgets/IntervalsWidget';
 
 export default function AnalyticsPage() {
 	const [activeTab, setActiveTab] = useState<string>('streaks');
@@ -68,11 +69,11 @@ export default function AnalyticsPage() {
 					{activeTab === 'occurrences' && (
 						<OccurrencesTable className="w-full" />
 					)}
-					{activeTab === 'series' && <SeriesWidget />}
+					{activeTab === 'series' && (
+						<SeriesWidget className="w-full" />
+					)}
 					{activeTab === 'interval' && (
-						<div className="w-full text-center p-12 border rounded-md">
-							Intervals view coming soon
-						</div>
+						<IntervalsWidget className="w-full" />
 					)}
 				</div>
 			</main>
