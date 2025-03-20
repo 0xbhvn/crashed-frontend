@@ -178,18 +178,33 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		}
 
 		return (
-			<div className="flex flex-col items-center gap-1">
-				<Badge
-					className={cn(
-						'px-2.5 py-0.5 font-semibold',
-						getPercentageBadgeColor(data.percentage)
-					)}
-				>
-					{data.percentage.toFixed(1)}%
-				</Badge>
-				<span className="text-xs text-muted-foreground">
-					{data.count}/{data.total_games}
-				</span>
+			<div className="flex items-stretch w-full divide-x divide-border">
+				{/* Left side - Count (larger) */}
+				<div className="flex-1 flex items-center justify-center text-2xl">
+					{data.count}
+				</div>
+
+				{/* Right side - Percentage and Total */}
+				<div className="flex-1 flex flex-col items-center divide-y divide-border">
+					{/* Top - Percentage */}
+					<div className="py-1 w-full flex justify-center">
+						<Badge
+							className={cn(
+								'px-2 py-0.5 text-xs font-semibold',
+								getPercentageBadgeColor(data.percentage)
+							)}
+						>
+							{data.percentage.toFixed(1)}%
+						</Badge>
+					</div>
+
+					{/* Bottom - Total games */}
+					<div className="py-1 w-full flex justify-center">
+						<span className="text-xs text-muted-foreground">
+							{data.total_games}
+						</span>
+					</div>
+				</div>
 			</div>
 		);
 	};
@@ -280,7 +295,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 				</div>
 
 				<div className="rounded-md border overflow-x-auto">
-					<Table>
+					<Table className="border-collapse [&_td]:border [&_th]:border [&_td]:border-border [&_th]:border-border">
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-20 text-center border-r">
