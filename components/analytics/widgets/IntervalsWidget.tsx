@@ -32,8 +32,8 @@ type IntervalDuration = (typeof INTERVAL_DURATIONS)[number];
 
 export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 	// Value for analysis (crash point)
-	const [value, setValue] = useState<number>(2.0);
-	const [inputValue, setInputValue] = useState<string>('2.0');
+	const [value, setValue] = useState<number>(10);
+	const [inputValue, setInputValue] = useState<string>('10');
 
 	// Analysis parameters
 	const [selectedInterval, setSelectedInterval] =
@@ -111,8 +111,15 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		const numValue = Number.parseFloat(inputValue);
 		if (!Number.isNaN(numValue) && numValue > 0) {
 			setValue(numValue);
+			// Update input display to show integers without decimal places if it's a whole number
+			setInputValue(
+				numValue % 1 === 0 ? numValue.toFixed(0) : numValue.toString()
+			);
 		} else {
-			setInputValue(value.toString());
+			// Format the value display based on whether it's an integer or decimal
+			setInputValue(
+				value % 1 === 0 ? value.toFixed(0) : value.toString()
+			);
 		}
 	};
 
@@ -180,7 +187,7 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		return (
 			<div className="flex items-stretch w-full divide-x divide-border">
 				{/* Left side - Count (larger) */}
-				<div className="flex-1 flex items-center justify-center text-2xl">
+				<div className="flex-1 flex items-center justify-center text-xl">
 					{data.count}
 				</div>
 
