@@ -39,6 +39,16 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useRealTimeSeriesAnalysis } from '@/hooks/analytics/useRealTimeSeriesAnalysis';
+import { ExportButton } from '@/components/export-button';
+import type { ExportConfig } from '@/components/analytics/ExportTypes';
+import type {
+	ExcelExportConfig,
+	ExcelColumnDefinition,
+} from '@/utils/export-utils/excel';
+import type {
+	HtmlChartConfig,
+	ChartDefinition,
+} from '@/utils/export-utils/chart-html';
 
 // CSS for pulsing effect
 const pulseKeyframes = `
@@ -441,6 +451,377 @@ export function SeriesWidget({
 		}));
 	}, [data, sortBy]);
 
+	// Current export configuration
+	const currentConfig: ExportConfig = React.useMemo(
+		() => ({
+			value,
+			analyzeBy: activeDataMode,
+			limit,
+			hours,
+			sortBy,
+			showCircles,
+		}),
+		[value, activeDataMode, limit, hours, sortBy, showCircles]
+	);
+
+	// Generate Excel export configuration
+	const getExcelConfig =
+		React.useCallback(async (): Promise<ExcelExportConfig> => {
+			// Get the data using the existing hook's data or refreshing if needed
+			let seriesData =
+				activeDataMode === 'games' ? gamesData.data : timeData.data;
+
+			// If no data is available, try to refresh
+			if (!seriesData || seriesData.length === 0) {
+				const api = activeDataMode === 'games' ? gamesData : timeData;
+				await api.refreshData();
+				seriesData =
+					activeDataMode === 'games' ? gamesData.data : timeData.data;
+			}
+
+			// Transform data for export
+			const exportData = seriesData.map((series) => ({
+				length: series.length,
+				seriesId: `${series.start_game_id}-${series.end_game_id}`,
+				startGameId: series.start_game_id,
+				endGameId: series.end_game_id,
+				startTime: new Date(series.start_time),
+				endTime: new Date(series.end_time),
+				followCount: series.follow_streak?.count || 0,
+				followGames:
+					series.follow_streak?.games?.map((game) =>
+						typeof game === 'object' && game !== null
+							? `#${game.game_id || 'unknown'}@${
+									game.crash_point?.toFixed(2) || '?.??'
+							  }x`
+							: String(game)
+					) || [],
+			}));
+
+			// Define columns for the main sheet
+			const mainColumns: ExcelColumnDefinition[] = [
+				{ header: 'Length (games)', key: 'length', width: 15 },
+				{
+					header: 'Start Game',
+					key: 'startGameId',
+					width: 15,
+					formatter: (value) => `#${value}`,
+				},
+				{
+					header: 'End Game',
+					key: 'endGameId',
+					width: 15,
+					formatter: (value) => `#${value}`,
+				},
+				{
+					header: 'Start Time',
+					key: 'startTime',
+					width: 20,
+					formatter: (value) =>
+						format(value as Date, 'MMM d, yyyy h:mm a'),
+				},
+				{
+					header: 'End Time',
+					key: 'endTime',
+					width: 20,
+					formatter: (value) =>
+						format(value as Date, 'MMM d, yyyy h:mm a'),
+				},
+				{
+					header: 'Follow Streak Count',
+					key: 'followCount',
+					width: 18,
+				},
+			];
+
+			// Create configuration for Excel export
+			const excelConfig: ExcelExportConfig = {
+				fileName: `series_analysis_${format(
+					new Date(),
+					'yyyyMMdd_HHmmss'
+				)}.xlsx`,
+				creator: 'Crash Game Analytics',
+				sheets: [
+					{
+						name: 'Series Data',
+						columns: mainColumns,
+						data: exportData,
+						autoFilter: true,
+						freezeHeader: true,
+					},
+					// Add instructions sheet
+					{
+						name: 'Chart Instructions',
+						columns: [
+							{
+								header: 'Instructions',
+								key: 'instructions',
+								width: 60,
+							},
+						],
+						data: [
+							{
+								instructions:
+									'Series Length Chart Instructions',
+							},
+							{ instructions: '' },
+							{ instructions: 'To create a chart in Excel:' },
+							{
+								instructions:
+									'1. Select all data in the Series Data sheet',
+							},
+							{ instructions: '2. Go to the Insert tab' },
+							{
+								instructions:
+									'3. Click on the Column or Bar chart option',
+							},
+							{ instructions: '4. Select a chart style' },
+							{ instructions: '' },
+							{ instructions: 'For Series Length chart:' },
+							{
+								instructions:
+									'- Use "Length (games)" column for values',
+							},
+							{
+								instructions:
+									'- Use "Start Game" column for categories',
+							},
+							{ instructions: '' },
+							{ instructions: 'For Follow Streak chart:' },
+							{
+								instructions:
+									'- Use "Follow Streak Count" column for values',
+							},
+							{
+								instructions:
+									'- Use "Start Game" column for categories',
+							},
+						],
+						autoFilter: false,
+						freezeHeader: false,
+					},
+				],
+			};
+
+			// Add follow games sheet if needed
+			if (currentConfig.showCircles) {
+				// Flatten follow games data
+				const followGamesData = [];
+				for (const series of exportData) {
+					if (series.followGames && series.followGames.length > 0) {
+						for (const game of series.followGames) {
+							// Split game data (format is typically "#GAMEID@CRASHPOINTx")
+							const parts = String(game).split('@');
+							const gameId = parts[0];
+							const crashPoint = parts.length > 1 ? parts[1] : '';
+
+							followGamesData.push({
+								series: `${series.startGameId}-${series.endGameId}`,
+								gameId: gameId,
+								crashPoint: crashPoint,
+							});
+						}
+					}
+				}
+
+				// Add follow games sheet
+				excelConfig.sheets.push({
+					name: 'Follow Games',
+					columns: [
+						{ header: 'Series', key: 'series', width: 25 },
+						{ header: 'Game ID', key: 'gameId', width: 15 },
+						{ header: 'Crash Point', key: 'crashPoint', width: 15 },
+					],
+					data:
+						followGamesData.length > 0
+							? followGamesData
+							: [
+									{
+										series: 'No follow games data available',
+										gameId: '',
+										crashPoint: '',
+									},
+							  ],
+					autoFilter: true,
+					freezeHeader: true,
+				});
+			}
+
+			// Add configuration sheet
+			excelConfig.sheets.push({
+				name: 'Configuration',
+				columns: [
+					{ header: 'Parameter', key: 'parameter', width: 20 },
+					{ header: 'Value', key: 'value', width: 15 },
+				],
+				data: [
+					{ parameter: 'Crash Point', value: currentConfig.value },
+					{
+						parameter: 'Analysis Mode',
+						value:
+							currentConfig.analyzeBy === 'games'
+								? 'Games'
+								: 'Hours',
+					},
+					{ parameter: 'Games Limit', value: currentConfig.limit },
+					{ parameter: 'Hours', value: currentConfig.hours },
+					{
+						parameter: 'Sort By',
+						value:
+							currentConfig.sortBy === 'time' ? 'Time' : 'Length',
+					},
+					{
+						parameter: 'Show Follow Games',
+						value: currentConfig.showCircles ? 'Yes' : 'No',
+					},
+				],
+				autoFilter: false,
+				freezeHeader: true,
+			});
+
+			return excelConfig;
+		}, [currentConfig, gamesData, timeData, activeDataMode]);
+
+	// Generate HTML chart configuration
+	const getChartConfig =
+		React.useCallback(async (): Promise<HtmlChartConfig> => {
+			// Use the same data as Excel export
+			let seriesData =
+				activeDataMode === 'games' ? gamesData.data : timeData.data;
+
+			// If no data is available, try to refresh
+			if (!seriesData || seriesData.length === 0) {
+				const api = activeDataMode === 'games' ? gamesData : timeData;
+				await api.refreshData();
+				seriesData =
+					activeDataMode === 'games' ? gamesData.data : timeData.data;
+			}
+
+			// Transform data for charts
+			const exportData = seriesData.map((series) => ({
+				length: series.length,
+				seriesId: `${series.start_game_id}-${series.end_game_id}`,
+				startGameId: series.start_game_id,
+				endGameId: series.end_game_id,
+				startTime: new Date(series.start_time),
+				endTime: new Date(series.end_time),
+				followCount: series.follow_streak?.count || 0,
+			}));
+
+			// Extract data for charts
+			const seriesLengths = exportData.map((item) => item.length);
+			const seriesIds = exportData.map(
+				(item) => `${item.startGameId}-${item.endGameId}`
+			);
+			const followCounts = exportData.map((item) => item.followCount);
+
+			// Define series length chart
+			const lengthChart: ChartDefinition = {
+				id: 'lengthChart',
+				title: 'Series Length Chart',
+				type: 'bar',
+				labels: seriesIds,
+				datasets: [
+					{
+						label: 'Series Length (games)',
+						data: seriesLengths,
+						backgroundColor: 'rgba(54, 162, 235, 0.7)',
+						borderColor: 'rgba(54, 162, 235, 1)',
+						borderWidth: 1,
+					},
+				],
+				xAxisTitle: 'Series ID',
+				yAxisTitle: 'Length (games)',
+			};
+
+			// Define follow streak chart
+			const followChart: ChartDefinition = {
+				id: 'followChart',
+				title: 'Follow Streak Count Chart',
+				type: 'bar',
+				labels: seriesIds,
+				datasets: [
+					{
+						label: 'Follow Streak Count',
+						data: followCounts,
+						backgroundColor: 'rgba(255, 159, 64, 0.7)',
+						borderColor: 'rgba(255, 159, 64, 1)',
+						borderWidth: 1,
+					},
+				],
+				xAxisTitle: 'Series ID',
+				yAxisTitle: 'Count',
+			};
+
+			// Build HTML chart config
+			const htmlConfig: HtmlChartConfig = {
+				title: `Series Analysis for Crash Point ${currentConfig.value}x`,
+				configTable: {
+					entries: [
+						{
+							parameter: 'Crash Point',
+							value: currentConfig.value,
+						},
+						{
+							parameter: 'Analysis Mode',
+							value:
+								currentConfig.analyzeBy === 'games'
+									? 'Games'
+									: 'Hours',
+						},
+						{
+							parameter:
+								currentConfig.analyzeBy === 'games'
+									? 'Games Limit'
+									: 'Hours',
+							value:
+								currentConfig.analyzeBy === 'games'
+									? currentConfig.limit
+									: currentConfig.hours,
+						},
+						{
+							parameter: 'Sort By',
+							value:
+								currentConfig.sortBy === 'time'
+									? 'Time'
+									: 'Length',
+						},
+						{
+							parameter: 'Show Follow Games',
+							value: currentConfig.showCircles ? 'Yes' : 'No',
+						},
+					],
+				},
+				charts: [lengthChart, followChart],
+				dataTable: {
+					columns: [
+						{ header: 'Series', key: 'seriesId' },
+						{ header: 'Length (games)', key: 'length' },
+						{
+							header: 'Start Time',
+							key: 'startTime',
+							formatter: (value) =>
+								format(value as Date, 'MMM d, yyyy h:mm a'),
+						},
+						{
+							header: 'End Time',
+							key: 'endTime',
+							formatter: (value) =>
+								format(value as Date, 'MMM d, yyyy h:mm a'),
+						},
+						{ header: 'Follow Count', key: 'followCount' },
+					],
+					data: exportData,
+				},
+				fileName: `series_charts_${format(
+					new Date(),
+					'yyyyMMdd_HHmmss'
+				)}.html`,
+			};
+
+			return htmlConfig;
+		}, [currentConfig, gamesData, timeData, activeDataMode]);
+
 	// Update pulse animation class periodically
 	React.useEffect(() => {
 		if (sortBy !== 'time' || !chartData.length) return;
@@ -526,10 +907,13 @@ export function SeriesWidget({
 								/>
 							</div>
 						</div>
+
+						{/* Combined controls box for sort by and follow circles */}
 						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<div className="flex items-center border border-border rounded-md h-8 px-2">
+							<div className="flex items-center border border-border rounded-md h-8 px-2 gap-2">
+								{/* Sort by toggle */}
+								<Tooltip>
+									<TooltipTrigger asChild>
 										<Button
 											variant="ghost"
 											size="icon"
@@ -542,22 +926,20 @@ export function SeriesWidget({
 												<ArrowDownWideNarrow className="h-4 w-4 text-muted-foreground" />
 											)}
 										</Button>
-									</div>
-								</TooltipTrigger>
-								<TooltipContent>
-									<p>
-										Sort By:{' '}
-										{sortBy === 'time' ? 'Time' : 'Length'}
-									</p>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>
+											Sort By:{' '}
+											{sortBy === 'time'
+												? 'Time'
+												: 'Length'}
+										</p>
+									</TooltipContent>
+								</Tooltip>
 
-						{/* Add new toggle for circles visibility */}
-						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<div className="flex items-center border border-border rounded-md h-8 px-2">
+								{/* Follow circles toggle */}
+								<Tooltip>
+									<TooltipTrigger asChild>
 										<Button
 											variant="ghost"
 											size="icon"
@@ -570,16 +952,22 @@ export function SeriesWidget({
 												<EyeOff className="h-4 w-4 text-muted-foreground" />
 											)}
 										</Button>
-									</div>
-								</TooltipTrigger>
-								<TooltipContent>
-									<p>
-										Follow Circles:{' '}
-										{showCircles ? 'ON' : 'OFF'}
-									</p>
-								</TooltipContent>
-							</Tooltip>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>
+											Follow Circles:{' '}
+											{showCircles ? 'ON' : 'OFF'}
+										</p>
+									</TooltipContent>
+								</Tooltip>
+							</div>
 						</TooltipProvider>
+
+						{/* Excel Export Button using the new generic component */}
+						<ExportButton
+							getExcelConfig={getExcelConfig}
+							getChartConfig={getChartConfig}
+						/>
 					</div>
 
 					<div className="flex items-center gap-3">
