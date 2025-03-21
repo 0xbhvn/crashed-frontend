@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LastGamesTable } from '@/components/analytics/widgets/LastGamesTable';
-import { OccurrencesTable } from '@/components/analytics/widgets/OccurrencesTable';
-import { SeriesWidget } from '@/components/analytics/widgets/SeriesWidget';
-import { IntervalsWidget } from '@/components/analytics/widgets/IntervalsWidget';
+import {
+	LastGamesTable,
+	OccurrencesTable,
+	IntervalsWidget,
+} from '@/components/analytics/widgets';
+import { SeriesWidget } from '@/components/analytics/widgets';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AnalyticsPage() {
