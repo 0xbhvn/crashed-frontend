@@ -46,11 +46,11 @@ export function ThemeToggle() {
 							className="h-6 w-6 p-0"
 						>
 							{theme === 'system' ? (
-								<Monitor className="h-4 w-4 text-muted-foreground" />
+								<Monitor className="h-4 w-4 text-foreground" />
 							) : theme === 'dark' ? (
-								<Moon className="h-4 w-4 text-muted-foreground" />
+								<Moon className="h-4 w-4 text-foreground" />
 							) : (
-								<Sun className="h-4 w-4 text-muted-foreground" />
+								<Sun className="h-4 w-4 text-foreground" />
 							)}
 						</Button>
 					</div>

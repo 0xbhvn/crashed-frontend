@@ -58,13 +58,6 @@ export function IntervalsControls({
 						step="0.1"
 					/>
 				</div>
-
-				{/* Export Button */}
-				<ExportButton
-					getExcelConfig={getExcelConfig}
-					getChartConfig={getChartConfig}
-					className="h-8 w-8 ml-2"
-				/>
 			</div>
 
 			<div className="flex items-center gap-3">
@@ -110,6 +103,13 @@ export function IntervalsControls({
 						</TabsList>
 					</Tabs>
 				</div>
+
+				{/* Export Button */}
+				<ExportButton
+					getExcelConfig={getExcelConfig}
+					getChartConfig={getChartConfig}
+					className="h-8 w-8"
+				/>
 			</div>
 		</div>
 	);

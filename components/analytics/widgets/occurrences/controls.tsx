@@ -89,13 +89,6 @@ export function Controls({
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
-
-				{/* Export Button */}
-				<ExportButton
-					getExcelConfig={getExcelConfig}
-					getChartConfig={getChartConfig}
-					className="h-8 w-8"
-				/>
 			</div>
 
 			<div className="flex items-center gap-3">
@@ -143,6 +136,13 @@ export function Controls({
 						</TabsTrigger>
 					</TabsList>
 				</Tabs>
+
+				{/* Export Button */}
+				<ExportButton
+					getExcelConfig={getExcelConfig}
+					getChartConfig={getChartConfig}
+					className="h-8 w-8"
+				/>
 			</div>
 		</div>
 	);

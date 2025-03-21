@@ -16,9 +16,11 @@ import {
 	PageSizeSelector,
 } from './pagination-context';
 import { CopyButton } from '@/components/copy-button';
+import { ExportButton } from '@/components/export-button';
 import { Wifi, WifiOff, RefreshCw, RefreshCwOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import type { ExcelExportConfig } from '@/utils/export-utils/excel';
 
 interface TableControlsHeaderProps {
 	apiData: ApiResponse | null;
@@ -42,6 +44,8 @@ interface TableControlsHeaderProps {
 	// New props for crash point threshold
 	crashPointThreshold?: number;
 	onCrashPointThresholdChange?: (threshold: number) => void;
+	// Export data function
+	getExcelConfig?: () => Promise<ExcelExportConfig>;
 }
 
 export function TableControlsHeader({
@@ -66,6 +70,8 @@ export function TableControlsHeader({
 	// New crash point threshold props
 	crashPointThreshold = 10.0,
 	onCrashPointThresholdChange = () => {},
+	// Export function
+	getExcelConfig,
 }: TableControlsHeaderProps) {
 	// Keep a ref to the provider update function
 	const providerUpdateRef = useRef<((data: ApiResponse) => void) | null>(
@@ -280,6 +286,14 @@ export function TableControlsHeader({
 											showTextLabel={false}
 											externalCopySuccess={copySuccess}
 										/>
+
+										{/* Export button */}
+										{getExcelConfig && (
+											<ExportButton
+												getExcelConfig={getExcelConfig}
+												className="h-8 w-8 ml-1"
+											/>
+										)}
 									</div>
 								</div>
 							</div>

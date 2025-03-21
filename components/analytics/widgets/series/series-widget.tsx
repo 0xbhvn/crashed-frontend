@@ -44,7 +44,7 @@ export function SeriesWidget({
 	const [hoursInput, setHoursInput] = React.useState(hours.toString());
 	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('games');
 	const [pulseClass, setPulseClass] = React.useState<string>('');
-	const [showCircles, setShowCircles] = React.useState<boolean>(false);
+	const [showCircles, setShowCircles] = React.useState<boolean>(true);
 
 	// Track which data set to display (separate from the tab state)
 	const [activeDataMode, setActiveDataMode] = React.useState<
@@ -677,7 +677,6 @@ export function SeriesWidget({
 					hours={hours}
 					hoursInput={hoursInput}
 					sortBy={sortBy}
-					isLoading={isLoading}
 					showCircles={showCircles}
 					onValueInputChange={handleValueInputChange}
 					onLimitInputChange={handleLimitInputChange}

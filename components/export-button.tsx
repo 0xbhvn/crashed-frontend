@@ -81,7 +81,7 @@ export function ExportButton({
 				<div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
 			) : (
 				<>
-					<DownloadIcon className="h-4 w-4 text-muted-foreground" />
+					<DownloadIcon className="h-4 w-4 text-foreground" />
 					{buttonLabel && <span className="ml-2">{buttonLabel}</span>}
 				</>
 			)}

@@ -26,7 +26,6 @@ export interface SeriesControlsProps {
 	hours: number;
 	hoursInput: string;
 	sortBy: 'time' | 'length';
-	isLoading: boolean;
 	showCircles: boolean;
 	onValueInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	onLimitInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -52,7 +51,6 @@ export function SeriesControls({
 	limitInput,
 	hoursInput,
 	sortBy,
-	isLoading,
 	showCircles,
 	onValueInputChange,
 	onLimitInputChange,
@@ -89,7 +87,6 @@ export function SeriesControls({
 					</div>
 				</div>
 
-				{/* Combined controls box for sort by and follow circles */}
 				<TooltipProvider>
 					<div className="flex items-center border border-border rounded-md h-8 px-2 gap-2">
 						{/* Sort by toggle */}
@@ -140,12 +137,6 @@ export function SeriesControls({
 						</Tooltip>
 					</div>
 				</TooltipProvider>
-
-				{/* Excel Export Button using the new generic component */}
-				<ExportButton
-					getExcelConfig={getExcelConfig}
-					getChartConfig={getChartConfig}
-				/>
 			</div>
 
 			<div className="flex items-center gap-3">
@@ -180,19 +171,24 @@ export function SeriesControls({
 						<TabsTrigger
 							value="games"
 							className="data-[state=active]:bg-black data-[state=active]:text-white"
-							disabled={isLoading && analyzeBy === 'time'}
 						>
 							Games
 						</TabsTrigger>
 						<TabsTrigger
 							value="time"
 							className="data-[state=active]:bg-black data-[state=active]:text-white"
-							disabled={isLoading && analyzeBy === 'games'}
 						>
 							Hours
 						</TabsTrigger>
 					</TabsList>
 				</Tabs>
+
+				{/* Excel Export Button using the new generic component */}
+				<ExportButton
+					getExcelConfig={getExcelConfig}
+					getChartConfig={getChartConfig}
+					className="h-8 w-8"
+				/>
 			</div>
 		</div>
 	);
