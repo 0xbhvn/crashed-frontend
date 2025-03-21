@@ -33,7 +33,7 @@ export function OccurrencesTable({ className }: BaseWidgetProps) {
 	const [limitInput, setLimitInput] = useState(limit.toString());
 	const [hours, setHours] = useState(24);
 	const [hoursInput, setHoursInput] = useState(hours.toString());
-	const [showComparison, setShowComparison] = useState(false);
+	const [showComparison, setShowComparison] = useState(true);
 
 	// Update input values when limit/hours change externally
 	useEffect(() => {
