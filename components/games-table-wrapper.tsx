@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { GamesTable } from '@/components/games-table';
-import { useGamesData } from '@/hooks/use-games-data';
+import { useGamesData } from '@/hooks/useGamesData';
 import { toast } from 'sonner';
 
 export default function GamesTableWrapper() {

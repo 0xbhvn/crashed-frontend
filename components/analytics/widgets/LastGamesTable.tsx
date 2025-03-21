@@ -9,7 +9,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { useRealTimeBatchGames } from '@/hooks/analytics/useRealTimeBatchGames';
+import { useRealTimeBatchGames } from '@/hooks/analytics';
 import { AnalyticsCard } from '../core/AnalyticsCard';
 import { Badge } from '@/components/ui/badge';
 import { formatDuration, intervalToDuration, format } from 'date-fns';

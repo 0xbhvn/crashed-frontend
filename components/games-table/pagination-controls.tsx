@@ -1,6 +1,6 @@
 'use client';
 
-import { usePagination } from '@/components/hooks/use-pagination';
+import { usePagination } from '@/hooks/usePagination';
 import { Button } from '@/components/ui/button';
 import {
 	Pagination,

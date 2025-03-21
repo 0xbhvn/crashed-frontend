@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ApiResponseSchema, createEmptyResponse } from '@/models/game';
 import type { ApiResponse, Game } from '@/models/game';
 import type { SortingState } from '@tanstack/react-table';
-import { useWebSocketGames } from './use-websocket-games';
+import { useWebSocketGames } from './useWebsocketGames';
 
 interface UseGamesDataProps {
 	initialPage?: number;

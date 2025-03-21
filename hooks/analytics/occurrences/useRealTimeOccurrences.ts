@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useOccurrenceAnalysis } from './useOccurrenceAnalysis';
 import { useAnalytics } from '@/context/analytics-context';
-import type { OccurrencesData } from '../../utils/analytics-types';
+import type { OccurrencesData } from '@/utils/analytics-types';
 
 interface UseRealTimeOccurrencesProps {
 	values: number[];

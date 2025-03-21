@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useIntervalsAnalysis } from './useIntervalsAnalysis';
 import { useAnalytics } from '@/context/analytics-context';
-import type { IntervalData } from '../../utils/analytics-types';
+import type { IntervalData } from '@/utils/analytics-types';
 
 interface UseRealTimeIntervalsAnalysisProps {
 	value: number;

@@ -38,7 +38,7 @@ import {
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { useRealTimeSeriesAnalysis } from '@/hooks/analytics/useRealTimeSeriesAnalysis';
+import { useRealTimeSeriesAnalysis } from '@/hooks/analytics';
 import { ExportButton } from '@/components/export-button';
 import type { ExportConfig } from '@/utils/export-utils';
 import type {

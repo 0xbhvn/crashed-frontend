@@ -5,7 +5,7 @@ import { getApiHeaders } from '@/lib/api-config';
 import type {
 	BatchLastGamesData,
 	ApiGameResponse,
-} from '../../utils/analytics-types';
+} from '@/utils/analytics-types';
 
 interface UseBatchLastGamesProps {
 	values: number[];

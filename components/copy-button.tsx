@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
 import type { Row } from '@tanstack/react-table';
 import type { Game } from '@/models/game';
-import { useClipboard } from '@/hooks/use-clipboard';
+import { useClipboard } from '@/hooks/useClipboard';
 import { useEffect, useCallback, useState } from 'react';
 import {
 	Tooltip,

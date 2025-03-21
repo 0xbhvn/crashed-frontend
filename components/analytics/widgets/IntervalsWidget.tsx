@@ -10,7 +10,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { useRealTimeIntervalsAnalysis } from '@/hooks/analytics/useRealTimeIntervalsAnalysis';
+import { useRealTimeIntervalsAnalysis } from '@/hooks/analytics';
 import { AnalyticsCard } from '../core/AnalyticsCard';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';

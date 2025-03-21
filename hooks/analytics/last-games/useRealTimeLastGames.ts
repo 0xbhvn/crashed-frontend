@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useBatchLastGames } from './useBatchLastGames';
+import { useBatchLastGames } from './useLastGames';
 import { useAnalytics } from '@/context/analytics-context';
-import type { BatchLastGamesData } from '../../utils/analytics-types';
+import type { BatchLastGamesData } from '@/utils/analytics-types';
 
 interface UseRealTimeBatchGamesProps {
 	values: number[];

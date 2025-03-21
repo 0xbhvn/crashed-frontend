@@ -23,8 +23,8 @@ import {
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-import type { UseGamesDataReturn } from '@/hooks/use-games-data';
-import { useClipboard } from '@/hooks/use-clipboard';
+import type { UseGamesDataReturn } from '@/hooks/useGamesData';
+import { useClipboard } from '@/hooks/useClipboard';
 import { columns } from './columns';
 import { TableSkeleton } from './table-skeleton';
 import { TableControlsHeader } from './table-controls-header';

@@ -8,7 +8,7 @@ import React, {
 	useRef,
 } from 'react';
 import type { ReactNode } from 'react';
-import { useWebSocketGames } from '@/hooks/use-websocket-games';
+import { useWebSocketGames } from '@/hooks/useWebsocketGames';
 import type { Game } from '@/models/game';
 
 interface AnalyticsContextType {
