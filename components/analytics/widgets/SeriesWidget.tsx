@@ -724,24 +724,64 @@ export function SeriesWidget({
 																{item.length}{' '}
 																games
 															</p>
-															<p className="text-xs">
-																Games:{' '}
-																{item.seriesId}
-															</p>
-															<p className="text-xs">
-																Start:{' '}
-																{format(
-																	item.startTime,
-																	'MMM d, yyyy HH:mm'
-																)}
-															</p>
-															<p className="text-xs">
-																End:{' '}
-																{format(
-																	item.endTime,
-																	'MMM d, yyyy HH:mm'
-																)}
-															</p>
+															<div className="rounded overflow-hidden border border-border/30 mt-2">
+																<table className="w-full">
+																	<tbody>
+																		<tr className="bg-muted/30">
+																			<td className="px-2 py-1 font-medium">
+																				Start
+																				Game
+																			</td>
+																			<td className="px-2 py-1 text-right">
+																				#
+																				{
+																					item.seriesId.split(
+																						'-'
+																					)[0]
+																				}
+																			</td>
+																		</tr>
+																		<tr>
+																			<td className="px-2 py-1 font-medium">
+																				End
+																				Game
+																			</td>
+																			<td className="px-2 py-1 text-right">
+																				#
+																				{
+																					item.seriesId.split(
+																						'-'
+																					)[1]
+																				}
+																			</td>
+																		</tr>
+																		<tr className="bg-muted/30">
+																			<td className="px-2 py-1 font-medium">
+																				Start
+																				Time
+																			</td>
+																			<td className="px-2 py-1 text-right">
+																				{format(
+																					item.startTime,
+																					'MMM d, yyyy HH:mm'
+																				)}
+																			</td>
+																		</tr>
+																		<tr>
+																			<td className="px-2 py-1 font-medium">
+																				End
+																				Time
+																			</td>
+																			<td className="px-2 py-1 text-right">
+																				{format(
+																					item.endTime,
+																					'MMM d, yyyy HH:mm'
+																				)}
+																			</td>
+																		</tr>
+																	</tbody>
+																</table>
+															</div>
 															{item.followCount >
 																0 && (
 																<>
@@ -907,7 +947,7 @@ export function SeriesWidget({
 									: `Most recent series without ${value}x or higher:`}
 							</h4>
 							<div className="overflow-x-auto">
-								<table className="w-1/2 text-sm">
+								<table className="w-full text-sm">
 									<thead>
 										<tr className="border-b">
 											<th className="text-left font-medium pb-2">
@@ -918,6 +958,12 @@ export function SeriesWidget({
 											</th>
 											<th className="text-left font-medium pb-2">
 												End Game
+											</th>
+											<th className="text-left font-medium pb-2">
+												Start Time
+											</th>
+											<th className="text-left font-medium pb-2">
+												End Time
 											</th>
 											<th className="text-left font-medium pb-2">
 												Follow Streak
@@ -938,6 +984,22 @@ export function SeriesWidget({
 												</td>
 												<td className="py-2">
 													#{series.end_game_id}
+												</td>
+												<td className="py-2">
+													{format(
+														new Date(
+															series.start_time
+														),
+														'MMM d, yyyy HH:mm'
+													)}
+												</td>
+												<td className="py-2">
+													{format(
+														new Date(
+															series.end_time
+														),
+														'MMM d, yyyy HH:mm'
+													)}
 												</td>
 												<td className="py-2">
 													{series.follow_streak
