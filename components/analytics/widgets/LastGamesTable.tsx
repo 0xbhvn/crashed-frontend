@@ -24,18 +24,13 @@ import type {
 } from '@/utils/export-utils/excel';
 import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
 import { generateLastGamesHtmlConfig } from '@/utils/export-utils/lastgames-html';
+import {
+	CURRENT_STREAK_POINTS,
+	UNIQUE_STREAK_POINTS,
+	type BaseWidgetProps,
+} from '@/utils/export-utils/types';
 
-interface LastGamesTableProps {
-	className?: string;
-}
-
-// Min crash points (current streak) - all values
-const CURRENT_STREAK_POINTS = [
-	2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 40, 50, 100, 150, 200, 500, 1000,
-];
-
-// Exact crash points (unique streak) - only 2-10
-const UNIQUE_STREAK_POINTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+type LastGamesTableProps = BaseWidgetProps;
 
 // All crash points for API requests
 const ALL_CRASH_POINTS = [

@@ -17,6 +17,22 @@ export type {
 	TableColumn,
 } from '@/utils/export-utils/chart-html';
 
+// Shared constants for streak points used in LastGamesTable and OccurrencesTable
+export const CURRENT_STREAK_POINTS = [
+	2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 40, 50, 100, 150, 200, 500, 1000,
+];
+
+export const UNIQUE_STREAK_POINTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+// Interval durations used in the IntervalsWidget
+export const INTERVAL_OPTIONS = [10, 15, 30] as const;
+export type IntervalDuration = (typeof INTERVAL_OPTIONS)[number];
+
+// Common pattern for all widget and table component props
+export interface BaseWidgetProps {
+	className?: string;
+}
+
 // Keep the SeriesExportData type for backward compatibility
 export interface SeriesExportData {
 	length: number;

@@ -6,7 +6,7 @@ import type {
 	OccurrencesData,
 	OccurrenceData,
 	OccurrenceComparisonData,
-} from './analytics-types';
+} from '../../utils/analytics-types';
 
 interface UseOccurrenceAnalysisProps {
 	values: number[];

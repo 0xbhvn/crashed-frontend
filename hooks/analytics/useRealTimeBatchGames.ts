@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useBatchLastGames } from './useBatchLastGames';
 import { useAnalytics } from '@/context/analytics-context';
-import type { BatchLastGamesData } from './analytics-types';
+import type { BatchLastGamesData } from '../../utils/analytics-types';
 
 interface UseRealTimeBatchGamesProps {
 	values: number[];

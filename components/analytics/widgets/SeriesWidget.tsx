@@ -40,7 +40,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useRealTimeSeriesAnalysis } from '@/hooks/analytics/useRealTimeSeriesAnalysis';
 import { ExportButton } from '@/components/export-button';
-import type { ExportConfig } from '@/components/analytics/ExportTypes';
+import type { ExportConfig } from '@/utils/export-utils';
 import type {
 	ExcelExportConfig,
 	ExcelColumnDefinition,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getApiHeaders } from '@/lib/api-config';
-import type { IntervalData } from './analytics-types';
+import type { IntervalData } from '../../utils/analytics-types';
 
 interface UseIntervalsAnalysisProps {
 	value: number;

@@ -17,10 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import type {
-	IntervalData,
-	IntervalGridData,
-} from '@/hooks/analytics/analytics-types';
+import type { IntervalData, IntervalGridData } from '@/utils/analytics-types';
 import { ExportButton } from '@/components/export-button';
 import type {
 	ExcelExportConfig,
@@ -28,15 +25,16 @@ import type {
 } from '@/utils/export-utils/excel';
 import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
 import { generateIntervalsHtmlConfig } from '@/utils/export-utils/intervals-html';
+import type {
+	BaseWidgetProps,
+	IntervalDuration,
+} from '@/utils/export-utils/types';
+import { INTERVAL_OPTIONS } from '@/utils/export-utils/types';
 
-interface IntervalsWidgetProps {
-	className?: string;
-}
+// const INTERVAL_OPTIONS = [10, 15, 30] as const;
+// type IntervalDuration = (typeof INTERVAL_OPTIONS)[number];
 
-const INTERVAL_OPTIONS = [10, 15, 30] as const;
-type IntervalDuration = (typeof INTERVAL_OPTIONS)[number];
-
-export function IntervalsWidget({ className }: IntervalsWidgetProps) {
+export function IntervalsWidget({ className }: BaseWidgetProps) {
 	// Value for analysis (crash point)
 	const [value, setValue] = useState<number>(10);
 	const [inputValue, setInputValue] = useState<string>('10');

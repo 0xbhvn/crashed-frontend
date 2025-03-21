@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import type { OccurrenceComparisonData } from '@/hooks/analytics/analytics-types';
+import type { OccurrenceComparisonData } from '@/utils/analytics-types';
 import { Button } from '@/components/ui/button';
 import {
 	Tooltip,
@@ -39,25 +39,18 @@ import type {
 import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
 import { generateOccurrencesHtmlConfig } from '@/utils/export-utils/occurrences-html';
 import { format } from 'date-fns';
-
-interface OccurrencesTableProps {
-	className?: string;
-}
-
-// Min crash points (current streak) - all values
-const CURRENT_STREAK_POINTS = [
-	2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 40, 50, 100, 150, 200, 500, 1000,
-];
-
-// Exact crash points (unique streak) - only 1-10
-const UNIQUE_STREAK_POINTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+import type { BaseWidgetProps } from '@/utils/export-utils/types';
+import {
+	CURRENT_STREAK_POINTS,
+	UNIQUE_STREAK_POINTS,
+} from '@/utils/export-utils/types';
 
 // All crash points for API requests
 const ALL_CRASH_POINTS = [
 	...new Set([...CURRENT_STREAK_POINTS, ...UNIQUE_STREAK_POINTS]),
 ];
 
-export function OccurrencesTable({ className }: OccurrencesTableProps) {
+export function OccurrencesTable({ className }: BaseWidgetProps) {
 	// State variables for component
 	const [selectedType, setSelectedType] = useState<'current' | 'unique'>(
 		'current'

@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getApiHeaders } from '@/lib/api-config';
-import type { BatchLastGamesData, ApiGameResponse } from './analytics-types';
+import type {
+	BatchLastGamesData,
+	ApiGameResponse,
+} from '../../utils/analytics-types';
 
 interface UseBatchLastGamesProps {
 	values: number[];
