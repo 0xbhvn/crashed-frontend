@@ -666,7 +666,7 @@ export function SeriesWidget({
 												) {
 													return format(
 														value,
-														'HH:mm'
+														'h:mm a'
 													);
 												}
 												return sortBy === 'length'
@@ -763,7 +763,7 @@ export function SeriesWidget({
 																			<td className="px-2 py-1 text-right">
 																				{format(
 																					item.startTime,
-																					'MMM d, yyyy HH:mm'
+																					'MMM d, yyyy h:mm a'
 																				)}
 																			</td>
 																		</tr>
@@ -775,7 +775,7 @@ export function SeriesWidget({
 																			<td className="px-2 py-1 text-right">
 																				{format(
 																					item.endTime,
-																					'MMM d, yyyy HH:mm'
+																					'MMM d, yyyy h:mm a'
 																				)}
 																			</td>
 																		</tr>
@@ -990,7 +990,7 @@ export function SeriesWidget({
 														new Date(
 															series.start_time
 														),
-														'MMM d, yyyy HH:mm'
+														'MMM d, yyyy h:mm a'
 													)}
 												</td>
 												<td className="py-2">
@@ -998,7 +998,7 @@ export function SeriesWidget({
 														new Date(
 															series.end_time
 														),
-														'MMM d, yyyy HH:mm'
+														'MMM d, yyyy h:mm a'
 													)}
 												</td>
 												<td className="py-2">
