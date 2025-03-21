@@ -255,6 +255,38 @@ export function SeriesWidget({
 	const [pulseClass, setPulseClass] = React.useState<string>('');
 	const [showCircles, setShowCircles] = React.useState<boolean>(false);
 
+	// Track which data set to display (separate from the tab state)
+	const [activeDataMode, setActiveDataMode] = React.useState<
+		'games' | 'time'
+	>('games');
+
+	// Use separate API calls for games and hours modes
+	const gamesData = useRealTimeSeriesAnalysis({
+		value,
+		analyzeBy: 'games',
+		limit,
+		sortBy,
+	});
+
+	const timeData = useRealTimeSeriesAnalysis({
+		value,
+		analyzeBy: 'time',
+		hours,
+		sortBy,
+	});
+
+	// Determine which data to use based on activeDataMode
+	const { data, isLoading, error, totalOccurrences } = React.useMemo(() => {
+		return activeDataMode === 'games' ? gamesData : timeData;
+	}, [activeDataMode, gamesData, timeData]);
+
+	// Update activeDataMode when analyzeBy changes, but only after loading completes
+	React.useEffect(() => {
+		if (!isLoading) {
+			setActiveDataMode(analyzeBy);
+		}
+	}, [analyzeBy, isLoading]);
+
 	// Inject pulse animation CSS
 	React.useEffect(() => {
 		// Create style element
@@ -294,7 +326,9 @@ export function SeriesWidget({
 		const parsedValue = Number.parseFloat(inputValue);
 		if (!Number.isNaN(parsedValue) && parsedValue > 0) {
 			setValue(parsedValue);
-			refreshData(); // Refresh data when value changes
+			// Refresh both data sources when value changes
+			gamesData.refreshData();
+			timeData.refreshData();
 		} else {
 			// Reset to current value if invalid
 			setInputValue(value.toString());
@@ -313,7 +347,8 @@ export function SeriesWidget({
 		// Ensure limit is within valid range and is a number
 		if (!Number.isNaN(newLimit) && newLimit >= 100 && newLimit <= 10000) {
 			setLimit(newLimit);
-			refreshData(); // Refresh data when limit changes
+			// Only refresh games data when limit changes
+			gamesData.refreshData();
 		} else {
 			// Reset to current limit if invalid
 			setLimitInput(limit.toString());
@@ -332,7 +367,8 @@ export function SeriesWidget({
 		// Ensure hours is within valid range and is a number
 		if (!Number.isNaN(newHours) && newHours >= 1 && newHours <= 168) {
 			setHours(newHours);
-			refreshData(); // Refresh data when hours changes
+			// Only refresh time data when hours changes
+			timeData.refreshData();
 		} else {
 			// Reset to current hours if invalid
 			setHoursInput(hours.toString());
@@ -352,23 +388,15 @@ export function SeriesWidget({
 	// Toggle sort mode
 	const toggleSortMode = () => {
 		setSortBy(sortBy === 'time' ? 'length' : 'time');
-		refreshData(); // Refresh data when sort mode changes
+		// Refresh both data sources when sort mode changes
+		gamesData.refreshData();
+		timeData.refreshData();
 	};
 
 	// Toggle circles visibility
 	const toggleCirclesVisibility = () => {
 		setShowCircles(!showCircles);
 	};
-
-	// Use real-time hook to fetch series data
-	const { data, isLoading, error, refreshData, totalOccurrences } =
-		useRealTimeSeriesAnalysis({
-			value,
-			analyzeBy,
-			limit,
-			hours,
-			sortBy,
-		});
 
 	// Format data for the chart
 	const chartData = React.useMemo(() => {
@@ -447,6 +475,15 @@ export function SeriesWidget({
 		// If odd number of items, take middle item
 		return sortedLengths[middle];
 	}, [chartData]);
+
+	// Function to handle tab change properly
+	const handleTabChange = (value: string) => {
+		const newAnalyzeBy = value as 'games' | 'time';
+		if (newAnalyzeBy !== analyzeBy) {
+			// Just update the tab state, actual data switch happens after loading
+			setAnalyzeBy(newAnalyzeBy);
+		}
+	};
 
 	return (
 		<Card className={cn('w-full', className)}>
@@ -575,22 +612,22 @@ export function SeriesWidget({
 						<Tabs
 							defaultValue="games"
 							value={analyzeBy}
-							onValueChange={(value) => {
-								setAnalyzeBy(value as 'games' | 'time');
-								// Refresh data when switching between games/time tabs
-								refreshData();
-							}}
+							onValueChange={handleTabChange}
 						>
 							<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
 								<TabsTrigger
 									value="games"
 									className="data-[state=active]:bg-black data-[state=active]:text-white"
+									disabled={isLoading && analyzeBy === 'time'}
 								>
 									Games
 								</TabsTrigger>
 								<TabsTrigger
 									value="time"
 									className="data-[state=active]:bg-black data-[state=active]:text-white"
+									disabled={
+										isLoading && analyzeBy === 'games'
+									}
 								>
 									Hours
 								</TabsTrigger>
