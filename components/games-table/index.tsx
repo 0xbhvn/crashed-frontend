@@ -53,7 +53,7 @@ export function GamesTable({
 	onAutoRefreshToggle = () => {},
 	newGamesCount = 0,
 	onRefreshClick = () => {},
-	crashPointThreshold = 10,
+	crashPointThreshold = 10.0,
 	onCrashPointThresholdChange = () => {},
 }: GamesTableProps) {
 	// Use the passed hook

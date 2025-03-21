@@ -70,7 +70,7 @@ export function SeriesControls({
 	return (
 		<div className="flex justify-between items-center mb-4">
 			<div className="flex items-center gap-3">
-				<div className="flex items-center text-sm text-muted-foreground">
+				<div className="flex items-center text-sm text-foreground">
 					<span className="mr-2">Crash Point</span>
 					<div className="w-16">
 						<Input
@@ -84,7 +84,7 @@ export function SeriesControls({
 							min="1"
 							step="0.1"
 							aria-label="Crash point value"
-							className="text-center h-7 px-2 py-1 [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+							className="text-center h-7 px-2 py-1 text-foreground [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 						/>
 					</div>
 				</div>
@@ -102,9 +102,9 @@ export function SeriesControls({
 									className="h-6 w-6 p-0"
 								>
 									{sortBy === 'time' ? (
-										<Clock className="h-4 w-4 text-muted-foreground" />
+										<Clock className="h-4 w-4 text-foreground" />
 									) : (
-										<ArrowDownWideNarrow className="h-4 w-4 text-muted-foreground" />
+										<ArrowDownWideNarrow className="h-4 w-4 text-foreground" />
 									)}
 								</Button>
 							</TooltipTrigger>
@@ -126,7 +126,7 @@ export function SeriesControls({
 									className="h-6 w-6 p-0"
 								>
 									{showCircles ? (
-										<Eye className="h-4 w-4 text-muted-foreground" />
+										<Eye className="h-4 w-4 text-foreground" />
 									) : (
 										<EyeOff className="h-4 w-4 text-muted-foreground" />
 									)}
@@ -153,7 +153,7 @@ export function SeriesControls({
 					<Input
 						id="limit"
 						type="number"
-						className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+						className="w-24 h-8 text-sm text-foreground [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 						value={limitInput}
 						onChange={onLimitInputChange}
 						onBlur={applyLimitChange}
@@ -163,7 +163,7 @@ export function SeriesControls({
 					<Input
 						id="hours"
 						type="number"
-						className="w-24 h-8 text-sm [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+						className="w-24 h-8 text-sm text-foreground [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 						value={hoursInput}
 						onChange={onHoursInputChange}
 						onBlur={applyHoursChange}

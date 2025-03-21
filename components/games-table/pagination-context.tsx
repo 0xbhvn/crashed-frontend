@@ -317,24 +317,55 @@ export const PageSizeSelector = React.memo(function PageSizeSelector({
 	compact?: boolean;
 }) {
 	const { perPage, setPerPage } = usePaginationContext();
+	const [sizeInput, setSizeInput] = React.useState(perPage.toString());
+
+	// Handle input changes
+	const handleSizeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setSizeInput(e.target.value);
+	};
+
+	// Apply size change
+	const applySizeChange = () => {
+		const newSize = Number.parseInt(sizeInput, 10);
+		if (!Number.isNaN(newSize) && newSize >= 10 && newSize <= 1000) {
+			setPerPage(newSize);
+		} else {
+			// Reset to current value if invalid
+			setSizeInput(perPage.toString());
+		}
+	};
+
+	// Handle key down for input
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === 'Enter') {
+			applySizeChange();
+		}
+	};
+
+	// Update input when perPage changes
+	React.useEffect(() => {
+		setSizeInput(perPage.toString());
+	}, [perPage]);
 
 	return (
 		<div className={compact ? 'flex-initial' : 'flex flex-1 justify-end'}>
-			<select
-				className="h-8 w-fit rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-				value={perPage}
-				onChange={(e) => setPerPage(Number(e.target.value))}
-				aria-label="Results per page"
-			>
-				{[10, 25, 50, 100].map((size) => (
-					<option
-						key={size}
-						value={size}
-					>
-						{size} / page
-					</option>
-				))}
-			</select>
+			<div className="flex items-center text-sm text-foreground">
+				<span className="mr-2">Games</span>
+				<div className="w-20">
+					<input
+						type="number"
+						value={sizeInput}
+						onChange={handleSizeInputChange}
+						onBlur={applySizeChange}
+						onKeyDown={handleKeyDown}
+						min="10"
+						max="1000"
+						step="10"
+						aria-label="Results per page"
+						className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-sm text-center text-foreground [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+					/>
+				</div>
+			</div>
 		</div>
 	);
 });

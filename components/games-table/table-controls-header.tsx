@@ -64,7 +64,7 @@ export function TableControlsHeader({
 	newGamesCount = 0,
 	onRefreshClick = () => {},
 	// New crash point threshold props
-	crashPointThreshold = 10,
+	crashPointThreshold = 10.0,
 	onCrashPointThresholdChange = () => {},
 }: TableControlsHeaderProps) {
 	// Keep a ref to the provider update function
@@ -101,39 +101,57 @@ export function TableControlsHeader({
 
 	// Add a component for the crash point threshold selector
 	const CrashPointThresholdSelector = () => {
+		// Add state for the input value
+		const [thresholdInput, setThresholdInput] = React.useState(
+			crashPointThreshold.toString()
+		);
+
+		// Handle input changes
+		const handleThresholdInputChange = (
+			e: React.ChangeEvent<HTMLInputElement>
+		) => {
+			setThresholdInput(e.target.value);
+		};
+
+		// Apply threshold change
+		const applyThresholdChange = () => {
+			const newThreshold = Number.parseFloat(thresholdInput);
+			if (!Number.isNaN(newThreshold) && newThreshold > 0) {
+				onCrashPointThresholdChange(newThreshold);
+			} else {
+				// Reset to current value if invalid
+				setThresholdInput(crashPointThreshold.toString());
+			}
+		};
+
+		// Handle key down for input
+		const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === 'Enter') {
+				applyThresholdChange();
+			}
+		};
+
+		// Update input when threshold changes
+		React.useEffect(() => {
+			setThresholdInput(crashPointThreshold.toString());
+		}, [crashPointThreshold]);
+
 		return (
-			<div className="flex-initial ml-2">
-				<select
-					className="h-8 w-fit rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-					value={crashPointThreshold}
-					onChange={(e) =>
-						onCrashPointThresholdChange(Number(e.target.value))
-					}
-					aria-label="Crash point threshold"
-				>
-					{/* Options 1-10 individually */}
-					{Array.from({ length: 10 }, (_, i) => i + 1).map(
-						(value) => (
-							<option
-								key={value}
-								value={value}
-							>
-								CP ≥ {value}
-							</option>
-						)
-					)}
-					{/* Higher options with larger increments */}
-					{[15, 20, 30, 40, 50, 100, 150, 200, 500, 1000].map(
-						(value) => (
-							<option
-								key={value}
-								value={value}
-							>
-								CP ≥ {value}
-							</option>
-						)
-					)}
-				</select>
+			<div className="flex-initial ml-2 flex items-center text-sm text-foreground">
+				<span className="mr-2">Crash point</span>
+				<div className="w-16">
+					<input
+						type="number"
+						value={thresholdInput}
+						onChange={handleThresholdInputChange}
+						onBlur={applyThresholdChange}
+						onKeyDown={handleKeyDown}
+						min="1"
+						step="0.1"
+						aria-label="Crash point threshold"
+						className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-sm text-center text-foreground [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+					/>
+				</div>
 			</div>
 		);
 	};
