@@ -34,6 +34,17 @@ export function getPercentageBadgeColor(
 	return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'; // Above threshold
 }
 
+// Get text color class for change values
+export function getChangeTextColor(change: number): string {
+	if (change > 0) {
+		return 'text-green-600 dark:text-green-400';
+	}
+	if (change < 0) {
+		return 'text-red-600 dark:text-red-400';
+	}
+	return 'text-gray-600 dark:text-gray-400';
+}
+
 // Function to get comparison badge color based on change percentage
 export function getComparisonBadgeColor(changePercent: number): string {
 	if (changePercent > 0) {
@@ -43,6 +54,17 @@ export function getComparisonBadgeColor(changePercent: number): string {
 		return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'; // Negative change
 	}
 	return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'; // No change
+}
+
+// Get text color class for comparison percentage
+export function getComparisonTextColor(changePercent: number): string {
+	if (changePercent > 0) {
+		return 'text-green-600 dark:text-green-400';
+	}
+	if (changePercent < 0) {
+		return 'text-red-600 dark:text-red-400';
+	}
+	return 'text-gray-600 dark:text-gray-400';
 }
 
 // Get change indicator symbol

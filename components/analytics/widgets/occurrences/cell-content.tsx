@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils';
 import {
 	getPercentageBadgeColor,
 	getChangeSymbol,
-	getComparisonBadgeColor,
+	getChangeTextColor,
+	getComparisonTextColor,
 	formatCrashPoint,
 } from './utils';
 import { ArrowDownIcon, ArrowUpIcon, ArrowDownUpIcon } from 'lucide-react';
@@ -42,7 +43,7 @@ export function RegularCell({
 				<td className="px-2 py-1.5">
 					<Badge
 						className={cn(
-							'px-2 py-0.5 text-xs font-semibold',
+							'px-2.5 py-0.5 text-xs font-semibold',
 							getPercentageBadgeColor(
 								percentage,
 								point,
@@ -67,7 +68,7 @@ export function RegularCell({
 			<td className="px-2 py-1.5">
 				<Badge
 					className={cn(
-						'px-2 py-0.5 text-xs font-semibold',
+						'px-2.5 py-0.5 text-xs font-semibold',
 						getPercentageBadgeColor(0, point, selectedType)
 					)}
 				>
@@ -99,7 +100,7 @@ export function ComparisonCell({
 				<td className="px-2 py-1.5">
 					<Badge
 						className={cn(
-							'px-2 py-0.5 text-xs font-semibold',
+							'px-2.5 py-0.5 text-xs font-semibold',
 							getPercentageBadgeColor(0, point, selectedType)
 						)}
 					>
@@ -121,24 +122,20 @@ export function ComparisonCell({
 			</td>
 			<td className="px-2 py-1.5">{currentData.count}</td>
 			<td className="px-2 py-1.5">
-				<Badge
+				<span
 					className={cn(
-						'px-2 py-0.5 text-xs font-semibold',
-						comparison.count_diff > 0
-							? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-							: comparison.count_diff < 0
-							? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-							: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+						'text-sm font-medium',
+						getChangeTextColor(comparison.count_diff)
 					)}
 				>
 					{getChangeSymbol(comparison.count_diff)}
 					{comparison.count_diff}
-				</Badge>
+				</span>
 			</td>
 			<td className="px-2 py-1.5">
 				<Badge
 					className={cn(
-						'px-2 py-0.5 text-xs font-semibold',
+						'px-2.5 py-0.5 text-xs font-semibold',
 						getPercentageBadgeColor(
 							currentData.percentage,
 							point,
@@ -150,30 +147,28 @@ export function ComparisonCell({
 				</Badge>
 			</td>
 			<td className="px-2 py-1.5">
-				<Badge
+				<span
 					className={cn(
-						'px-2 py-0.5 text-xs font-semibold',
-						getComparisonBadgeColor(
+						'text-sm font-medium flex items-center',
+						getComparisonTextColor(
 							analyzeBy === 'games'
 								? comparison.count_percent_change
 								: comparison.percentage_diff
 						)
 					)}
 				>
-					<span className="flex items-center">
-						{getPercentChangeIcon(
-							analyzeBy === 'games'
-								? comparison.count_percent_change
-								: comparison.percentage_diff
-						)}
-						{Math.abs(
-							analyzeBy === 'games'
-								? comparison.count_percent_change
-								: comparison.percentage_diff
-						).toFixed(2)}
-						%
-					</span>
-				</Badge>
+					{getPercentChangeIcon(
+						analyzeBy === 'games'
+							? comparison.count_percent_change
+							: comparison.percentage_diff
+					)}
+					{Math.abs(
+						analyzeBy === 'games'
+							? comparison.count_percent_change
+							: comparison.percentage_diff
+					).toFixed(2)}
+					%
+				</span>
 			</td>
 		</React.Fragment>
 	);
@@ -195,7 +190,7 @@ export function EmptyCell({
 			<td className="px-2 py-1.5">
 				<Badge
 					className={cn(
-						'px-2 py-0.5 text-xs font-semibold',
+						'px-2.5 py-0.5 text-xs font-semibold',
 						getPercentageBadgeColor(0, point, selectedType)
 					)}
 				>

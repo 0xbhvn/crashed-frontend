@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { Game } from '@/models/game';
 import { formatDate, calculateDuration } from '@/utils/date-utils';
+import { Badge } from '@/components/ui/badge';
 
 // Define an interface for the extended table state
 interface ExtendedTableState {
@@ -41,10 +42,10 @@ export const columns: ColumnDef<Game>[] = [
 				(typeof rawValue === 'number' && !Number.isFinite(rawValue))
 			) {
 				return (
-					<div className="rounded font-semibold px-2 py-0.5 bg-yellow-600/20 text-yellow-600 dark:bg-yellow-800/30 dark:text-yellow-400 flex items-center gap-1">
+					<Badge className="font-semibold px-2.5 py-0.5 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 flex items-center gap-1">
 						<AlertTriangle size={12} />
 						<span>Invalid</span>
-					</div>
+					</Badge>
 				);
 			}
 
@@ -55,24 +56,24 @@ export const columns: ColumnDef<Game>[] = [
 
 			if (Number.isNaN(value)) {
 				return (
-					<div className="rounded font-semibold px-2 py-0.5 bg-yellow-600/20 text-yellow-600 dark:bg-yellow-800/30 dark:text-yellow-400 flex items-center gap-1">
+					<Badge className="font-semibold px-2.5 py-0.5 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 flex items-center gap-1">
 						<AlertTriangle size={12} />
 						<span>Invalid</span>
-					</div>
+					</Badge>
 				);
 			}
 
 			return (
-				<div
+				<Badge
 					className={cn(
-						'rounded font-semibold px-2 py-0.5 inline-block',
+						'font-semibold px-2.5 py-0.5',
 						value < threshold
-							? 'bg-red-600/20 text-red-600 dark:bg-red-800/30 dark:text-red-400'
-							: 'bg-green-600/20 text-green-600 dark:bg-green-800/30 dark:text-green-400'
+							? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+							: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
 					)}
 				>
 					{value.toFixed(2)}
-				</div>
+				</Badge>
 			);
 		},
 	},

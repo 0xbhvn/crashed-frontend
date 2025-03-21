@@ -76,7 +76,7 @@ export function IntervalsTable({
 					{/* Top - Percentage */}
 					<div className="py-1 w-full flex justify-center">
 						<Badge
-							className={`px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}
+							className={`px-2.5 py-0.5 text-xs font-semibold ${badgeColorClass}`}
 						>
 							{data.percentage.toFixed(1)}%
 						</Badge>
@@ -116,7 +116,7 @@ export function IntervalsTable({
 					{/* Top - Percentage */}
 					<div className="py-1 w-full flex justify-center">
 						<Badge
-							className={`px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}
+							className={`px-2.5 py-0.5 text-xs font-semibold ${badgeColorClass}`}
 						>
 							{hourTotal.percentage.toFixed(1)}%
 						</Badge>
