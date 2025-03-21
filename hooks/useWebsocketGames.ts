@@ -63,19 +63,11 @@ export function useWebSocketGames(): UseWebSocketGamesResult {
 
 					// Handle message based on type field
 					if (validatedMessage.type === 'connection_established') {
-						console.log(
-							'Connection confirmed:',
-							validatedMessage.message
-						);
+						// Connection message handled silently
 					} else if (
 						validatedMessage.type === 'new_game' ||
 						validatedMessage.type === 'game_update'
 					) {
-						console.log(
-							`WebSocket received ${validatedMessage.type}:`,
-							validatedMessage.data.gameId
-						);
-
 						// Add the new game to the list
 						setNewGames((prevGames) => {
 							// Check if the game already exists in our list
@@ -86,31 +78,19 @@ export function useWebSocketGames(): UseWebSocketGamesResult {
 
 							// If the game doesn't exist, add it to the list
 							if (!gameExists) {
-								console.log(
-									`Adding new game to WebSocket buffer: ${validatedMessage.data.gameId}`
-								);
 								return [validatedMessage.data, ...prevGames];
 							}
 
 							// If the game exists, update it
-							console.log(
-								`Updating existing game in WebSocket buffer: ${validatedMessage.data.gameId}`
-							);
 							return prevGames.map((game) =>
 								game.gameId === validatedMessage.data.gameId
 									? validatedMessage.data
 									: game
 							);
 						});
-					} else {
-						console.log('Unknown message type:', validatedMessage);
 					}
 				} else {
-					console.warn(
-						'Invalid WebSocket message format:',
-						parsedData,
-						result.error.format()
-					);
+					console.warn('Invalid WebSocket message format');
 				}
 			} catch (error) {
 				console.error('Error processing WebSocket message:', error);

@@ -50,23 +50,13 @@ export default function GamesTableWrapper() {
 	// Sync the perPage state whenever it changes in the hook
 	useEffect(() => {
 		if (perPage !== currentPerPage) {
-			console.log(
-				`Syncing perPage from hook: ${perPage} (current: ${currentPerPage})`
-			);
 			setCurrentPerPage(perPage);
 		}
 	}, [perPage, currentPerPage]);
 
-	// Update the hook's enableRealtime setting when autoRefresh changes
-	useEffect(() => {
-		// This ensures the hook's enableRealtime setting stays in sync with autoRefresh
-		console.log(`Auto-refresh ${autoRefresh ? 'enabled' : 'disabled'}`);
-	}, [autoRefresh]);
-
 	// Handle refresh button click - just update games without forcing re-render
 	const handleRefresh = useCallback(() => {
 		if (newGamesCount > 0) {
-			console.log(`Incorporating ${newGamesCount} new games into table`);
 			incorporateNewGames();
 
 			// Simplified toast message

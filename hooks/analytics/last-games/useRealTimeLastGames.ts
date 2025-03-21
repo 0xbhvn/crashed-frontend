@@ -35,7 +35,6 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 	// Initialize local data with API data
 	useEffect(() => {
 		if (apiData && !localData) {
-			console.log('⭐ Initial data loaded from API');
 			setLocalData(apiData);
 		}
 	}, [apiData, localData]);
@@ -75,7 +74,6 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 
 			// Update local data only if there are changes
 			if (hasChanges) {
-				console.log('📊 Silently updating data with API changes');
 				setLocalData(updatedData);
 			}
 		}
@@ -88,11 +86,6 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 		// Skip if we've already processed this game
 		if (lastProcessedGameRef.current === latestGame.gameId) {
 			return;
-		}
-
-		// Only log when developer tools are open
-		if (typeof window !== 'undefined' && window.console && console.debug) {
-			console.debug(`Silent data refresh for game ${latestGame.gameId}`);
 		}
 
 		// Prevent excessive API calls (at most once every 2 seconds)

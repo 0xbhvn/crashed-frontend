@@ -70,10 +70,6 @@ export function useBatchLastGames({
 			const minPointsData = await minPointsResponse.json();
 			const exactFloorsData = await exactFloorsResponse.json();
 
-			// Log raw API responses for debugging
-			console.log('Min points raw data:', minPointsData);
-			console.log('Exact floors raw data:', exactFloorsData);
-
 			// Check for error status in the responses
 			if (minPointsData.status === 'error') {
 				throw new Error(
@@ -127,7 +123,6 @@ export function useBatchLastGames({
 				};
 			}
 
-			console.log('Processed batch data:', processedData);
 			setData(processedData);
 		} catch (err) {
 			console.error('Error fetching batch data:', err);

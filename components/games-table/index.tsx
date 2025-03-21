@@ -103,22 +103,6 @@ export function GamesTable({
 		getRowId: (row) => row.gameId,
 	});
 
-	// Log table data for debugging
-	useEffect(() => {
-		if (apiData) {
-			console.log(
-				`Table rendering with ${apiData.data.length} rows (expected: ${perPage})`
-			);
-			// Log the first few game IDs to help debugging
-			if (apiData.data.length > 0) {
-				console.log(
-					'First games in table:',
-					apiData.data.slice(0, 3).map((game) => game.gameId)
-				);
-			}
-		}
-	}, [apiData, perPage]);
-
 	// Extract the copy to clipboard handler for direct call
 	const handleCopyData = () =>
 		copyTableDataToClipboard(table.getRowModel().rows);

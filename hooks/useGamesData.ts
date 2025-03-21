@@ -85,21 +85,13 @@ export function useGamesData({
 				let validatedData: ApiResponse;
 				try {
 					// Parse the data with Zod schema
-					console.log(
-						'API raw data:',
-						JSON.stringify(rawData, null, 2)
-					); // Debug response
 					const result = ApiResponseSchema.safeParse(rawData);
 
 					if (result.success) {
 						validatedData = result.data;
-						console.log('Validation successful:', validatedData);
 					} else {
 						// If validation fails, set flag and create empty response
-						console.error(
-							'Validation errors:',
-							JSON.stringify(result.error.format(), null, 2)
-						);
+						console.error('Validation errors in API response');
 						setDataValidationIssues(true);
 						validatedData = createEmptyResponse(page, perPage);
 					}
@@ -151,8 +143,6 @@ export function useGamesData({
 	// Modified incorporate function to properly merge WS games with API data
 	const incorporateNewGames = useCallback(() => {
 		if (wsGames.length === 0 || !apiData) return;
-
-		console.log('Incorporating new games:', wsGames);
 
 		// Properly merge WebSocket games with API data
 		setApiData((prevData) => {
@@ -232,10 +222,6 @@ export function useGamesData({
 			// we fetch the entire current page data but without showing loading state
 			(async () => {
 				try {
-					console.log(
-						`Smart-refreshing page ${currentPage} without loading indicator`
-					);
-
 					// Fetch the fresh data for the current page
 					const res = await fetch(
 						`/api/games?per_page=${currentPerPage}&page=${currentPage}`
@@ -249,10 +235,7 @@ export function useGamesData({
 					const result = ApiResponseSchema.safeParse(rawData);
 
 					if (!result.success) {
-						console.error(
-							'Validation errors during smart refresh:',
-							JSON.stringify(result.error.format(), null, 2)
-						);
+						console.error('Validation errors during smart refresh');
 						return;
 					}
 
@@ -272,14 +255,6 @@ export function useGamesData({
 						const needsUpdate = !arraysEqual(currentIds, freshIds);
 
 						if (needsUpdate) {
-							console.log(
-								'Detected changes in game list, updating view:',
-								{
-									current: currentIds.slice(0, 3),
-									fresh: freshIds.slice(0, 3),
-								}
-							);
-
 							// Update only the data portion without showing loading state
 							setApiData({
 								...apiData,
@@ -287,14 +262,6 @@ export function useGamesData({
 								count: freshData.count,
 								pagination: freshData.pagination,
 							});
-
-							console.log(
-								`Updated page ${currentPage} with fresh data containing ${freshData.data.length} games`
-							);
-						} else {
-							console.log(
-								'No changes detected in game list, keeping current view'
-							);
 						}
 					}
 				} catch (err) {
@@ -318,7 +285,6 @@ export function useGamesData({
 	// Helper function to fetch a full page of data (used as fallback)
 	const fetchFullPage = async (pageNumber: number, itemsPerPage: number) => {
 		try {
-			console.log(`Fetching full page ${pageNumber} data as fallback`);
 			setLoading(true);
 
 			const res = await fetch(
@@ -335,10 +301,7 @@ export function useGamesData({
 			if (result.success) {
 				setApiData(result.data);
 			} else {
-				console.error(
-					'Validation errors during page refresh:',
-					JSON.stringify(result.error.format(), null, 2)
-				);
+				console.error('Validation errors during page refresh');
 			}
 		} catch (err) {
 			console.error('Failed to refresh page data:', err);
