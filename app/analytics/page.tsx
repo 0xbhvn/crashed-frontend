@@ -7,9 +7,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
 	LastGamesTable,
 	OccurrencesTable,
-	IntervalsWidget,
 } from '@/components/analytics/widgets';
-import { SeriesWidget } from '@/components/analytics/widgets';
+import { SeriesWidget, IntervalsWidget } from '@/components/analytics/widgets';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AnalyticsPage() {
