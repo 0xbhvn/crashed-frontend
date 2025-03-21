@@ -33,7 +33,8 @@ export interface HtmlChartConfig {
 	configTable?: {
 		entries: Array<{ parameter: string; value: string | number | boolean }>;
 	};
-	charts: ChartDefinition[];
+	charts?: ChartDefinition[];
+	customHtml?: string;
 	dataTable?: {
 		columns: TableColumn[];
 		data: Record<string, unknown>[];
@@ -43,9 +44,14 @@ export interface HtmlChartConfig {
 // Function to generate HTML with interactive charts
 export function generateChartHtml(config: HtmlChartConfig): void {
 	// Format data for HTML
-	const chartScripts = config.charts
-		.map((chart) => {
-			return `
+	let chartScripts = '';
+	let chartContainersHtml = '';
+
+	// Process charts if they exist
+	if (config.charts && config.charts.length > 0) {
+		chartScripts = config.charts
+			.map((chart) => {
+				return `
     // ${chart.title} Chart
     new Chart(document.getElementById('${chart.id}'), {
       type: '${chart.type}',
@@ -73,8 +79,21 @@ export function generateChartHtml(config: HtmlChartConfig): void {
       }
     });
     `;
-		})
-		.join('\n');
+			})
+			.join('\n');
+
+		// Generate chart containers HTML
+		chartContainersHtml = config.charts
+			.map(
+				(chart) => `
+    <h2>${chart.title}</h2>
+    <div class="chart-container">
+      <canvas id="${chart.id}"></canvas>
+    </div>
+  `
+			)
+			.join('');
+	}
 
 	// Generate config table HTML if provided
 	let configTableHtml = '';
@@ -129,18 +148,6 @@ export function generateChartHtml(config: HtmlChartConfig): void {
     </table>
     `;
 	}
-
-	// Generate chart containers HTML
-	const chartContainersHtml = config.charts
-		.map(
-			(chart) => `
-    <h2>${chart.title}</h2>
-    <div class="chart-container">
-      <canvas id="${chart.id}"></canvas>
-    </div>
-  `
-		)
-		.join('');
 
 	// Complete HTML template
 	const html = `
@@ -211,6 +218,8 @@ export function generateChartHtml(config: HtmlChartConfig): void {
   }
   
   ${configTableHtml}
+  
+  ${config.customHtml || ''}
   
   ${chartContainersHtml}
   

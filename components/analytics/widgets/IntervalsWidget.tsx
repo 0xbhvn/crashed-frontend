@@ -21,6 +21,12 @@ import type {
 	IntervalData,
 	IntervalGridData,
 } from '@/hooks/analytics/analytics-types';
+import { ExportButton } from '@/components/export-button';
+import type {
+	ExcelExportConfig,
+	ExcelColumnDefinition,
+} from '@/utils/export-utils/excel';
+import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
 
 interface IntervalsWidgetProps {
 	className?: string;
@@ -321,6 +327,379 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 		);
 	};
 
+	// Current export configuration
+	const currentConfig = useMemo(
+		() => ({
+			value,
+			hours,
+			intervalMinutes: selectedInterval,
+		}),
+		[value, hours, selectedInterval]
+	);
+
+	// Generate Excel export configuration
+	const getExcelConfig = async (): Promise<ExcelExportConfig> => {
+		// Transform data for export
+		const exportRows = [];
+
+		// Process each hour
+		for (const hourKey of hourLabels) {
+			const hourData = gridData[hourKey];
+			const row: Record<string, unknown> = {
+				hour: formatHourLabel(hourKey),
+			};
+
+			// Add each interval to the row
+			for (const minute of intervalColumns) {
+				const intervalKey = minute.toString().padStart(2, '0');
+				const intervalData = hourData?.[intervalKey];
+
+				// Add count data
+				row[`count_${minute}`] = intervalData?.count || 0;
+
+				// Add percentage data
+				row[`percentage_${minute}`] = intervalData?.percentage || 0;
+
+				// Add total games data
+				row[`games_${minute}`] = intervalData?.total_games || 0;
+			}
+
+			// Add hour totals
+			const hourTotal = hourTotals[hourKey];
+			if (hourTotal) {
+				row.hour_total_count = hourTotal.count;
+				row.hour_total_percentage = hourTotal.percentage;
+				row.hour_total_games = hourTotal.totalGames;
+			}
+
+			exportRows.push(row);
+		}
+
+		// Define columns for Excel
+		const columns: ExcelColumnDefinition[] = [
+			{ header: 'Hour', key: 'hour', width: 15 },
+		];
+
+		// Add interval columns
+		for (const minute of intervalColumns) {
+			const endMinute = minute + selectedInterval;
+			const header = `${minute}-${endMinute}`;
+
+			columns.push({
+				header: `${header} Count`,
+				key: `count_${minute}`,
+				width: 12,
+			});
+			columns.push({
+				header: `${header} %`,
+				key: `percentage_${minute}`,
+				width: 12,
+				formatter: (value) =>
+					typeof value === 'number' ? `${value.toFixed(1)}%` : '0%',
+			});
+			columns.push({
+				header: `${header} Games`,
+				key: `games_${minute}`,
+				width: 12,
+			});
+		}
+
+		// Add hour total columns
+		columns.push({
+			header: 'Hour Total Count',
+			key: 'hour_total_count',
+			width: 15,
+		});
+		columns.push({
+			header: 'Hour Total %',
+			key: 'hour_total_percentage',
+			width: 15,
+			formatter: (value) =>
+				typeof value === 'number' ? `${value.toFixed(1)}%` : '0%',
+		});
+		columns.push({
+			header: 'Hour Total Games',
+			key: 'hour_total_games',
+			width: 15,
+		});
+
+		// Create configuration for Excel export
+		const excelConfig: ExcelExportConfig = {
+			fileName: `intervals_analysis_${format(
+				new Date(),
+				'yyyyMMdd_HHmmss'
+			)}.xlsx`,
+			creator: 'Crash Game Analytics',
+			sheets: [
+				{
+					name: 'Intervals Data',
+					columns,
+					data: exportRows,
+					autoFilter: true,
+					freezeHeader: true,
+				},
+				// Add configuration sheet
+				{
+					name: 'Configuration',
+					columns: [
+						{ header: 'Parameter', key: 'parameter', width: 20 },
+						{ header: 'Value', key: 'value', width: 15 },
+					],
+					data: [
+						{
+							parameter: 'Crash Point',
+							value: currentConfig.value,
+						},
+						{ parameter: 'Hours', value: currentConfig.hours },
+						{
+							parameter: 'Interval (minutes)',
+							value: currentConfig.intervalMinutes,
+						},
+					],
+					autoFilter: false,
+					freezeHeader: true,
+				},
+			],
+		};
+
+		return excelConfig;
+	};
+
+	// Generate HTML chart configuration
+	const getChartConfig = async (): Promise<HtmlChartConfig> => {
+		// We'll create a custom HTML table-based heatmap instead of charts
+		// This will better match the intervals visualization in the UI
+
+		// Build HTML chart config with custom heatmap rendering
+		const htmlConfig: HtmlChartConfig = {
+			title: `Intervals Analysis for Crash Point ${currentConfig.value}x`,
+			subtitle: `Games with crash point below ${currentConfig.value}x by time interval`,
+			configTable: {
+				entries: [
+					{ parameter: 'Crash Point', value: currentConfig.value },
+					{ parameter: 'Hours', value: currentConfig.hours },
+					{
+						parameter: 'Interval (minutes)',
+						value: currentConfig.intervalMinutes,
+					},
+				],
+			},
+			// We'll create a custom HTML structure for visualization
+			customHtml: `
+				<style>
+					.intervals-heatmap {
+						border-collapse: collapse;
+						width: 100%;
+						margin: 20px 0;
+						font-size: 14px;
+					}
+					.intervals-heatmap th, .intervals-heatmap td {
+						border: 1px solid #ddd;
+						padding: 8px;
+						text-align: center;
+					}
+					.intervals-heatmap th {
+						background-color: #f2f2f2;
+						font-weight: bold;
+					}
+					.intervals-heatmap .hour-total {
+						background-color: #f8f8f8;
+						font-weight: bold;
+					}
+					.cell-content {
+						display: flex;
+						flex-direction: column;
+						align-items: center;
+					}
+					.cell-count {
+						font-size: 20px;
+						font-weight: 500;
+					}
+					.cell-percentage {
+						margin: 4px 0;
+					}
+					.percentage-badge {
+						display: inline-block;
+						padding: 2px 6px;
+						border-radius: 4px;
+						font-weight: 600;
+						font-size: 12px;
+					}
+					.percentage-badge.high {
+						background-color: rgba(34, 197, 94, 0.2);
+						color: rgb(22, 101, 52);
+					}
+					.percentage-badge.medium {
+						background-color: rgba(234, 179, 8, 0.2);
+						color: rgb(113, 63, 18);
+					}
+					.percentage-badge.low {
+						background-color: rgba(239, 68, 68, 0.2);
+						color: rgb(153, 27, 27);
+					}
+					.cell-total {
+						font-size: 11px;
+						color: #666;
+					}
+				</style>
+				<div class="heatmap-container">
+					<table class="intervals-heatmap">
+						<thead>
+							<tr>
+								<th>Hour</th>
+								${intervalColumns
+									.map((startMinute) => {
+										const endMinute =
+											startMinute + selectedInterval;
+										return `<th>${startMinute}-${endMinute}</th>`;
+									})
+									.join('')}
+								<th class="hour-total">Hour Total</th>
+							</tr>
+						</thead>
+						<tbody>
+							${hourLabels
+								.map((hourKey) => {
+									const hourData = gridData[hourKey];
+									const hourTotal = hourTotals[hourKey];
+
+									return `
+									<tr>
+										<td>${formatHourLabel(hourKey)}</td>
+										${intervalColumns
+											.map((startMinute) => {
+												const intervalKey = startMinute
+													.toString()
+													.padStart(2, '0');
+												const intervalData =
+													hourData?.[intervalKey];
+
+												if (!intervalData) {
+													return '<td>-</td>';
+												}
+
+												// Get badge class based on percentage
+												let badgeClass = 'medium';
+												const borderlinePercentage =
+													100 / value;
+
+												if (
+													Math.abs(
+														intervalData.percentage -
+															borderlinePercentage
+													) < 1
+												) {
+													badgeClass = 'medium';
+												} else if (
+													intervalData.percentage <
+													borderlinePercentage
+												) {
+													badgeClass = 'low';
+												} else {
+													badgeClass = 'high';
+												}
+
+												return `
+												<td>
+													<div class="cell-content">
+														<div class="cell-count">${intervalData.count}</div>
+														<div class="cell-percentage">
+															<span class="percentage-badge ${badgeClass}">${intervalData.percentage.toFixed(
+													1
+												)}%</span>
+														</div>
+														<div class="cell-total">${intervalData.total_games}</div>
+													</div>
+												</td>
+											`;
+											})
+											.join('')}
+										<td class="hour-total">
+											${
+												hourTotal
+													? `
+												<div class="cell-content">
+													<div class="cell-count">${hourTotal.count}</div>
+													<div class="cell-percentage">
+														${(() => {
+															// Get badge class for hour total
+															let badgeClass =
+																'medium';
+															const borderlinePercentage =
+																100 / value;
+
+															if (
+																Math.abs(
+																	hourTotal.percentage -
+																		borderlinePercentage
+																) < 1
+															) {
+																badgeClass =
+																	'medium';
+															} else if (
+																hourTotal.percentage <
+																borderlinePercentage
+															) {
+																badgeClass =
+																	'low';
+															} else {
+																badgeClass =
+																	'high';
+															}
+
+															return `<span class="percentage-badge ${badgeClass}">${hourTotal.percentage.toFixed(
+																1
+															)}%</span>`;
+														})()}
+													</div>
+													<div class="cell-total">${hourTotal.totalGames}</div>
+												</div>
+											`
+													: '-'
+											}
+										</td>
+									</tr>
+								`;
+								})
+								.join('')}
+						</tbody>
+					</table>
+				</div>
+			`,
+			// We still include a summary table for the data
+			dataTable: {
+				columns: [
+					{ header: 'Hour', key: 'hour' },
+					{ header: 'Count', key: 'count' },
+					{
+						header: 'Percentage',
+						key: 'percentage',
+						formatter: (value) =>
+							typeof value === 'number'
+								? `${value.toFixed(1)}%`
+								: '0%',
+					},
+					{ header: 'Total Games', key: 'totalGames' },
+				],
+				data: hourLabels.map((hourKey) => {
+					const hourTotal = hourTotals[hourKey];
+					return {
+						hour: formatHourLabel(hourKey),
+						count: hourTotal?.count || 0,
+						percentage: hourTotal?.percentage || 0,
+						totalGames: hourTotal?.totalGames || 0,
+					};
+				}),
+			},
+			fileName: `intervals_analysis_${format(
+				new Date(),
+				'yyyyMMdd_HHmmss'
+			)}.html`,
+		};
+
+		return htmlConfig;
+	};
+
 	// Render content
 	const renderContent = () => {
 		if (error) {
@@ -355,6 +734,13 @@ export function IntervalsWidget({ className }: IntervalsWidgetProps) {
 								step="0.1"
 							/>
 						</div>
+
+						{/* Add Export Button */}
+						<ExportButton
+							getExcelConfig={getExcelConfig}
+							getChartConfig={getChartConfig}
+							className="h-8 w-8 ml-2"
+						/>
 					</div>
 
 					<div className="flex items-center gap-3">
