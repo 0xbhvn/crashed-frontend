@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-	LastGamesTable,
 	OccurrencesTable,
+	LastGamesTable,
+	SeriesWidget,
+	IntervalsWidget,
 } from '@/components/analytics/widgets';
-import { SeriesWidget, IntervalsWidget } from '@/components/analytics/widgets';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AnalyticsPage() {
