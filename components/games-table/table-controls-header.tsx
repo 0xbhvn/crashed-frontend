@@ -16,10 +16,9 @@ import {
 	PageSizeSelector,
 } from './pagination-context';
 import { CopyButton } from '@/components/copy-button';
-import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, RefreshCwOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 interface TableControlsHeaderProps {
 	apiData: ApiResponse | null;
@@ -152,9 +151,9 @@ export function TableControlsHeader({
 									<TooltipTrigger asChild>
 										<div className="flex items-center">
 											{isConnected ? (
-												<Wifi className="h-5 w-5 text-green-500" />
+												<Wifi className="h-5 w-5 text-foreground" />
 											) : (
-												<WifiOff className="h-5 w-5 text-red-500" />
+												<WifiOff className="h-5 w-5 text-muted-foreground" />
 											)}
 										</div>
 									</TooltipTrigger>
@@ -173,14 +172,11 @@ export function TableControlsHeader({
 												onClick={onAutoRefreshToggle}
 												className="h-6 w-6 p-0"
 											>
-												<RefreshCw
-													className={cn(
-														'h-4 w-4',
-														autoRefreshEnabled
-															? 'text-green-500'
-															: 'text-muted-foreground'
-													)}
-												/>
+												{autoRefreshEnabled ? (
+													<RefreshCw className="h-4 w-4 text-foreground" />
+												) : (
+													<RefreshCwOff className="h-4 w-4 text-muted-foreground" />
+												)}
 											</Button>
 										</TooltipTrigger>
 										<TooltipContent>
