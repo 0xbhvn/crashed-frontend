@@ -12,11 +12,18 @@ import {
 import { useRealTimeBatchGames } from '@/hooks/analytics/useRealTimeBatchGames';
 import { AnalyticsCard } from '../core/AnalyticsCard';
 import { Badge } from '@/components/ui/badge';
-import { formatDuration, intervalToDuration } from 'date-fns';
+import { formatDuration, intervalToDuration, format } from 'date-fns';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ExportButton } from '@/components/export-button';
+import type {
+	ExcelExportConfig,
+	ExcelColumnDefinition,
+} from '@/utils/export-utils/excel';
+import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
+import { generateLastGamesHtmlConfig } from '@/utils/export-utils/lastgames-html';
 
 interface LastGamesTableProps {
 	className?: string;
@@ -144,6 +151,104 @@ export function LastGamesTable({ className }: LastGamesTableProps) {
 		return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'; // Green
 	};
 
+	// Generate Excel export configuration
+	const getExcelConfig = async (): Promise<ExcelExportConfig> => {
+		// Transform data for export
+		const exportRows = pointsToShow.map((point) => {
+			const pointData = batchData?.[point];
+			const streakValue = pointData?.[selectedType] ?? 0;
+
+			// Use the appropriate game data based on selected tab
+			const gameData =
+				selectedType === 'current'
+					? pointData?.currentGame
+					: pointData?.uniqueGame;
+			const exact = gameData?.crashPoint;
+
+			return {
+				crashPoint:
+					selectedType === 'current'
+						? `≥ ${point}${point === Math.floor(point) ? '.0' : ''}`
+						: `= ${point}${
+								point === Math.floor(point) ? '.0' : ''
+						  }`,
+				streakCount: streakValue,
+				timeSince: !gameData
+					? 'No data'
+					: timeAgoMap[point] || 'calculating...',
+				lastGameId: !gameData ? '-' : `#${gameData.gameId}`,
+				exactCrash: !gameData ? '-' : `${exact?.toFixed(2)}x`,
+				beginTime: gameData?.beginTime
+					? new Date(gameData.beginTime).toISOString()
+					: '-',
+			};
+		});
+
+		// Define columns for Excel
+		const columns: ExcelColumnDefinition[] = [
+			{ header: 'Crash Point', key: 'crashPoint', width: 15 },
+			{ header: 'Streak Count', key: 'streakCount', width: 15 },
+			{ header: 'Time Since', key: 'timeSince', width: 20 },
+			{ header: 'Last Game ID', key: 'lastGameId', width: 15 },
+			{ header: 'Exact Crash', key: 'exactCrash', width: 15 },
+			{ header: 'Begin Time', key: 'beginTime', width: 20 },
+		];
+
+		// Create configuration for Excel export
+		const excelConfig: ExcelExportConfig = {
+			fileName: `lastgames_analysis_${format(
+				new Date(),
+				'yyyyMMdd_HHmmss'
+			)}.xlsx`,
+			creator: 'Crash Game Analytics',
+			sheets: [
+				{
+					name: 'Last Games Data',
+					columns,
+					data: exportRows,
+					autoFilter: true,
+					freezeHeader: true,
+				},
+				// Add configuration sheet
+				{
+					name: 'Configuration',
+					columns: [
+						{ header: 'Parameter', key: 'parameter', width: 20 },
+						{ header: 'Value', key: 'value', width: 20 },
+					],
+					data: [
+						{
+							parameter: 'Analysis Type',
+							value:
+								selectedType === 'current'
+									? 'Above Value'
+									: 'Exact Value',
+						},
+						{
+							parameter: 'Points Analyzed',
+							value: pointsToShow.length,
+						},
+					],
+					autoFilter: false,
+					freezeHeader: true,
+				},
+			],
+		};
+
+		return excelConfig;
+	};
+
+	// Generate HTML chart configuration
+	const getChartConfig = async (): Promise<HtmlChartConfig> => {
+		// Use the dedicated utility to generate the HTML config
+		return generateLastGamesHtmlConfig({
+			selectedType,
+			batchData: batchData || {},
+			timeAgoMap,
+			pointsToShow,
+		});
+	};
+
 	// Render content
 	const renderContent = () => {
 		if (batchError) {
@@ -160,7 +265,7 @@ export function LastGamesTable({ className }: LastGamesTableProps) {
 
 		return (
 			<div className="w-full">
-				<div className="flex mb-4">
+				<div className="flex justify-between mb-4">
 					<Tabs
 						defaultValue="current"
 						value={selectedType}
@@ -183,6 +288,13 @@ export function LastGamesTable({ className }: LastGamesTableProps) {
 							</TabsTrigger>
 						</TabsList>
 					</Tabs>
+
+					{/* Add Export Button */}
+					<ExportButton
+						getExcelConfig={getExcelConfig}
+						getChartConfig={getChartConfig}
+						className="h-8 w-8"
+					/>
 				</div>
 
 				<div className="rounded-md border">
