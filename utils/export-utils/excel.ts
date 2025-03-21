@@ -85,7 +85,12 @@ export async function exportToExcel(config: ExcelExportConfig): Promise<void> {
 
 	// Write to buffer and save
 	const buffer = await workbook.xlsx.writeBuffer();
-	saveAs(new Blob([buffer]), fileName);
+	saveAs(
+		new Blob([buffer], {
+			type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		}),
+		fileName
+	);
 
 	return;
 }
