@@ -75,7 +75,7 @@ export function Controls({
 										className={cn(
 											'h-4 w-4',
 											showComparison
-												? 'text-green-500'
+												? 'text-black'
 												: 'text-muted-foreground'
 										)}
 									/>
