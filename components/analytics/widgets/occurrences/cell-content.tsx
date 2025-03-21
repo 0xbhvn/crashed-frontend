@@ -27,13 +27,6 @@ export function RegularCell({
 	selectedType,
 	dataItem,
 }: Pick<CellContentProps, 'point' | 'selectedType' | 'dataItem'>) {
-	// Debug logging
-	console.log('RegularCell rendering with data:', {
-		point,
-		selectedType,
-		dataItem,
-	});
-
 	// Type guard to ensure we're working with OccurrenceData
 	if (dataItem && !isComparisonData(dataItem)) {
 		const occurrenceData = dataItem as OccurrenceData;

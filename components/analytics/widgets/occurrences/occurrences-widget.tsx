@@ -109,13 +109,6 @@ export function OccurrencesTable({ className }: BaseWidgetProps) {
 		comparison: showComparison,
 	});
 
-	// Debug logging
-	useEffect(() => {
-		console.log('Occurrences Data:', occurrencesData);
-		console.log('Loading State:', occurrencesLoading);
-		console.log('Error State:', occurrencesError);
-	}, [occurrencesData, occurrencesLoading, occurrencesError]);
-
 	// Generate Excel export configuration
 	const getExcelConfig = async (): Promise<ExcelExportConfig> => {
 		// Transform data for export

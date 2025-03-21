@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useEffect } from 'react';
 import {
 	Table,
 	TableBody,
@@ -21,33 +20,6 @@ export function DataTable({
 	occurrencesData,
 	isLoading,
 }: OccurrencesTableProps) {
-	// Debug logging for occurrencesData
-	useEffect(() => {
-		console.log('DataTable received occurrencesData:', occurrencesData);
-		console.log('DataTable selected type:', selectedType);
-		console.log('DataTable points to show:', pointsToShow);
-
-		// Check if data is structured as expected
-		if (occurrencesData) {
-			const firstPoint = pointsToShow[0];
-			const pointKey =
-				firstPoint === Math.floor(firstPoint)
-					? `${firstPoint}.0`
-					: firstPoint.toString();
-
-			console.log(
-				`Data for first point (${pointKey}):`,
-				occurrencesData[pointKey]
-			);
-			if (occurrencesData[pointKey]) {
-				console.log(
-					`${selectedType} data for first point:`,
-					occurrencesData[pointKey][selectedType]
-				);
-			}
-		}
-	}, [occurrencesData, selectedType, pointsToShow]);
-
 	// Skeleton component for loading state
 	const TableSkeleton = () => {
 		return (
@@ -120,10 +92,11 @@ export function DataTable({
 									: point.toString();
 
 							// Get the data for the selected type (current or unique)
-							const dataItem =
+							const dataRaw =
 								occurrencesData?.[pointKey]?.[selectedType];
 
-							if (!dataItem) {
+							// Handle empty data
+							if (!dataRaw) {
 								return (
 									<TableRow
 										key={pointKey}
@@ -138,6 +111,18 @@ export function DataTable({
 								);
 							}
 
+							// Now handle both comparison and regular data
+							let dataItem = dataRaw;
+
+							// If in non-comparison mode but the data is a comparison object,
+							// we need to extract just the current_period
+							if (
+								!showComparison &&
+								'current_period' in dataRaw
+							) {
+								dataItem = dataRaw.current_period;
+							}
+
 							return (
 								<TableRow
 									key={pointKey}
@@ -147,7 +132,7 @@ export function DataTable({
 										<ComparisonCell
 											point={point}
 											selectedType={selectedType}
-											dataItem={dataItem}
+											dataItem={dataRaw}
 											analyzeBy={analyzeBy}
 										/>
 									) : (
