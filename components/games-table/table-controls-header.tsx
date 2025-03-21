@@ -107,10 +107,13 @@ export function TableControlsHeader({
 
 	// Add a component for the crash point threshold selector
 	const CrashPointThresholdSelector = () => {
-		// Add state for the input value
-		const [thresholdInput, setThresholdInput] = React.useState(
+		// Initialize with the current value but don't create a dependency
+		const initialValue = React.useRef(
 			crashPointThreshold.toString()
-		);
+		).current;
+		// Add state for the input value
+		const [thresholdInput, setThresholdInput] =
+			React.useState(initialValue);
 
 		// Handle input changes
 		const handleThresholdInputChange = (
@@ -137,10 +140,7 @@ export function TableControlsHeader({
 			}
 		};
 
-		// Update input when threshold changes
-		React.useEffect(() => {
-			setThresholdInput(crashPointThreshold.toString());
-		}, [crashPointThreshold]);
+		// No need for useEffect - we'll just use the value directly
 
 		return (
 			<div className="flex-initial ml-2 flex items-center text-sm text-foreground">

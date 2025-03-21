@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { formatDuration, intervalToDuration, format } from 'date-fns';
+import { formatDuration, intervalToDuration } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { AnalyticsCard } from '../../core/AnalyticsCard';
@@ -17,6 +17,7 @@ import {
 import type { ExcelExportConfig } from '@/utils/export-utils/excel';
 import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
 import type { TimeAgoMap } from './types';
+import { getExcelConfig as getExcelConfigUtil } from './excel-export';
 
 // All crash points for API requests
 const ALL_CRASH_POINTS = [
@@ -91,89 +92,11 @@ export function LastGamesTable({ className }: BaseWidgetProps) {
 
 	// Generate Excel export configuration
 	const getExcelConfig = async (): Promise<ExcelExportConfig> => {
-		// Transform data for export
-		const exportRows = pointsToShow.map((point) => {
-			const pointData = batchData?.[point];
-			const streakValue = pointData?.[selectedType] ?? 0;
-
-			// Use the appropriate game data based on selected tab
-			const gameData =
-				selectedType === 'current'
-					? pointData?.currentGame
-					: pointData?.uniqueGame;
-			const exact = gameData?.crashPoint;
-
-			return {
-				crashPoint:
-					selectedType === 'current'
-						? `≥ ${point}${point === Math.floor(point) ? '.0' : ''}`
-						: `= ${point}${
-								point === Math.floor(point) ? '.0' : ''
-						  }`,
-				streakCount: streakValue,
-				timeSince: !gameData
-					? 'No data'
-					: timeAgoMap[point] || 'calculating...',
-				lastGameId: !gameData ? '-' : `#${gameData.gameId}`,
-				exactCrash: !gameData ? '-' : `${exact?.toFixed(2)}x`,
-				beginTime: gameData?.beginTime
-					? new Date(gameData.beginTime).toISOString()
-					: '-',
-			};
+		return getExcelConfigUtil({
+			selectedType,
+			batchData: batchData || {},
+			timeAgoMap,
 		});
-
-		// Define columns for Excel
-		const columns = [
-			{ header: 'Crash Point', key: 'crashPoint', width: 15 },
-			{ header: 'Streak Count', key: 'streakCount', width: 15 },
-			{ header: 'Time Since', key: 'timeSince', width: 20 },
-			{ header: 'Last Game ID', key: 'lastGameId', width: 15 },
-			{ header: 'Exact Crash', key: 'exactCrash', width: 15 },
-			{ header: 'Begin Time', key: 'beginTime', width: 20 },
-		];
-
-		// Create configuration for Excel export
-		const excelConfig: ExcelExportConfig = {
-			fileName: `lastgames_analysis_${format(
-				new Date(),
-				'yyyyMMdd_HHmmss'
-			)}.xlsx`,
-			creator: 'Crash Game Analytics',
-			sheets: [
-				{
-					name: 'Last Games Data',
-					columns,
-					data: exportRows,
-					autoFilter: true,
-					freezeHeader: true,
-				},
-				// Add configuration sheet
-				{
-					name: 'Configuration',
-					columns: [
-						{ header: 'Parameter', key: 'parameter', width: 20 },
-						{ header: 'Value', key: 'value', width: 20 },
-					],
-					data: [
-						{
-							parameter: 'Analysis Type',
-							value:
-								selectedType === 'current'
-									? 'Above Value'
-									: 'Exact Value',
-						},
-						{
-							parameter: 'Points Analyzed',
-							value: pointsToShow.length,
-						},
-					],
-					autoFilter: false,
-					freezeHeader: true,
-				},
-			],
-		};
-
-		return excelConfig;
 	};
 
 	// Generate HTML chart configuration

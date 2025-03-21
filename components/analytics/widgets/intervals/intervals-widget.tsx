@@ -11,13 +11,11 @@ import { useRealTimeIntervalsAnalysis } from '@/hooks/analytics';
 import type { IntervalDuration } from '@/utils/export-utils/types';
 import type { IntervalGridData } from '@/utils/analytics-types';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
-import type {
-	ExcelExportConfig,
-	ExcelColumnDefinition,
-} from '@/utils/export-utils/excel';
+import type { ExcelExportConfig } from '@/utils/export-utils/excel';
 import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
 import { generateIntervalsHtmlConfig } from '@/utils/export-utils/intervals-html';
 import type { HourTotalsMap } from './types';
+import { getExcelConfig as getExcelConfigUtil } from './excel-export';
 
 export function IntervalsWidget({ className }: BaseWidgetProps) {
 	// Value for analysis (crash point)
@@ -191,142 +189,12 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 
 	// Generate Excel export configuration
 	const getExcelConfig = async (): Promise<ExcelExportConfig> => {
-		// Transform data for export
-		const exportRows = [];
-
-		// Process each hour
-		for (const hourKey of hourLabels) {
-			const hourData = gridData[hourKey];
-			const row: Record<string, unknown> = {
-				hour: format(parseISO(`${hourKey}:00:00`), 'MMM dd, h a'),
-			};
-
-			// Get the interval columns
-			const intervalColumns = [];
-			for (let i = 0; i < 60; i += selectedInterval) {
-				intervalColumns.push(i);
-			}
-
-			// Add each interval to the row
-			for (const minute of intervalColumns) {
-				const intervalKey = minute.toString().padStart(2, '0');
-				const intervalData = hourData?.[intervalKey];
-
-				// Add count data
-				row[`count_${minute}`] = intervalData?.count || 0;
-
-				// Add percentage data
-				row[`percentage_${minute}`] = intervalData?.percentage || 0;
-
-				// Add total games data
-				row[`games_${minute}`] = intervalData?.total_games || 0;
-			}
-
-			// Add hour totals
-			const hourTotal = hourTotals[hourKey];
-			if (hourTotal) {
-				row.hour_total_count = hourTotal.count;
-				row.hour_total_percentage = hourTotal.percentage;
-				row.hour_total_games = hourTotal.totalGames;
-			}
-
-			exportRows.push(row);
-		}
-
-		// Define columns for Excel
-		const columns: ExcelColumnDefinition[] = [
-			{ header: 'Hour', key: 'hour', width: 15 },
-		];
-
-		// Get the interval columns
-		const intervalColumns = [];
-		for (let i = 0; i < 60; i += selectedInterval) {
-			intervalColumns.push(i);
-		}
-
-		// Add interval columns
-		for (const minute of intervalColumns) {
-			const endMinute = minute + selectedInterval;
-			const header = `${minute}-${endMinute}`;
-
-			columns.push({
-				header: `${header} Count`,
-				key: `count_${minute}`,
-				width: 12,
-			});
-			columns.push({
-				header: `${header} %`,
-				key: `percentage_${minute}`,
-				width: 12,
-				formatter: (value: unknown) =>
-					typeof value === 'number' ? `${value.toFixed(1)}%` : '0%',
-			});
-			columns.push({
-				header: `${header} Games`,
-				key: `games_${minute}`,
-				width: 12,
-			});
-		}
-
-		// Add hour total columns
-		columns.push({
-			header: 'Hour Total Count',
-			key: 'hour_total_count',
-			width: 15,
-		});
-		columns.push({
-			header: 'Hour Total %',
-			key: 'hour_total_percentage',
-			width: 15,
-			formatter: (value: unknown) =>
-				typeof value === 'number' ? `${value.toFixed(1)}%` : '0%',
-		});
-		columns.push({
-			header: 'Hour Total Games',
-			key: 'hour_total_games',
-			width: 15,
-		});
-
-		// Create configuration for Excel export
-		const excelConfig: ExcelExportConfig = {
-			fileName: `intervals_analysis_${format(
-				new Date(),
-				'yyyyMMdd_HHmmss'
-			)}.xlsx`,
-			creator: 'Crash Game Analytics',
-			sheets: [
-				{
-					name: 'Intervals Data',
-					columns,
-					data: exportRows,
-					autoFilter: true,
-					freezeHeader: true,
-				},
-				// Add configuration sheet
-				{
-					name: 'Configuration',
-					columns: [
-						{ header: 'Parameter', key: 'parameter', width: 20 },
-						{ header: 'Value', key: 'value', width: 15 },
-					],
-					data: [
-						{
-							parameter: 'Crash Point',
-							value: currentConfig.value,
-						},
-						{ parameter: 'Hours', value: currentConfig.hours },
-						{
-							parameter: 'Interval (minutes)',
-							value: currentConfig.intervalMinutes,
-						},
-					],
-					autoFilter: false,
-					freezeHeader: true,
-				},
-			],
-		};
-
-		return excelConfig;
+		return getExcelConfigUtil(
+			currentConfig,
+			gridData,
+			hourLabels,
+			hourTotals
+		);
 	};
 
 	// Generate HTML chart configuration
