@@ -31,7 +31,7 @@ export interface UseGamesDataReturn {
 
 export function useGamesData({
 	initialPage = 1,
-	initialPerPage = 10,
+	initialPerPage = 25,
 	enableRealtime = true,
 }: UseGamesDataProps = {}): UseGamesDataReturn {
 	const [page, setPage] = useState(initialPage);

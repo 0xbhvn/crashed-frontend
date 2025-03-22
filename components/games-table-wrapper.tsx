@@ -9,7 +9,7 @@ export default function GamesTableWrapper() {
 	// Remove the tableKey state as we don't need to force re-renders anymore
 
 	// Initialize with default page size
-	const [currentPerPage, setCurrentPerPage] = useState(100);
+	const [currentPerPage, setCurrentPerPage] = useState(25);
 
 	// Initialize with default crash point threshold (10)
 	const [crashPointThreshold, setCrashPointThreshold] = useState(10);
