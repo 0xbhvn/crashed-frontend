@@ -36,9 +36,9 @@ export function SeriesWidget({
 		defaultValue.toString()
 	);
 	const [sortBy, setSortBy] = React.useState<'time' | 'length'>('time');
-	const [limit, setLimit] = React.useState<number>(1000);
+	const [limit, setLimit] = React.useState<number>(2000);
 	const [limitInput, setLimitInput] = React.useState(limit.toString());
-	const [hours, setHours] = React.useState<number>(12);
+	const [hours, setHours] = React.useState<number>(24);
 	const [hoursInput, setHoursInput] = React.useState(hours.toString());
 	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('games');
 	const [pulseClass, setPulseClass] = React.useState<string>('');

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { AnalyticsCard } from '../../core/AnalyticsCard';
+import { AnalyticsCard } from '../../core/analytics-card';
 import { useRealTimeOccurrences } from '@/hooks/analytics';
 import { Controls } from './controls';
 import { DataTable } from './data-table';

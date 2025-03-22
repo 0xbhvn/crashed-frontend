@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { AnalyticsCard } from '../../core/AnalyticsCard';
+import { AnalyticsCard } from '../../core/analytics-card';
 import { useRealTimeBatchGames } from '@/hooks/analytics';
 import { Controls } from './controls';
 import { DataTable } from './data-table';
 import { generateLastGamesHtmlConfig } from '@/utils/export-utils/lastgames-html';
+import { CrashPointCards } from '../../core/crash-point-cards';
 import {
 	CURRENT_STREAK_POINTS,
 	UNIQUE_STREAK_POINTS,
@@ -24,10 +25,17 @@ const ALL_CRASH_POINTS = [
 	...new Set([...CURRENT_STREAK_POINTS, ...UNIQUE_STREAK_POINTS]),
 ];
 
-export function LastGamesTable({ className }: BaseWidgetProps) {
-	const [selectedType, setSelectedType] = useState<'current' | 'unique'>(
-		'current'
-	);
+// Props interfaces
+export interface LastGamesTableProps extends BaseWidgetProps {
+	selectedType: 'current' | 'unique';
+	setSelectedType: (value: 'current' | 'unique') => void;
+}
+
+export function LastGamesTable({
+	className,
+	selectedType,
+	setSelectedType,
+}: LastGamesTableProps) {
 	const [timeAgoMap, setTimeAgoMap] = useState<TimeAgoMap>({});
 
 	// Get the current points to display based on selected tab
@@ -132,6 +140,8 @@ export function LastGamesTable({ className }: BaseWidgetProps) {
 					getExcelConfig={getExcelConfig}
 					getChartConfig={getChartConfig}
 				/>
+
+				<CrashPointCards selectedType={selectedType} />
 
 				<DataTable
 					selectedType={selectedType}

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { format, parseISO } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { AnalyticsCard } from '../../core/AnalyticsCard';
+import { AnalyticsCard } from '../../core/analytics-card';
 import { IntervalsControls } from './control-components';
 import { IntervalsTable } from './intervals-table';
 import { useRealTimeIntervalsAnalysis } from '@/hooks/analytics';
@@ -38,6 +38,15 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 		intervalMinutes: selectedInterval,
 		hours,
 	});
+
+	// Calculate total occurrences from intervals data
+	const totalOccurrences = React.useMemo(() => {
+		if (!intervalsData || intervalsData.length === 0) return 0;
+		return intervalsData.reduce(
+			(total, interval) => total + interval.count,
+			0
+		);
+	}, [intervalsData]);
 
 	// Convert interval data into a grid format for easier rendering
 	const gridData = React.useMemo<IntervalGridData>(() => {
@@ -155,7 +164,7 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 	// Apply hours change
 	const applyHoursChange = () => {
 		const numValue = Number.parseInt(hoursInputValue, 10);
-		if (!Number.isNaN(numValue) && numValue > 0 && numValue <= 72) {
+		if (!Number.isNaN(numValue) && numValue > 0 && numValue <= 168) {
 			setHours(numValue);
 		} else {
 			setHoursInputValue(hours.toString());
@@ -275,6 +284,14 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 			title="Intervals Analysis"
 			description={`Games with crash point below ${value}x by time interval`}
 			className={className}
+			stats={
+				!isLoading && !error && totalOccurrences !== undefined
+					? {
+							label: `Total ${value}x occurrences`,
+							value: totalOccurrences,
+					  }
+					: undefined
+			}
 		>
 			{renderContent()}
 		</AnalyticsCard>

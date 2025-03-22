@@ -14,6 +14,10 @@ interface AnalyticsCardProps {
 	children: React.ReactNode;
 	footer?: React.ReactNode;
 	className?: string;
+	stats?: {
+		label: string;
+		value: number | string;
+	};
 }
 
 export function AnalyticsCard({
@@ -22,13 +26,24 @@ export function AnalyticsCard({
 	children,
 	footer,
 	className,
+	stats,
 }: AnalyticsCardProps) {
 	return (
 		<Card className={className}>
-			<CardHeader>
-				<CardTitle>{title}</CardTitle>
-				{description && (
-					<CardDescription>{description}</CardDescription>
+			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+				<div>
+					<CardTitle>{title}</CardTitle>
+					{description && (
+						<CardDescription>{description}</CardDescription>
+					)}
+				</div>
+				{stats && (
+					<div className="flex items-center bg-muted px-3 py-1 rounded-md">
+						<span className="text-sm font-medium mr-1">
+							{stats.label}:
+						</span>
+						<span className="text-sm font-bold">{stats.value}</span>
+					</div>
 				)}
 			</CardHeader>
 			<CardContent>{children}</CardContent>

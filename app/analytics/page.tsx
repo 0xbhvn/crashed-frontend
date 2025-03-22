@@ -14,6 +14,9 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AnalyticsPage() {
 	const [activeTab, setActiveTab] = useState<string>('streaks');
+	const [selectedType, setSelectedType] = useState<'current' | 'unique'>(
+		'current'
+	);
 
 	return (
 		<div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
@@ -67,7 +70,11 @@ export default function AnalyticsPage() {
 
 				<div className="w-full">
 					{activeTab === 'streaks' && (
-						<LastGamesTable className="w-full" />
+						<LastGamesTable
+							className="w-full"
+							selectedType={selectedType}
+							setSelectedType={setSelectedType}
+						/>
 					)}
 					{activeTab === 'occurrences' && (
 						<OccurrencesTable className="w-full" />
