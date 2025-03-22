@@ -34,73 +34,96 @@ The project utilizes the following key libraries:
       /last-games          # Last games analysis endpoints
       /occurrences         # Occurrences analysis endpoints
       /series              # Series analysis endpoints
+      /intervals           # Intervals analysis endpoints
     /games                 # Games data API routes
 
-  /components
+/components
   /analytics               # Analytics-specific components
     /core                  # Core analytics components
-      AnalyticsCard.tsx    # Card component for analytics widgets
       AnalyticsFilters.tsx # Filters for analytics views
-      AnalyticsLayout.tsx  # Layout component for analytics sections
+      CrashPointCards.tsx  # Cards displaying crash point stats (ACTIVE DEVELOPMENT)
     /widgets               # Widget components
-      LastGamesTable.tsx   # Table for "Last Games" analytics
-      OccurrencesTable.tsx # Table for "Occurrences" analytics
-      SeriesWidget.tsx     # Widget for "Series" analytics
+      /last-games          # Last games components
+        data-table.tsx     # Table component for last games
+        excel-export.ts    # Excel export functionality
+        utils.ts           # Utility functions
+      /occurrences         # Occurrences components
+        cell-content.tsx   # Cell content renderer
+        excel-export.ts    # Excel export functionality
+        utils.ts           # Utility functions
+      /series              # Series components
+        series-chart.tsx   # Chart for series visualization
+        series-table.tsx   # Table for series data
+        excel-export.ts    # Excel export functionality
+      /intervals           # Intervals components
+        intervals-chart.tsx# Chart for intervals visualization
+        intervals-table.tsx# Table for intervals data
+        excel-export.ts    # Excel export functionality
+      index.tsx            # Export barrel file
   /games-table             # Game table components
   /ui                      # Shared UI components (ShadCN)
-  /hooks                   # Legacy hooks folder
+  copy-button.tsx          # Copy functionality component
+  export-button.tsx        # Export functionality component
+  games-table-wrapper.tsx  # Wrapper for games table
+  theme-toggle.tsx         # Theme toggle component
 
-/context
-  analytics-context.tsx    # Analytics state management
-      
-  /hooks
+/hooks
   /analytics               # Analytics-specific hooks
-    analytics-types.ts     # Type definitions for analytics
-    useBatchLastGames.ts   # Hook for batch last games data
-    useOccurrenceAnalysis.ts  # Hook for occurrence analysis
-    useRealTimeBatchGames.ts  # Real-time batch games updates
-    useRealTimeOccurrences.ts # Real-time occurrences updates
-    useRealTimeSeriesAnalysis.ts # Real-time series analysis
-    useSeriesAnalysis.ts   # Hook for series analysis
-  use-games-data.ts        # Hook for fetching games data
-  use-websocket-games.ts   # Hook for WebSocket game updates
-  use-clipboard.ts         # Utility hook for clipboard operations
+    /last-games            # Last games hooks
+    /occurrences           # Occurrences hooks
+    /series                # Series hooks
+    /intervals             # Intervals hooks
+    index.ts               # Export barrel file
+  useGamesData.ts          # Hook for fetching games data
+  useWebsocketGames.ts     # Hook for WebSocket game updates
+  useClipboard.ts          # Utility hook for clipboard operations
+  usePagination.tsx        # Hook for pagination functionality
 
-/lib
-  api-config.ts            # API configuration
-  utils.ts                 # Utility functions
+/utils
+  analytics-types.ts       # Type definitions for analytics
+  export-utils             # Export utility functions and types
+  date-utils.ts            # Date formatting utilities
 
 /models
   game.ts                  # Game data models and schemas
-    
-  /utils
-  date-utils.ts            # Date formatting utilities
 ```
 
 ## Feature Implementation
 
-The analytics dashboard is implemented as a single-page application with tab-based navigation between different analytics views. The current implementation includes three main features:
+The analytics dashboard is implemented as a single-page application with tab-based navigation between different analytics views. The current implementation includes the following features:
 
-### 1. Last Games Analytics
+### 1. Crash Point Cards (ACTIVE DEVELOPMENT)
 
 **Implementation:**
 
-- Located in `components/analytics/widgets/LastGamesTable.tsx`
-- Data fetching with `hooks/analytics/useBatchLastGames.ts` and `useRealTimeBatchGames.ts`
+- Located in `components/analytics/core/CrashPointCards.tsx`
+- Displays quick-view cards for selected crash points
+- Shows real-time streak counts and last seen information
+- Supports dynamic editing of displayed crash points
+- Updates time information in real-time
+- Color-coded indicators for streak status
+
+### 2. Last Games Analytics
+
+**Implementation:**
+
+- Located in `components/analytics/widgets/last-games/` directory
+- Data fetching with hooks in `hooks/analytics/last-games/` directory
 - Shows when specific crash points last occurred and how many games have passed since
 - Supports real-time updates via WebSocket integration
+- Offers toggle between current and unique streak types
 
 **API Routes:**
 
 - `/api/analytics/last-games/exact-floors`
 - `/api/analytics/last-games/min-crash-points`
 
-### 2. Occurrences Analytics
+### 3. Occurrences Analytics
 
 **Implementation:**
 
-- Located in `components/analytics/widgets/OccurrencesTable.tsx`
-- Data fetching with `hooks/analytics/useOccurrenceAnalysis.ts` and `useRealTimeOccurrences.ts`
+- Located in `components/analytics/widgets/occurrences/` directory
+- Data fetching with hooks in `hooks/analytics/occurrences/` directory
 - Provides statistics on how frequently specific crash points occur
 - Supports analysis by game count or time period
 - Includes comparison mode to see changes between periods
@@ -112,12 +135,12 @@ The analytics dashboard is implemented as a single-page application with tab-bas
 - `/api/analytics/occurrences/min-crash-points`
 - `/api/analytics/occurrences/min-crash-points/time`
 
-### 3. Series Analytics
+### 4. Series Analytics
 
 **Implementation:**
 
-- Located in `components/analytics/widgets/SeriesWidget.tsx`
-- Data fetching with `hooks/analytics/useSeriesAnalysis.ts` and `useRealTimeSeriesAnalysis.ts`
+- Located in `components/analytics/widgets/series/` directory
+- Data fetching with hooks in `hooks/analytics/series/` directory
 - Analyzes series of games without specific crash points
 - Visualizes series on a timeline chart
 - Supports sorting by time or series length
@@ -127,9 +150,19 @@ The analytics dashboard is implemented as a single-page application with tab-bas
 - `/api/analytics/series/without-min-crash-point/[value]`
 - `/api/analytics/series/without-min-crash-point/[value]/time`
 
-### Planned Features
+### 5. Intervals Analytics
 
-The "Intervals" tab is present in the UI but marked as "coming soon," indicating planned future development.
+**Implementation:**
+
+- Located in `components/analytics/widgets/intervals/` directory
+- Data fetching with hooks in `hooks/analytics/intervals/` directory
+- Analyzes intervals between games with specific crash points
+- Visualizes intervals on a timeline chart
+- Supports sorting by time or interval length
+
+**API Routes:**
+
+- `/api/analytics/intervals/min-crash-points/[value]`
 
 ## Data Management
 
@@ -154,7 +187,7 @@ The application uses a custom data fetching approach:
 Real-time updates are implemented using:
 
 1. **WebSocket Connection**: Via `react-use-websocket`
-2. **Custom Hooks**: `useRealTimeBatchGames.ts`, `useRealTimeOccurrences.ts`, etc.
+2. **Custom Hooks**: Organized by feature in the `/hooks/analytics/` directory
 3. **Data Merging**: New data is merged with existing data for smooth UI updates
 
 ## UI Components
@@ -174,6 +207,7 @@ Data is presented through:
 1. **Tables**: Using Tanstack React Table for sortable, filterable data
 2. **Charts**: Using Recharts for interactive data visualization
 3. **Badges**: Color-coded indicators for data values and trends
+4. **Cards**: Quick-view cards for important metrics (Crash Point Cards)
 
 ### Form Controls
 
@@ -182,6 +216,7 @@ User inputs are managed through:
 1. **Filters**: Common filters for crash point values
 2. **Tabs**: To switch between analysis types
 3. **Inputs**: For numeric values and configuration options
+4. **Editable Fields**: Interactive editing of crash point values
 
 ## API Integration
 
@@ -208,18 +243,15 @@ The application is designed to be responsive across devices:
 1. **Fluid Layout**: Adapts to different screen sizes
 2. **Mobile-friendly Controls**: Touch-friendly UI elements
 3. **Responsive Tables**: Tables adapt to smaller screens
+4. **Flexible Cards**: Card layouts that adjust to available space
 
 ## Future Improvements
 
 Based on the codebase analysis, potential improvements include:
 
-1. **Complete Intervals Feature**: Implement the planned intervals analysis
+1. **Enhanced Crash Point Cards**: Complete and refine the active development
 2. **Enhanced Visualization**: Add more chart types and visualization options
 3. **Performance Optimization**: For handling larger datasets
 4. **Export Functionality**: Allow exporting analytics data
 5. **User Preferences**: Save and load user filter preferences
 6. **More Comparison Options**: Additional comparative analysis tools
-
-## Conclusion
-
-The Crash Game Analytics frontend provides a comprehensive set of tools for analyzing game patterns and trends. The modular architecture allows for easy maintenance and extension with new features. The use of modern React patterns and libraries ensures a responsive and interactive user experience.
