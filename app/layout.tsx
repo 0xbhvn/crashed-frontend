@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/providers/theme-provider';
+import { ReactScan } from '@/components/react-scan';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -31,6 +32,7 @@ export default function RootLayout({
 			lang="en"
 			suppressHydrationWarning
 		>
+			<ReactScan />
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
