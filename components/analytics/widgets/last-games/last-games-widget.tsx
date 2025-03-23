@@ -20,7 +20,7 @@ import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
 import type { TimeAgoMap } from './types';
 import { getExcelConfig as getExcelConfigUtil } from './excel-export';
 
-// All crash points for API requests
+// All crash points for API requests - use Set to ensure uniqueness
 const ALL_CRASH_POINTS = [
 	...new Set([...CURRENT_STREAK_POINTS, ...UNIQUE_STREAK_POINTS]),
 ];
@@ -44,7 +44,7 @@ export function LastGamesTable({
 			? CURRENT_STREAK_POINTS
 			: UNIQUE_STREAK_POINTS;
 
-	// Fetch data with real-time updates
+	// Fetch data with real-time updates - now more efficient with optimized API calls
 	const {
 		data: batchData,
 		isLoading: batchLoading,
@@ -55,13 +55,16 @@ export function LastGamesTable({
 
 	// Update time ago strings every second
 	useEffect(() => {
-		const updateTimeAgo = () => {
-			if (!batchData) return;
+		if (!batchData) return;
 
+		function updateTimeAgo() {
 			const newTimeAgoMap: TimeAgoMap = {};
 
 			for (const point of pointsToShow) {
+				if (!batchData || !batchData[point]) continue;
+
 				const pointData = batchData[point];
+
 				// Use the appropriate game data based on selected tab
 				const gameData =
 					selectedType === 'current'
@@ -86,7 +89,7 @@ export function LastGamesTable({
 			}
 
 			setTimeAgoMap(newTimeAgoMap);
-		};
+		}
 
 		// Initial update
 		updateTimeAgo();

@@ -9,11 +9,13 @@ import type {
 
 interface UseBatchLastGamesProps {
 	values: number[];
-	type: 'current' | 'unique';
+	type?: 'current' | 'unique';
+	skipInitialFetch?: boolean;
 }
 
 export function useBatchLastGames({
 	values,
+	skipInitialFetch = false,
 }: Omit<UseBatchLastGamesProps, 'type'>) {
 	const [data, setData] = useState<BatchLastGamesData | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -137,8 +139,10 @@ export function useBatchLastGames({
 	}, [values]);
 
 	useEffect(() => {
-		fetchData();
-	}, [fetchData]);
+		if (!skipInitialFetch) {
+			fetchData();
+		}
+	}, [fetchData, skipInitialFetch]);
 
 	return { data, isLoading, error, fetchData };
 }

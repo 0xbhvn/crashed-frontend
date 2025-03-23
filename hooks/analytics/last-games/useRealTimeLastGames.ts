@@ -16,8 +16,11 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 	// Track the last game we processed
 	const lastProcessedGameRef = useRef<string | null>(null);
 
-	// Keep track of when the data was last reloaded
-	const lastRefreshTimeRef = useRef<number>(Date.now());
+	// Flag to indicate initial data load has happened
+	const initialLoadCompletedRef = useRef<boolean>(false);
+
+	// Flag to prevent concurrent refresh requests
+	const isRefreshingRef = useRef<boolean>(false);
 
 	// Get real-time game updates from the context
 	const { latestGame } = useAnalytics();
@@ -30,12 +33,14 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 		fetchData,
 	} = useBatchLastGames({
 		values,
+		skipInitialFetch: initialLoadCompletedRef.current, // Skip initial fetch if we've already loaded once
 	});
 
 	// Initialize local data with API data
 	useEffect(() => {
 		if (apiData && !localData) {
 			setLocalData(apiData);
+			initialLoadCompletedRef.current = true;
 		}
 	}, [apiData, localData]);
 
@@ -88,24 +93,24 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 			return;
 		}
 
-		// Prevent excessive API calls (at most once every 2 seconds)
-		const now = Date.now();
-		const timeSinceLastRefresh = now - lastRefreshTimeRef.current;
-
-		if (timeSinceLastRefresh < 2000) {
-			// Throttle API calls by setting a timeout
-			const timeoutMs = 2000 - timeSinceLastRefresh;
-			setTimeout(() => {
-				fetchData();
-				lastRefreshTimeRef.current = Date.now();
-				lastProcessedGameRef.current = latestGame.gameId;
-			}, timeoutMs);
-		} else {
-			// Reload immediately if throttle period has passed
-			fetchData();
-			lastRefreshTimeRef.current = Date.now();
-			lastProcessedGameRef.current = latestGame.gameId;
+		// Skip if we're already refreshing (prevents multiple API calls in quick succession)
+		if (isRefreshingRef.current) {
+			return;
 		}
+
+		// Mark that we're refreshing data
+		isRefreshingRef.current = true;
+
+		// Fetch updated data
+		fetchData();
+
+		// Track that we've processed this game
+		lastProcessedGameRef.current = latestGame.gameId;
+
+		// Reset the refreshing flag after a delay to allow the network request to complete
+		setTimeout(() => {
+			isRefreshingRef.current = false;
+		}, 3000);
 	}, [latestGame, fetchData]);
 
 	return {
