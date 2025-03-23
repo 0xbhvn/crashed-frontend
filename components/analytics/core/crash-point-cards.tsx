@@ -264,7 +264,23 @@ export function CrashPointCards({
 
 								{/* Bottom section: Game ID and time ago */}
 								<div className="flex justify-between items-end mt-2">
+									{/* Time Since (left side) */}
 									<div className="flex flex-col">
+										<div className="text-lg font-medium">
+											{gameData ? (
+												timeAgoMap[point] ||
+												'calculating...'
+											) : (
+												<Skeleton className="w-28 h-7 mb-1 rounded-sm" />
+											)}
+										</div>
+										<div className="text-xs text-muted-foreground">
+											Time Since
+										</div>
+									</div>
+
+									{/* Game ID (right side) */}
+									<div className="flex flex-col items-end">
 										<div className="text-sm font-medium">
 											{gameData ? (
 												`#${gameData.gameId}`
@@ -274,20 +290,6 @@ export function CrashPointCards({
 										</div>
 										<div className="text-xs text-muted-foreground">
 											Last Game
-										</div>
-									</div>
-
-									<div className="flex flex-col items-end">
-										<div className="text-sm font-medium">
-											{gameData ? (
-												timeAgoMap[point] ||
-												'calculating...'
-											) : (
-												<Skeleton className="w-24 h-5 rounded-sm" />
-											)}
-										</div>
-										<div className="text-xs text-muted-foreground">
-											Time Since
 										</div>
 									</div>
 								</div>
