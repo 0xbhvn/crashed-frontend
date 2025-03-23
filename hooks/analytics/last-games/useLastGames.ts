@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { getApiHeaders } from '@/lib/api-config';
 import type {
 	BatchLastGamesData,
@@ -22,9 +22,16 @@ export function useBatchLastGames({
 	const [error, setError] = useState<Error | null>(null);
 
 	const fetchData = useCallback(async () => {
+		// Prevent multiple concurrent fetches
+		if (isLoading) {
+			console.log('Skipping fetch - already loading');
+			return;
+		}
+
 		setIsLoading(true);
 		setError(null);
 		try {
+			console.log('Fetching data for values:', values);
 			// Call both APIs and process the responses
 			const minPointsResponse = await fetch(
 				'/api/analytics/last-games/min-crash-points',
@@ -90,18 +97,24 @@ export function useBatchLastGames({
 
 			for (const value of values) {
 				// API might use different format for keys (with .0 suffix for integers)
-				const minKey = value.toString();
-				const exactKey = value.toString();
+				const valueStr = value.toString();
+				const valueWithDecimal = value.toString().includes('.')
+					? valueStr
+					: `${value}.0`;
+				const valueWithoutDecimal = valueStr.replace('.0', '');
 
-				// Try possible key formats
-				const minKeysToTry = [minKey, `${value}.0`];
-				const exactKeysToTry = [exactKey, `${value}.0`];
+				// Try all possible key formats
+				const keysToTry = [
+					valueStr,
+					valueWithDecimal,
+					valueWithoutDecimal,
+				];
 
 				let minPointEntry: ApiGameResponse | undefined;
 				let exactFloorEntry: ApiGameResponse | undefined;
 
 				// Find the correct key in min points data
-				for (const key of minKeysToTry) {
+				for (const key of keysToTry) {
 					if (minPointsData.data[key]) {
 						minPointEntry = minPointsData.data[key];
 						break;
@@ -109,7 +122,7 @@ export function useBatchLastGames({
 				}
 
 				// Find the correct key in exact floors data
-				for (const key of exactKeysToTry) {
+				for (const key of keysToTry) {
 					if (exactFloorsData.data[key]) {
 						exactFloorEntry = exactFloorsData.data[key];
 						break;
@@ -123,9 +136,15 @@ export function useBatchLastGames({
 					currentGame: minPointEntry?.game || null,
 					uniqueGame: exactFloorEntry?.game || null,
 				};
+
+				console.log(
+					`Processed data for value ${value}:`,
+					processedData[value]
+				);
 			}
 
 			setData(processedData);
+			console.log('Final processed data:', processedData);
 		} catch (err) {
 			console.error('Error fetching batch data:', err);
 			setError(
@@ -136,13 +155,26 @@ export function useBatchLastGames({
 		} finally {
 			setIsLoading(false);
 		}
-	}, [values]);
+	}, [values, isLoading]);
+
+	// Compare previous values to prevent unnecessary fetches
+	const prevValuesRef = useRef<number[]>([]);
 
 	useEffect(() => {
-		if (!skipInitialFetch) {
+		// Skip if initial fetch is disabled
+		if (skipInitialFetch) return;
+
+		// Check if values array has actually changed
+		const valuesChanged =
+			prevValuesRef.current.length !== values.length ||
+			values.some((val, i) => prevValuesRef.current[i] !== val);
+
+		// Only fetch on first render or when values change
+		if (prevValuesRef.current.length === 0 || valuesChanged) {
+			prevValuesRef.current = [...values];
 			fetchData();
 		}
-	}, [fetchData, skipInitialFetch]);
+	}, [fetchData, skipInitialFetch, values]);
 
 	return { data, isLoading, error, fetchData };
 }

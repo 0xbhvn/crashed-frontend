@@ -20,6 +20,7 @@ export function DataTable({
 	batchData,
 	timeAgoMap,
 	isLoading,
+	isValueLoading,
 }: LastGamesDataTableProps) {
 	// Skeleton component for loading state
 	const TableSkeleton = () => {
@@ -79,6 +80,10 @@ export function DataTable({
 					) : (
 						pointsToShow.map((point) => {
 							const pointData = batchData?.[point];
+							// Check if this specific point is loading
+							const isPointLoading = isValueLoading
+								? isValueLoading(point)
+								: pointData === undefined;
 							const streakValue = pointData?.[selectedType] ?? 0;
 
 							// Use the appropriate game data based on selected tab
@@ -88,6 +93,47 @@ export function DataTable({
 									: pointData?.uniqueGame;
 
 							const exact = gameData?.crashPoint;
+
+							// If this specific point's data is still loading, show a row skeleton
+							if (isPointLoading) {
+								return (
+									<TableRow
+										key={`loading-row-${point}`}
+										className="h-10"
+									>
+										<TableCell className="font-medium">
+											{formatCrashPoint(
+												point,
+												selectedType
+											)}
+										</TableCell>
+										<TableCell>
+											<Badge
+												className={cn(
+													'px-2.5 py-0.5 font-semibold',
+													selectedType === 'current'
+														? getStreakBadgeColor(
+																0,
+																point
+														  )
+														: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+												)}
+											>
+												-
+											</Badge>
+										</TableCell>
+										<TableCell className="py-1">
+											<div className="h-4 w-20 animate-pulse rounded bg-muted" />
+										</TableCell>
+										<TableCell className="py-1">
+											<div className="h-4 w-14 animate-pulse rounded bg-muted" />
+										</TableCell>
+										<TableCell className="py-1">
+											<div className="h-4 w-12 animate-pulse rounded bg-muted" />
+										</TableCell>
+									</TableRow>
+								);
+							}
 
 							return (
 								<TableRow
@@ -109,13 +155,13 @@ export function DataTable({
 													: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
 											)}
 										>
-											{streakValue}
+											{!pointData ? '-' : streakValue}
 										</Badge>
 									</TableCell>
 									<TableCell>
 										{!gameData ? (
 											<span className="text-muted-foreground">
-												No data
+												-
 											</span>
 										) : (
 											timeAgoMap[point] ||

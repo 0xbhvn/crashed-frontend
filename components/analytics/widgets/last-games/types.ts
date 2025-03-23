@@ -20,4 +20,5 @@ export interface LastGamesDataTableProps {
 	batchData?: BatchLastGamesData | null;
 	timeAgoMap: TimeAgoMap;
 	isLoading: boolean;
+	isValueLoading?: (value: number) => boolean;
 }

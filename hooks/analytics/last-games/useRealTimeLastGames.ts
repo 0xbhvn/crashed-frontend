@@ -13,14 +13,14 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 	// Keep local copy of data to prevent loading states
 	const [localData, setLocalData] = useState<BatchLastGamesData | null>(null);
 
-	// Track the last game we processed
-	const lastProcessedGameRef = useRef<string | null>(null);
-
 	// Flag to indicate initial data load has happened
 	const initialLoadCompletedRef = useRef<boolean>(false);
 
 	// Flag to prevent concurrent refresh requests
 	const isRefreshingRef = useRef<boolean>(false);
+
+	// Track values that are currently being loaded
+	const loadingValuesRef = useRef<Set<number>>(new Set());
 
 	// Get real-time game updates from the context
 	const { latestGame } = useAnalytics();
@@ -41,6 +41,7 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 		if (apiData && !localData) {
 			setLocalData(apiData);
 			initialLoadCompletedRef.current = true;
+			loadingValuesRef.current.clear(); // Clear loading values once initial data is loaded
 		}
 	}, [apiData, localData]);
 
@@ -51,8 +52,19 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 			const updatedData = { ...localData };
 			let hasChanges = false;
 
-			// Check each value and update if it's changed
+			// Check each value and update if it's changed or new
 			for (const value of values) {
+				// Handle completely new values
+				if (apiData[value] && !localData[value]) {
+					console.log(`Adding new data for value ${value}`);
+					updatedData[value] = apiData[value];
+					hasChanges = true;
+					// Remove from loading values
+					loadingValuesRef.current.delete(value);
+					continue;
+				}
+
+				// Skip if data not available for this value
 				if (!apiData[value] || !localData[value]) continue;
 
 				const apiCurrent = apiData[value].current;
@@ -74,48 +86,100 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 							localData[value].uniqueGame,
 					};
 					hasChanges = true;
+					// Remove from loading values
+					loadingValuesRef.current.delete(value);
 				}
 			}
 
 			// Update local data only if there are changes
 			if (hasChanges) {
+				console.log('Updating local data with new values');
 				setLocalData(updatedData);
 			}
 		}
 	}, [apiData, localData, values]);
 
-	// Silently reload data when a new game arrives
+	// Track values in a ref to prevent unnecessary refreshes
+	const prevValuesRef = useRef<number[]>([]);
+
+	// Combination of handling values changes and new games
 	useEffect(() => {
+		// Only refresh if we received a new game event
 		if (!latestGame) return;
 
-		// Skip if we've already processed this game
-		if (lastProcessedGameRef.current === latestGame.gameId) {
-			return;
+		console.log('New game detected, refreshing data:', latestGame.gameId);
+
+		// Skip if we're already refreshing
+		if (isRefreshingRef.current) return;
+
+		// If we have initial data, we should refresh
+		if (initialLoadCompletedRef.current) {
+			isRefreshingRef.current = true;
+			fetchData()
+				.catch((err) => console.error('Error refreshing data:', err))
+				.finally(() => {
+					// Reset the refreshing flag after operation completes
+					setTimeout(() => {
+						isRefreshingRef.current = false;
+					}, 1000);
+				});
+		}
+	}, [fetchData, latestGame]);
+
+	// Handle values changes separately
+	useEffect(() => {
+		// Skip if arrays are identical (same length and values)
+		const valuesChanged =
+			prevValuesRef.current.length !== values.length ||
+			values.some((val, i) => prevValuesRef.current[i] !== val);
+
+		if (!valuesChanged) return;
+
+		console.log('Values changed, refreshing data:', values);
+
+		// Find new values that were added
+		const newValues = values.filter(
+			(val) => !prevValuesRef.current.includes(val)
+		);
+
+		// Mark new values as loading
+		if (newValues.length > 0) {
+			// Use for...of instead of forEach (per linter recommendation)
+			for (const val of newValues) {
+				loadingValuesRef.current.add(val);
+			}
+			console.log('New values being loaded:', newValues);
 		}
 
-		// Skip if we're already refreshing (prevents multiple API calls in quick succession)
-		if (isRefreshingRef.current) {
-			return;
+		// Update the previous values reference
+		prevValuesRef.current = [...values];
+
+		// Skip if we're already refreshing
+		if (isRefreshingRef.current) return;
+
+		// If we have initial data, we should refresh
+		if (initialLoadCompletedRef.current) {
+			isRefreshingRef.current = true;
+			fetchData()
+				.catch((err) => console.error('Error refreshing data:', err))
+				.finally(() => {
+					// Reset the refreshing flag after operation completes
+					setTimeout(() => {
+						isRefreshingRef.current = false;
+					}, 1000);
+				});
 		}
+	}, [fetchData, values]);
 
-		// Mark that we're refreshing data
-		isRefreshingRef.current = true;
-
-		// Fetch updated data
-		fetchData();
-
-		// Track that we've processed this game
-		lastProcessedGameRef.current = latestGame.gameId;
-
-		// Reset the refreshing flag after a delay to allow the network request to complete
-		setTimeout(() => {
-			isRefreshingRef.current = false;
-		}, 3000);
-	}, [latestGame, fetchData]);
+	// Function to check if a specific value is loading
+	const isValueLoading = (value: number): boolean => {
+		return loadingValuesRef.current.has(value);
+	};
 
 	return {
 		data: localData,
 		isLoading: apiLoading && !localData, // Only show loading on initial load
+		isValueLoading, // Add function to check if a specific value is loading
 		error: apiError,
 	};
 }

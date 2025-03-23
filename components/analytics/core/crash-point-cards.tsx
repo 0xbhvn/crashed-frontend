@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,12 +22,21 @@ interface CrashPointCardsProps {
 	batchData: BatchLastGamesData | null;
 	// Optional timeAgoMap - if not provided, we'll calculate it internally
 	timeAgoMap?: Record<number, string>;
+	// Callback for when a crash point is changed or added
+	onCrashPointChange?: (newPoint: number) => void;
+	// Default points to consider when checking if a point is custom
+	defaultPoints?: number[];
+	// Function to check if a specific point is loading
+	isValueLoading?: (value: number) => boolean;
 }
 
 export function CrashPointCards({
 	selectedType,
 	batchData,
 	timeAgoMap: externalTimeAgoMap,
+	onCrashPointChange,
+	defaultPoints = [],
+	isValueLoading,
 }: CrashPointCardsProps) {
 	const [displayPoints, setDisplayPoints] = useState<number[]>(
 		INITIAL_DISPLAY_POINTS
@@ -40,9 +50,33 @@ export function CrashPointCards({
 	const [editingPoint, setEditingPoint] = useState<number | null>(null);
 	const [editingValue, setEditingValue] = useState<string>('');
 	const editInputRef = useRef<HTMLInputElement>(null);
+	const [cardPositions, setCardPositions] = useState<Record<number, number>>(
+		{}
+	);
+	const originalPointsRef = useRef<Record<number, number>>({});
 
 	// Use externally provided timeAgoMap if available, otherwise use internal one
 	const timeAgoMap = externalTimeAgoMap || internalTimeAgoMap;
+
+	// Initialize card positions - only once on component mount
+	const initializedRef = useRef(false);
+	useEffect(() => {
+		// Skip if already initialized to prevent re-initialization
+		if (initializedRef.current) return;
+
+		// Use a function to safely access the current displayPoints
+		function initializeCardPositions() {
+			const initialPositions: Record<number, number> = {};
+			// Access displayPoints directly from current scope
+			INITIAL_DISPLAY_POINTS.forEach((point, index) => {
+				initialPositions[point] = index;
+			});
+			setCardPositions(initialPositions);
+		}
+
+		initializeCardPositions();
+		initializedRef.current = true;
+	}, []);
 
 	// Update time ago strings every second (only if externalTimeAgoMap is not provided)
 	useEffect(() => {
@@ -95,6 +129,130 @@ export function CrashPointCards({
 		return () => clearInterval(intervalId);
 	}, [batchData, selectedType, displayPoints, externalTimeAgoMap]);
 
+	// Custom hook to safely access the latest values without triggering effect dependency cycles
+	const getLatestValues = useRef(() => ({
+		displayPoints,
+		cardPositions,
+		onCrashPointChange,
+	})).current;
+
+	// React to selectedType changes with a ref to prevent infinite updates
+	const selectedTypeRef = useRef(selectedType);
+	useEffect(() => {
+		// Skip if the selectedType hasn't actually changed to prevent unnecessary updates
+		if (selectedTypeRef.current === selectedType) return;
+
+		console.log(
+			`Tab changed from ${selectedTypeRef.current} to ${selectedType}`
+		);
+
+		// Update our ref with the new type first to prevent re-entry
+		selectedTypeRef.current = selectedType;
+
+		// Get latest values using the stable getter
+		const { displayPoints, cardPositions, onCrashPointChange } =
+			getLatestValues();
+
+		// When switching to unique mode, floor decimal values
+		if (selectedType === 'unique') {
+			const newDisplayPoints = [...displayPoints];
+			let positionsUpdated = false;
+
+			// Process all points in a single update
+			for (let i = 0; i < newDisplayPoints.length; i++) {
+				const point = newDisplayPoints[i];
+				if (point !== Math.floor(point)) {
+					const flooredPoint = Math.floor(point);
+					console.log(
+						`Flooring point ${point} to ${flooredPoint} for unique mode`
+					);
+
+					// Remember original value to restore later
+					originalPointsRef.current[flooredPoint] = point;
+
+					// Update the point in our copy
+					newDisplayPoints[i] = flooredPoint;
+					positionsUpdated = true;
+				}
+			}
+
+			// Only update state if we actually made changes
+			if (positionsUpdated) {
+				// Update positions in one batch
+				const newPositions = { ...cardPositions };
+				for (let i = 0; i < displayPoints.length; i++) {
+					const oldPoint = displayPoints[i];
+					const newPoint = newDisplayPoints[i];
+					if (oldPoint !== newPoint) {
+						newPositions[newPoint] = newPositions[oldPoint];
+						delete newPositions[oldPoint];
+					}
+				}
+
+				// Apply all changes in one go
+				setCardPositions(newPositions);
+				// Use a callback to ensure we're working with the latest state
+				setDisplayPoints(() => [...newDisplayPoints]);
+			}
+		}
+		// When switching to current mode, restore original decimal values
+		else if (selectedType === 'current') {
+			const newDisplayPoints = [...displayPoints];
+			let positionsUpdated = false;
+			let needsDataRefresh = false;
+
+			// Process all points in a single update
+			for (let i = 0; i < newDisplayPoints.length; i++) {
+				const point = newDisplayPoints[i];
+				if (originalPointsRef.current[point]) {
+					const originalValue = originalPointsRef.current[point];
+					console.log(
+						`Restoring point ${point} to original ${originalValue} for current mode`
+					);
+
+					// Update the point in our copy
+					newDisplayPoints[i] = originalValue;
+					positionsUpdated = true;
+					needsDataRefresh = true;
+				}
+			}
+
+			// Only update state if we actually made changes
+			if (positionsUpdated) {
+				// Update positions in one batch
+				const newPositions = { ...cardPositions };
+				for (let i = 0; i < displayPoints.length; i++) {
+					const oldPoint = displayPoints[i];
+					const newPoint = newDisplayPoints[i];
+					if (oldPoint !== newPoint) {
+						newPositions[newPoint] = newPositions[oldPoint];
+						delete newPositions[oldPoint];
+					}
+				}
+
+				// Apply all changes in one go - use function form to ensure we're using latest state
+				setCardPositions(() => ({ ...newPositions }));
+				setDisplayPoints(() => [...newDisplayPoints]);
+
+				// Notify parent we need data for restored values (only once)
+				if (needsDataRefresh && onCrashPointChange) {
+					// Find the first restored value and use setTimeout to break potential update cycles
+					setTimeout(() => {
+						for (let i = 0; i < newDisplayPoints.length; i++) {
+							const newPoint = newDisplayPoints[i];
+							const oldPoint = displayPoints[i];
+							if (newPoint !== oldPoint) {
+								onCrashPointChange(newPoint);
+								break; // Just fetch one to trigger refresh
+							}
+						}
+					}, 0);
+				}
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedType, getLatestValues]);
+
 	// Get streak badge color based on value and crash point
 	const getStreakBadgeColor = (value: number, point: number): string => {
 		// For unique selection, always use blue badges
@@ -137,7 +295,20 @@ export function CrashPointCards({
 
 	// Handle input changes when editing
 	const handleEditChange = (e: ChangeEvent<HTMLInputElement>) => {
-		setEditingValue(e.target.value);
+		const inputValue = e.target.value;
+
+		// For unique/exact mode, only allow integers
+		if (selectedType === 'unique') {
+			// Only allow digits (no decimal point)
+			if (/^\d*$/.test(inputValue)) {
+				setEditingValue(inputValue);
+			}
+		} else {
+			// Allow decimals for current mode
+			if (/^\d*\.?\d*$/.test(inputValue)) {
+				setEditingValue(inputValue);
+			}
+		}
 	};
 
 	// Finish editing and update values
@@ -145,25 +316,46 @@ export function CrashPointCards({
 		if (editingPoint === null) return;
 
 		// Validate input
-		const newPointValue = Number.parseFloat(editingValue);
+		let newPointValue = Number.parseFloat(editingValue);
 		if (Number.isNaN(newPointValue) || newPointValue <= 0) {
 			setEditingPoint(null);
 			return;
 		}
 
-		// Replace the edited point with the new value
-		const updatedPoints = displayPoints.map((p) =>
-			p === editingPoint ? newPointValue : p
-		);
+		// For unique/exact mode, ensure we use integers only
+		if (selectedType === 'unique') {
+			newPointValue = Math.floor(newPointValue);
+		}
+
+		// Check if this is a new value or just editing the same value
+		const isNewValue = newPointValue !== editingPoint;
+
+		const positionIndex = cardPositions[editingPoint];
+
+		// Update the display points by replacing the edited point with the new value
+		const updatedPoints = [...displayPoints];
+		updatedPoints[positionIndex] = newPointValue;
+
+		// Update cardPositions to track the new value's position
+		const updatedPositions = { ...cardPositions };
+		delete updatedPositions[editingPoint];
+		updatedPositions[newPointValue] = positionIndex;
 
 		// Add the new value to all crash points (if it's not already there)
-		const updatedAllPoints = [
-			...new Set([...allCrashPoints, newPointValue]),
-		];
+		const updatedAllPoints = [...allCrashPoints];
+		if (!updatedAllPoints.includes(newPointValue)) {
+			updatedAllPoints.push(newPointValue);
+		}
 
 		setDisplayPoints(updatedPoints);
+		setCardPositions(updatedPositions);
 		setAllCrashPoints(updatedAllPoints);
 		setEditingPoint(null);
+
+		// Notify parent component about the change if value actually changed
+		if (isNewValue && onCrashPointChange) {
+			onCrashPointChange(newPointValue);
+		}
 	};
 
 	// Handle keyboard events during editing
@@ -176,128 +368,184 @@ export function CrashPointCards({
 		}
 	};
 
+	// Check if a point is custom (not in default points)
+	const isCustomPoint = (point: number): boolean => {
+		return !defaultPoints.includes(point);
+	};
+
 	return (
-		<div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-6">
-			{displayPoints.map((point) => {
-				// Get data for this point
-				const pointData = batchData?.[point];
-				const streakValue = pointData?.[selectedType] ?? 0;
+		<div className="w-full mb-6">
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+				{displayPoints.map((point) => {
+					// Get data for this point
+					const pointData = batchData?.[point];
+					const streakValue = pointData?.[selectedType] ?? null;
+					// Show loading state when entire batchData is null OR when this specific point's data is missing
+					const isLoading = isValueLoading
+						? isValueLoading(point)
+						: batchData === null || pointData === undefined;
 
-				// Use the appropriate game data based on selected type
-				const gameData =
-					selectedType === 'current'
-						? pointData?.currentGame
-						: pointData?.uniqueGame;
+					// Use the appropriate game data based on selected type
+					const gameData =
+						selectedType === 'current'
+							? pointData?.currentGame
+							: pointData?.uniqueGame;
 
-				const exact = gameData?.crashPoint;
+					const exact = gameData?.crashPoint;
+					const isCustom = isCustomPoint(point);
 
-				return (
-					<Card key={point}>
-						<CardContent className="p-4">
-							<div className="flex flex-col gap-2">
-								{/* Top section: Crash point and streak count */}
-								<div className="flex justify-between items-start">
-									<div className="flex flex-col">
-										<div className="flex items-center gap-3">
-											{editingPoint === point ? (
-												<input
-													ref={editInputRef}
-													type="text"
-													value={editingValue}
-													onChange={handleEditChange}
-													onBlur={finishEditing}
-													onKeyDown={handleKeyDown}
-													className="w-28 bg-transparent border-b border-input focus:border-primary outline-none text-5xl font-semibold"
-												/>
-											) : (
-												<button
-													onClick={() =>
-														startEditing(point)
-													}
-													className="bg-transparent border-none p-0 cursor-pointer hover:text-primary text-5xl font-semibold"
-													aria-label={`Edit ${point}x crash point`}
-													type="button"
-												>
-													{point}x
-												</button>
-											)}
-
-											<Badge
-												className={cn(
-													'px-5 py-2.5 font-semibold text-3xl h-12',
-													getStreakBadgeColor(
-														streakValue,
-														point
-													)
+					return (
+						<Card key={`card-${point}-${cardPositions[point]}`}>
+							<CardContent className="p-4">
+								<div className="flex flex-col gap-2">
+									{/* Top section: Crash point and streak count */}
+									<div className="flex justify-between items-start">
+										<div className="flex flex-col">
+											<div className="flex items-center gap-3">
+												{editingPoint === point ? (
+													<input
+														ref={editInputRef}
+														type="text"
+														value={editingValue}
+														onChange={
+															handleEditChange
+														}
+														onBlur={finishEditing}
+														onKeyDown={
+															handleKeyDown
+														}
+														className="w-28 bg-transparent border-b border-input focus:border-primary outline-none text-5xl font-semibold"
+													/>
+												) : (
+													<button
+														onClick={() =>
+															startEditing(point)
+														}
+														className={cn(
+															'bg-transparent border-none p-0 cursor-pointer hover:text-primary text-5xl font-semibold',
+															isCustom &&
+																'text-primary'
+														)}
+														aria-label={`Edit ${point}x crash point`}
+														type="button"
+													>
+														{point}x
+													</button>
 												)}
-											>
-												{streakValue}
-											</Badge>
+
+												<Badge
+													className={cn(
+														'px-5 py-2.5 font-semibold text-3xl h-12',
+														getStreakBadgeColor(
+															streakValue || 0,
+															point
+														)
+													)}
+												>
+													{isLoading
+														? '-'
+														: streakValue !== null
+														? streakValue
+														: '-'}
+												</Badge>
+											</div>
+											<div className="text-sm text-muted-foreground mt-1">
+												{selectedType === 'current'
+													? 'Current streak ≥'
+													: 'Unique streak ='}{' '}
+												{point}x
+												{selectedType === 'unique' &&
+													originalPointsRef.current[
+														point
+													] && (
+														<span className="text-yellow-600 dark:text-yellow-400 ml-1">
+															(floored from{' '}
+															{
+																originalPointsRef
+																	.current[
+																	point
+																]
+															}
+															x)
+														</span>
+													)}
+											</div>
 										</div>
-										<div className="text-sm text-muted-foreground mt-1">
-											{selectedType === 'current'
-												? 'Current streak ≥'
-												: 'Unique streak ='}{' '}
-											{point}x
-										</div>
+
+										{/* Exact Value moved to top section */}
+										{isLoading ? (
+											<div className="flex flex-col items-end self-end">
+												<Skeleton className="w-14 h-5 mb-1 rounded-sm" />
+												<div className="text-xs text-muted-foreground">
+													Exact Value
+												</div>
+											</div>
+										) : gameData && exact !== undefined ? (
+											<div className="flex flex-col items-end self-end">
+												<div className="text-sm font-medium">
+													{formatExactCrash(exact)}x
+												</div>
+												<div className="text-xs text-muted-foreground">
+													Exact Value
+												</div>
+											</div>
+										) : (
+											<div className="flex flex-col items-end self-end">
+												<div className="text-sm font-medium">
+													-
+												</div>
+												<div className="text-xs text-muted-foreground">
+													Exact Value
+												</div>
+											</div>
+										)}
 									</div>
 
-									{/* Exact Value moved to top section */}
-									{gameData && exact !== undefined ? (
-										<div className="flex flex-col items-end self-end">
-											<div className="text-sm font-medium">
-												{formatExactCrash(exact)}x
-											</div>
-											<div className="text-xs text-muted-foreground">
-												Exact Value
-											</div>
-										</div>
-									) : (
-										<div className="flex flex-col items-end self-end">
-											<Skeleton className="w-14 h-5 mb-1 rounded-sm" />
-											<div className="text-xs text-muted-foreground">
-												Exact Value
-											</div>
-										</div>
-									)}
-								</div>
-
-								{/* Bottom section: Game ID and time ago */}
-								<div className="flex justify-between items-end mt-2">
-									{/* Time Since (left side) */}
-									<div className="flex flex-col">
-										<div className="text-lg font-medium">
-											{gameData ? (
-												timeAgoMap[point] ||
-												'calculating...'
-											) : (
+									{/* Bottom section: Game ID and time ago */}
+									<div className="flex justify-between items-end mt-2">
+										{/* Time Since (left side) */}
+										<div className="flex flex-col">
+											{isLoading ? (
 												<Skeleton className="w-28 h-7 mb-1 rounded-sm" />
-											)}
-										</div>
-										<div className="text-xs text-muted-foreground">
-											Time Since
-										</div>
-									</div>
-
-									{/* Game ID (right side) */}
-									<div className="flex flex-col items-end">
-										<div className="text-sm font-medium">
-											{gameData ? (
-												`#${gameData.gameId}`
+											) : gameData ? (
+												<div className="text-lg font-medium">
+													{timeAgoMap[point] ||
+														'calculating...'}
+												</div>
 											) : (
-												<Skeleton className="w-20 h-5 rounded-sm" />
+												<div className="text-lg font-medium">
+													-
+												</div>
 											)}
+											<div className="text-xs text-muted-foreground">
+												Time Since
+											</div>
 										</div>
-										<div className="text-xs text-muted-foreground">
-											Last Game
+
+										{/* Game ID (right side) */}
+										<div className="flex flex-col items-end">
+											{isLoading ? (
+												<Skeleton className="w-20 h-5 rounded-sm" />
+											) : gameData ? (
+												<div className="text-sm font-medium">
+													{`#${gameData.gameId}`}
+												</div>
+											) : (
+												<div className="text-sm font-medium">
+													-
+												</div>
+											)}
+											<div className="text-xs text-muted-foreground">
+												Last Game
+											</div>
 										</div>
 									</div>
 								</div>
-							</div>
-						</CardContent>
-					</Card>
-				);
-			})}
+							</CardContent>
+						</Card>
+					);
+				})}
+			</div>
 		</div>
 	);
 }
