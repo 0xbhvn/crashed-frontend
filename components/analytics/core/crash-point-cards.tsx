@@ -3,7 +3,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useRealTimeBatchGames } from '@/hooks/analytics';
 import { useState, useEffect, useRef } from 'react';
 import type { KeyboardEvent, ChangeEvent } from 'react';
 import { formatDuration, intervalToDuration } from 'date-fns';
@@ -12,44 +11,54 @@ import {
 	CURRENT_STREAK_POINTS,
 	UNIQUE_STREAK_POINTS,
 } from '@/utils/export-utils/types';
-
-// All crash points for API requests (same as in LastGamesTable)
-const ALL_CRASH_POINTS = [
-	...new Set([...CURRENT_STREAK_POINTS, ...UNIQUE_STREAK_POINTS]),
-];
+import type { BatchLastGamesData } from '@/utils/analytics-types';
 
 // Initial points to display in the cards
 const INITIAL_DISPLAY_POINTS = [2, 10];
 
 interface CrashPointCardsProps {
 	selectedType: 'current' | 'unique';
+	batchData: BatchLastGamesData | null;
+	// Optional timeAgoMap - if not provided, we'll calculate it internally
+	timeAgoMap?: Record<number, string>;
 }
 
-export function CrashPointCards({ selectedType }: CrashPointCardsProps) {
+export function CrashPointCards({
+	selectedType,
+	batchData,
+	timeAgoMap: externalTimeAgoMap,
+}: CrashPointCardsProps) {
 	const [displayPoints, setDisplayPoints] = useState<number[]>(
 		INITIAL_DISPLAY_POINTS
 	);
-	const [timeAgoMap, setTimeAgoMap] = useState<Record<number, string>>({});
-	const [allCrashPoints, setAllCrashPoints] =
-		useState<number[]>(ALL_CRASH_POINTS);
+	const [internalTimeAgoMap, setInternalTimeAgoMap] = useState<
+		Record<number, string>
+	>({});
+	const [allCrashPoints, setAllCrashPoints] = useState<number[]>([
+		...new Set([...CURRENT_STREAK_POINTS, ...UNIQUE_STREAK_POINTS]),
+	]);
 	const [editingPoint, setEditingPoint] = useState<number | null>(null);
 	const [editingValue, setEditingValue] = useState<string>('');
 	const editInputRef = useRef<HTMLInputElement>(null);
 
-	// Fetch data with real-time updates
-	const { data: batchData } = useRealTimeBatchGames({
-		values: allCrashPoints,
-	});
+	// Use externally provided timeAgoMap if available, otherwise use internal one
+	const timeAgoMap = externalTimeAgoMap || internalTimeAgoMap;
 
-	// Update time ago strings every second
+	// Update time ago strings every second (only if externalTimeAgoMap is not provided)
 	useEffect(() => {
-		const updateTimeAgo = () => {
-			if (!batchData) return;
+		// Skip if external timeAgoMap is provided
+		if (externalTimeAgoMap) return;
 
+		// Skip if no batchData
+		if (!batchData) return;
+
+		const updateTimeAgo = () => {
 			const newTimeAgoMap: Record<number, string> = {};
 
 			for (const point of displayPoints) {
 				const pointData = batchData[point];
+				if (!pointData) continue;
+
 				// Use the appropriate game data based on selected tab
 				const gameData =
 					selectedType === 'current'
@@ -73,7 +82,7 @@ export function CrashPointCards({ selectedType }: CrashPointCardsProps) {
 				}
 			}
 
-			setTimeAgoMap(newTimeAgoMap);
+			setInternalTimeAgoMap(newTimeAgoMap);
 		};
 
 		// Initial update
@@ -84,7 +93,7 @@ export function CrashPointCards({ selectedType }: CrashPointCardsProps) {
 
 		// Clean up on unmount
 		return () => clearInterval(intervalId);
-	}, [batchData, selectedType, displayPoints]);
+	}, [batchData, selectedType, displayPoints, externalTimeAgoMap]);
 
 	// Get streak badge color based on value and crash point
 	const getStreakBadgeColor = (value: number, point: number): string => {
@@ -253,49 +262,33 @@ export function CrashPointCards({ selectedType }: CrashPointCardsProps) {
 									)}
 								</div>
 
-								{/* Bottom section: Last seen, Game ID */}
-								<div className="flex justify-between mt-3 pt-3 border-t border-border">
-									{/* Last seen */}
+								{/* Bottom section: Game ID and time ago */}
+								<div className="flex justify-between items-end mt-2">
 									<div className="flex flex-col">
-										{gameData ? (
-											<>
-												<div className="text-lg font-medium">
-													{timeAgoMap[point] ||
-														'calculating...'}
-												</div>
-												<div className="text-xs text-muted-foreground">
-													Last seen
-												</div>
-											</>
-										) : (
-											<>
-												<Skeleton className="w-28 h-7 mb-1 rounded-sm" />
-												<div className="text-xs text-muted-foreground">
-													Last seen
-												</div>
-											</>
-										)}
+										<div className="text-sm font-medium">
+											{gameData ? (
+												`#${gameData.gameId}`
+											) : (
+												<Skeleton className="w-20 h-5 rounded-sm" />
+											)}
+										</div>
+										<div className="text-xs text-muted-foreground">
+											Last Game
+										</div>
 									</div>
 
-									{/* Right side: Game ID */}
 									<div className="flex flex-col items-end">
-										{gameData ? (
-											<>
-												<div className="text-sm font-medium">
-													#{gameData.gameId}
-												</div>
-												<div className="text-xs text-muted-foreground">
-													Game ID
-												</div>
-											</>
-										) : (
-											<>
-												<Skeleton className="w-16 h-5 mb-1 rounded-sm" />
-												<div className="text-xs text-muted-foreground">
-													Game ID
-												</div>
-											</>
-										)}
+										<div className="text-sm font-medium">
+											{gameData ? (
+												timeAgoMap[point] ||
+												'calculating...'
+											) : (
+												<Skeleton className="w-24 h-5 rounded-sm" />
+											)}
+										</div>
+										<div className="text-xs text-muted-foreground">
+											Time Since
+										</div>
 									</div>
 								</div>
 							</div>

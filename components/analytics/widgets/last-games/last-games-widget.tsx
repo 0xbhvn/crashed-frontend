@@ -144,7 +144,11 @@ export function LastGamesTable({
 					getChartConfig={getChartConfig}
 				/>
 
-				<CrashPointCards selectedType={selectedType} />
+				<CrashPointCards
+					selectedType={selectedType}
+					batchData={batchData}
+					timeAgoMap={timeAgoMap}
+				/>
 
 				<DataTable
 					selectedType={selectedType}
