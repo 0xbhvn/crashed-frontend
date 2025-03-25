@@ -244,6 +244,13 @@ export function SeriesWidget({
 		return data?.slice(0, 5) || [];
 	}, [data]);
 
+	// Calculate the biggest gap
+	const biggestGap = React.useMemo(() => {
+		if (!data || data.length === 0) return 0;
+		// Always sort by length to get the biggest gap
+		return Math.max(...data.map((series) => series.length));
+	}, [data]);
+
 	// Calculate median length for the reference line
 	const medianLength = React.useMemo(() => {
 		if (!chartData || chartData.length === 0) return 0;
@@ -458,13 +465,23 @@ export function SeriesWidget({
 					</CardDescription>
 				</div>
 				{!isLoading && !error && data && (
-					<div className="flex items-center bg-muted px-3 py-1 rounded-md">
-						<span className="text-sm font-medium mr-1">
-							Total {value}x occurrences:
-						</span>
-						<span className="text-sm font-bold">
-							{totalOccurrences}
-						</span>
+					<div className="flex items-center gap-2">
+						<div className="flex items-center bg-muted px-3 py-1 rounded-md">
+							<span className="text-sm font-medium mr-1">
+								Total {value}x occurrences:
+							</span>
+							<span className="text-sm font-bold">
+								{totalOccurrences}
+							</span>
+						</div>
+						<div className="flex items-center bg-muted px-3 py-1 rounded-md">
+							<span className="text-sm font-medium mr-1">
+								Biggest gap:
+							</span>
+							<span className="text-sm font-bold">
+								{biggestGap}
+							</span>
+						</div>
 					</div>
 				)}
 			</CardHeader>

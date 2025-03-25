@@ -64,6 +64,9 @@ export function SeriesTable({
 							<th className="text-left font-medium pb-2">
 								Follow Streak
 							</th>
+							<th className="text-left font-medium pb-2">
+								Following Crash
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -116,7 +119,6 @@ export function SeriesTable({
 															: 'games'}{' '}
 														followed
 													</p>
-													{/* Only show games list if circles are visible */}
 													{showCircles &&
 														series.follow_streak
 															.games &&
@@ -139,7 +141,6 @@ export function SeriesTable({
 																						| GameObject,
 																					i: number
 																				) => {
-																					// Format the game information
 																					let gameId: string;
 																					let crashPoint: string;
 
@@ -160,7 +161,6 @@ export function SeriesTable({
 																							'?.??'
 																						}x`;
 																					} else {
-																						// Handle string format which should be "#GAMEID@CRASHPOINTx"
 																						const parts =
 																							String(
 																								game
@@ -220,6 +220,21 @@ export function SeriesTable({
 											None
 										</span>
 									)}
+								</td>
+								<td className="py-2 font-medium">
+									{series.follow_streak?.games &&
+									series.follow_streak.games.length > 0
+										? typeof series.follow_streak
+												.games[0] === 'object'
+											? `${(
+													series.follow_streak
+														.games[0] as GameObject
+											  ).crash_point?.toFixed(2)}x`
+											: (
+													series.follow_streak
+														.games[0] as string
+											  ).split('@')[1]
+										: '-'}
 								</td>
 							</tr>
 						))}
