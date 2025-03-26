@@ -254,7 +254,7 @@ export function useOccurrenceAnalysis({
 			setIsLoading(false);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [values, analyzeBy, limit, hours]);
+	}, [values, analyzeBy, limit, hours, comparison]);
 
 	useEffect(() => {
 		fetchData();
