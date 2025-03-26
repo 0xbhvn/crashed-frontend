@@ -49,7 +49,12 @@ export function useRealTimeSeriesAnalysis({
 
 	// Initialize local data with API data
 	useEffect(() => {
-		if (apiData && apiData.length > 0 && localData.length === 0) {
+		if (
+			apiData &&
+			Array.isArray(apiData) &&
+			apiData.length > 0 &&
+			localData.length === 0
+		) {
 			setLocalData(apiData);
 		}
 	}, [apiData, localData]);
@@ -59,6 +64,16 @@ export function useRealTimeSeriesAnalysis({
 		if (apiData && localData) {
 			// Use a more careful comparison approach that doesn't trigger unnecessary updates
 			const hasDataChanged = (() => {
+				// First ensure apiData is an array
+				if (!Array.isArray(apiData)) {
+					console.warn(
+						'API structure changed: apiData is now',
+						typeof apiData,
+						'- Handling gracefully...'
+					);
+					return false;
+				}
+
 				// Different lengths mean the data definitely changed
 				if (apiData.length !== localData.length) return true;
 
@@ -88,10 +103,16 @@ export function useRealTimeSeriesAnalysis({
 				setLocalData(apiData);
 
 				// Calculate total occurrences when data changes
-				const newTotalOccurrences = apiData.reduce((sum, series) => {
-					return sum + (series.follow_streak?.count || 0);
-				}, 0);
-				setTotalOccurrences(newTotalOccurrences);
+				// Make sure apiData is an array before using reduce
+				if (Array.isArray(apiData)) {
+					const newTotalOccurrences = apiData.reduce(
+						(sum, series) => {
+							return sum + (series.follow_streak?.count || 0);
+						},
+						0
+					);
+					setTotalOccurrences(newTotalOccurrences);
+				}
 			}
 		}
 	}, [apiData, localData]);
@@ -126,9 +147,10 @@ export function useRealTimeSeriesAnalysis({
 	}, [latestGame, fetchData]);
 
 	return {
-		data: localData,
+		data: Array.isArray(localData) ? localData : [],
 		totalOccurrences,
-		isLoading: apiLoading && localData.length === 0, // Only show loading on initial load
+		isLoading:
+			apiLoading && (localData.length === 0 || !Array.isArray(localData)), // Only show loading on initial load
 		error: apiError,
 		refreshData: fetchData,
 	};

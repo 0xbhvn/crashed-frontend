@@ -198,7 +198,7 @@ export function SeriesWidget({
 
 	// Format data for the chart
 	const chartData = React.useMemo(() => {
-		if (!data || data.length === 0) return [];
+		if (!data || !Array.isArray(data) || data.length === 0) return [];
 
 		// For time sorting: Latest on the right
 		// For length sorting: Highest on the left
@@ -241,12 +241,12 @@ export function SeriesWidget({
 
 	// Get the top series for display
 	const topSeries = React.useMemo(() => {
-		return data?.slice(0, 5) || [];
+		return Array.isArray(data) ? data.slice(0, 5) : [];
 	}, [data]);
 
 	// Calculate the biggest gap
 	const biggestGap = React.useMemo(() => {
-		if (!data || data.length === 0) return 0;
+		if (!data || !Array.isArray(data) || data.length === 0) return 0;
 		// Always sort by length to get the biggest gap
 		return Math.max(...data.map((series) => series.length));
 	}, [data]);

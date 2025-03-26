@@ -70,13 +70,37 @@ export async function GET(
 		const data = await backendResponse.json();
 
 		// Check if data is structured as expected
-		if (!data.data || !Array.isArray(data.data)) {
+		if (!data.data) {
 			console.warn(
 				'⚠️ Unexpected data structure from backend (series time):',
 				data
 			);
 			// Return the data as-is even if unexpected
 			return NextResponse.json(data);
+		}
+
+		// If the data is not an array but another structure, transform it
+		if (!Array.isArray(data.data)) {
+			console.warn(
+				'⚠️ API structure changed: data.data is now',
+				typeof data.data,
+				'- Attempting to adapt...'
+			);
+
+			// Try to handle potentially changed API response structure
+			if (typeof data.data === 'object' && data.data !== null) {
+				// Look for potential array fields within the data object
+				const potentialArrays = Object.values(data.data).filter((val) =>
+					Array.isArray(val)
+				);
+				if (potentialArrays.length > 0) {
+					console.info(
+						'Found alternative array in response, using that instead'
+					);
+					// Replace data.data with the first array we found
+					data.data = potentialArrays[0];
+				}
+			}
 		}
 
 		// Return the data to the client

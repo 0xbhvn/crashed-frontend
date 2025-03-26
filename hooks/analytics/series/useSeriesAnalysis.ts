@@ -96,7 +96,47 @@ export function useSeriesAnalysis({
 				);
 			}
 
-			setData(responseData.data || []);
+			// Verify data structure and handle potential changes in API response
+			if (responseData.data) {
+				// Check if it's an array as expected
+				if (Array.isArray(responseData.data)) {
+					setData(responseData.data);
+				} else {
+					console.warn(
+						'API response structure changed: responseData.data is now',
+						typeof responseData.data,
+						'- Attempting to adapt...'
+					);
+					// If the data structure has changed, try to adapt (if object with nested data)
+					if (
+						typeof responseData.data === 'object' &&
+						responseData.data !== null
+					) {
+						// Look for potential array fields within the data object
+						const potentialArrayFields = Object.values(
+							responseData.data
+						).filter((value) => Array.isArray(value));
+						if (
+							potentialArrayFields.length > 0 &&
+							Array.isArray(potentialArrayFields[0])
+						) {
+							console.log(
+								'Found alternative data array, using it instead'
+							);
+							setData(potentialArrayFields[0] as SeriesData[]);
+						} else {
+							// Set empty array if we can't find suitable data
+							setData([]);
+						}
+					} else {
+						// Set empty array as fallback
+						setData([]);
+					}
+				}
+			} else {
+				// Set empty array if data is missing
+				setData([]);
+			}
 		} catch (err) {
 			console.error('Error fetching series analysis data:', err);
 			setError(
