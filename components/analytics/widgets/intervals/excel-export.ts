@@ -50,8 +50,8 @@ export const getExcelConfig = (
 			}
 
 			return row;
-		} catch (err) {
-			console.error('Error creating Excel row:', err);
+		} catch {
+			// Return a row with default values in case of an error
 			return {
 				hour: hourKey,
 				total: 0,

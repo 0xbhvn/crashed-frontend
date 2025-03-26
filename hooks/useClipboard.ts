@@ -78,17 +78,13 @@ export function useClipboard() {
 					// Reset after 2 seconds
 					setTimeout(() => setCopySuccess(false), 2000);
 				})
-				.catch((err) => {
-					console.error('Failed to copy: ', err);
-
+				.catch(() => {
 					// Show error toast
 					toast.error('Failed to copy data', {
 						description: 'Please try again',
 					});
 				});
-		} catch (error) {
-			console.error('Error copying data to clipboard:', error);
-
+		} catch {
 			// Show error toast
 			toast.error('Error copying data', {
 				description: 'An unexpected error occurred',

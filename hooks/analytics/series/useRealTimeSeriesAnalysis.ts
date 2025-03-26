@@ -66,16 +66,14 @@ export function useRealTimeSeriesAnalysis({
 			const hasDataChanged = (() => {
 				// First ensure apiData is an array
 				if (!Array.isArray(apiData)) {
-					console.warn(
-						'API structure changed: apiData is now',
-						typeof apiData,
-						'- Handling gracefully...'
-					);
+					// Skip silently, the default return value of null/empty array will be used
 					return false;
 				}
 
 				// Different lengths mean the data definitely changed
-				if (apiData.length !== localData.length) return true;
+				if (apiData.length !== localData.length) {
+					return true;
+				}
 
 				// Compare only essential properties that would affect rendering
 				// This prevents circle flicker from irrelevant property changes

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 		// Return the data from our API route
 		return NextResponse.json(data);
 	} catch (error) {
-		console.error('Error proxying API request:', error);
+		console.error('API request failed:', error);
 
 		// Return an appropriate error response
 		return NextResponse.json(

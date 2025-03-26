@@ -244,7 +244,7 @@ export function useOccurrenceAnalysis({
 
 			setData(processedData);
 		} catch (err) {
-			console.error('Error fetching occurrence data:', err);
+			console.error('API request failed:', err);
 			setError(
 				err instanceof Error
 					? err

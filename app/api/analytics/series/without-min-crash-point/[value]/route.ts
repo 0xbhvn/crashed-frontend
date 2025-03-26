@@ -50,7 +50,7 @@ export async function GET(
 		// Check if the response was successful
 		if (!backendResponse.ok) {
 			const errorText = await backendResponse.text();
-			console.error('⚠️ Backend response not OK (series):', errorText);
+			console.error('Backend response not OK (series):', errorText);
 			throw new Error(
 				`Backend API responded with status: ${backendResponse.status} - ${errorText}`
 			);
@@ -61,32 +61,20 @@ export async function GET(
 
 		// Check if data is structured as expected
 		if (!data.data) {
-			console.warn(
-				'⚠️ Unexpected data structure from backend (series):',
-				data
-			);
+			console.warn('Unexpected API structure: missing data property');
 			// Return the data as-is even if unexpected
 			return NextResponse.json(data);
 		}
 
 		// If the data is not an array but another structure, transform it
 		if (!Array.isArray(data.data)) {
-			console.warn(
-				'⚠️ API structure changed: data.data is now',
-				typeof data.data,
-				'- Attempting to adapt...'
-			);
-
-			// Try to handle potentially changed API response structure
+			// Handle new API structure silently - automatically adapt the response
 			if (typeof data.data === 'object' && data.data !== null) {
 				// Look for potential array fields within the data object
 				const potentialArrays = Object.values(data.data).filter((val) =>
 					Array.isArray(val)
 				);
 				if (potentialArrays.length > 0) {
-					console.info(
-						'Found alternative array in response, using that instead'
-					);
 					// Replace data.data with the first array we found
 					data.data = potentialArrays[0];
 				}

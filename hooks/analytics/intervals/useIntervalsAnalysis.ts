@@ -61,7 +61,7 @@ export function useIntervalsAnalysis({
 
 			setData(responseData.data || []);
 		} catch (err) {
-			console.error('Error fetching intervals analysis data:', err);
+			console.error('API request failed:', err);
 			setError(
 				err instanceof Error
 					? err

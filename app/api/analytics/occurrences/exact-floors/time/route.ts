@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 		if (!backendResponse.ok) {
 			const errorText = await backendResponse.text();
 			console.error(
-				'⚠️ Backend response not OK (exact floors time):',
+				'Backend response not OK (exact floors time):',
 				errorText
 			);
 			throw new Error(
@@ -66,8 +66,7 @@ export async function POST(request: NextRequest) {
 		// Check if data is structured as expected
 		if (!data.data || typeof data.data !== 'object') {
 			console.warn(
-				'⚠️ Unexpected data structure from backend (exact floors time):',
-				data
+				'Unexpected API structure: data.data is not an object'
 			);
 			// Return the data as-is even if unexpected
 			return NextResponse.json(data);

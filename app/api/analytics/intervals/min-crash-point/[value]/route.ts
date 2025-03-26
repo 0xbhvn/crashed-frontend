@@ -76,7 +76,7 @@ export async function GET(
 		// Check if the response was successful
 		if (!backendResponse.ok) {
 			const errorText = await backendResponse.text();
-			console.error('⚠️ Backend response not OK (intervals):', errorText);
+			console.error('Backend response not OK (intervals):', errorText);
 			throw new Error(
 				`Backend API responded with status: ${backendResponse.status} - ${errorText}`
 			);
@@ -87,10 +87,7 @@ export async function GET(
 
 		// Check if data is structured as expected
 		if (!data.data || !Array.isArray(data.data)) {
-			console.warn(
-				'⚠️ Unexpected data structure from backend (intervals):',
-				data
-			);
+			console.warn('Unexpected API structure: data.data is not an array');
 			// Return the data as-is even if unexpected
 			return NextResponse.json(data);
 		}

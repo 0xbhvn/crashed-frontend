@@ -138,7 +138,7 @@ export function useBatchLastGames({
 
 			setData(processedData);
 		} catch (err) {
-			console.error('Error fetching batch data:', err);
+			console.error('API request failed:', err);
 			setError(
 				err instanceof Error
 					? err

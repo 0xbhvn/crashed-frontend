@@ -132,7 +132,7 @@ export function useSeriesAnalysis({
 				setData([]);
 			}
 		} catch (err) {
-			console.error('Error fetching series analysis data:', err);
+			console.error('API request failed:', err);
 			setError(
 				err instanceof Error
 					? err

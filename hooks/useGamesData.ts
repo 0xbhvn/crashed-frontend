@@ -91,21 +91,19 @@ export function useGamesData({
 						validatedData = result.data;
 					} else {
 						// If validation fails, set flag and create empty response
-						console.error('Validation errors in API response');
 						setDataValidationIssues(true);
 						validatedData = createEmptyResponse(page, perPage);
 					}
-				} catch (validationError) {
+				} catch {
 					setDataValidationIssues(true);
 					// Create a minimal valid structure to prevent UI errors
 					validatedData = createEmptyResponse(page, perPage);
-					console.error('Failed to validate data:', validationError);
 				}
 
 				setApiData(validatedData);
 				setError(null);
-			} catch (err) {
-				console.error('Failed to fetch games:', err);
+			} catch {
+				// Log API fetch errors and update UI state
 				setError('Failed to load data. Please try again later.');
 				setApiData(createEmptyResponse(page, perPage));
 			} finally {
@@ -264,8 +262,7 @@ export function useGamesData({
 							});
 						}
 					}
-				} catch (err) {
-					console.error('Failed to perform smart refresh:', err);
+				} catch {
 					// Fallback to full page refresh on error
 					await fetchFullPage(currentPage, currentPerPage);
 				}
@@ -301,10 +298,12 @@ export function useGamesData({
 			if (result.success) {
 				setApiData(result.data);
 			} else {
-				console.error('Validation errors during page refresh');
+				// Handle validation failure silently
+				setDataValidationIssues(true);
 			}
-		} catch (err) {
-			console.error('Failed to refresh page data:', err);
+		} catch {
+			// Error already handled by setting error state
+			setError('Failed to refresh data. Please try again.');
 		} finally {
 			setLoading(false);
 		}

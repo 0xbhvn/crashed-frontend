@@ -60,8 +60,8 @@ export function ExportButton({
 				// Notify success with Excel only
 				toast.success('Excel data has been downloaded successfully.');
 			}
-		} catch (error) {
-			console.error('Export failed:', error);
+		} catch {
+			// Log only critical errors
 			toast.error('Export failed. Please try again.');
 		} finally {
 			setIsExporting(false);

@@ -112,7 +112,9 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 		if (initialLoadCompletedRef.current) {
 			isRefreshingRef.current = true;
 			fetchData()
-				.catch((err) => console.error('Error refreshing data:', err))
+				.catch(() => {
+					// Error is already handled by the fetchData function
+				})
 				.finally(() => {
 					// Reset the refreshing flag after operation completes
 					setTimeout(() => {
@@ -154,7 +156,9 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 		if (initialLoadCompletedRef.current) {
 			isRefreshingRef.current = true;
 			fetchData()
-				.catch((err) => console.error('Error refreshing data:', err))
+				.catch(() => {
+					// Error is already handled by the fetchData function
+				})
 				.finally(() => {
 					// Reset the refreshing flag after operation completes
 					setTimeout(() => {

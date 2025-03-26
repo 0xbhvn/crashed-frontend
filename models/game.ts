@@ -88,8 +88,8 @@ export function formatDate(
 		// We can safely create a Date here because isValidDate ensures it's a valid string
 		const date = new Date(dateString as string);
 		return date.toLocaleString();
-	} catch (error) {
-		console.error('Date formatting error:', error);
+	} catch {
+		// Return fallback on date formatting error
 		return fallback;
 	}
 }
@@ -114,8 +114,8 @@ export function calculateDuration(
 
 		const durationMs = end - start;
 		return `${(durationMs / 1000).toFixed(2)}s`;
-	} catch (error) {
-		console.error('Duration calculation error:', error);
+	} catch {
+		// Return fallback on calculation error
 		return fallback;
 	}
 }

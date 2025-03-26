@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 		// Return the data to the client
 		return NextResponse.json(data);
 	} catch (error) {
-		console.error('Error proxying API request:', error);
+		console.error('API request failed:', error);
 
 		// Return an appropriate error response
 		return NextResponse.json(

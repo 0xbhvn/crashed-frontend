@@ -80,8 +80,8 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 
 				// Store interval data in the grid
 				grid[hourKey][intervalKey] = interval;
-			} catch (err) {
-				console.error('Error processing interval:', err);
+			} catch {
+				// Silently skip problematic intervals
 			}
 		}
 

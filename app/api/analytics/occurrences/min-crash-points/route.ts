@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 		// Check if the response was successful
 		if (!backendResponse.ok) {
 			const errorText = await backendResponse.text();
-			console.error('⚠️ Backend response not OK:', errorText);
+			console.error('Backend response not OK:', errorText);
 			throw new Error(
 				`Backend API responded with status: ${backendResponse.status} - ${errorText}`
 			);
@@ -55,7 +55,9 @@ export async function POST(request: NextRequest) {
 
 		// Check if data is structured as expected
 		if (!data.data || typeof data.data !== 'object') {
-			console.warn('⚠️ Unexpected data structure from backend:', data);
+			console.warn(
+				'Unexpected API structure: data.data is not an object'
+			);
 			// Return the data as-is even if unexpected
 			return NextResponse.json(data);
 		}
