@@ -52,16 +52,6 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 				return;
 			}
 
-			// Only log in development when console is open
-			if (
-				process.env.NODE_ENV === 'development' &&
-				typeof window !== 'undefined' &&
-				window.console &&
-				console.debug
-			) {
-				console.debug(`WebSocket game received: ${latest.gameId}`);
-			}
-
 			// Update latest game state - ensure a new object is created to trigger re-render
 			setLatestGame({ ...latest });
 			lastProcessedGameIdRef.current = latest.gameId;

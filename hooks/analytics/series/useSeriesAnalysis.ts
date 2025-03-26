@@ -98,16 +98,11 @@ export function useSeriesAnalysis({
 
 			// Verify data structure and handle potential changes in API response
 			if (responseData.data) {
-				// Check if it's an array as expected
+				// Check if it's an array as expected (old structure)
 				if (Array.isArray(responseData.data)) {
 					setData(responseData.data);
 				} else {
-					console.warn(
-						'API response structure changed: responseData.data is now',
-						typeof responseData.data,
-						'- Attempting to adapt...'
-					);
-					// If the data structure has changed, try to adapt (if object with nested data)
+					// New API structure - data.data is now an object with arrays inside
 					if (
 						typeof responseData.data === 'object' &&
 						responseData.data !== null
@@ -116,10 +111,12 @@ export function useSeriesAnalysis({
 						const potentialArrayFields = Object.values(
 							responseData.data
 						).filter((value) => Array.isArray(value));
+
 						if (
 							potentialArrayFields.length > 0 &&
 							Array.isArray(potentialArrayFields[0])
 						) {
+							// Use the first array found as our data
 							setData(potentialArrayFields[0] as SeriesData[]);
 						} else {
 							// Set empty array if we can't find suitable data
