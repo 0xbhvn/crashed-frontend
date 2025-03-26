@@ -227,8 +227,8 @@ export function TableControlsHeader({
 													className="h-6 w-6 p-0"
 												>
 													<Badge
-														variant="destructive"
-														className="flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium rounded-md"
+														variant="outline"
+														className="flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
 													>
 														{newGamesCount > 99
 															? '99+'
