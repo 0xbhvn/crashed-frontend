@@ -49,6 +49,9 @@ export interface OccurrenceComparisonData {
 		count_diff: number;
 		percentage_diff: number;
 		count_percent_change: number;
+		// Additional fields for API compatibility
+		count_change?: number;
+		percentage_change?: number;
 	};
 }
 

@@ -10,7 +10,6 @@ interface UseRealTimeOccurrencesProps {
 	analyzeBy: 'games' | 'time';
 	limit?: number;
 	hours?: number;
-	comparison?: boolean;
 }
 
 export function useRealTimeOccurrences({
@@ -18,7 +17,6 @@ export function useRealTimeOccurrences({
 	analyzeBy,
 	limit = 2000,
 	hours = 24,
-	comparison = false,
 }: UseRealTimeOccurrencesProps) {
 	// Keep local copy of data to prevent loading states
 	const [localData, setLocalData] = useState<OccurrencesData | null>(null);
@@ -43,7 +41,7 @@ export function useRealTimeOccurrences({
 		analyzeBy,
 		limit,
 		hours,
-		comparison,
+		comparison: true,
 	});
 
 	// Initialize local data with API data

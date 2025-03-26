@@ -28,11 +28,46 @@ export function RegularCell({
 	selectedType,
 	dataItem,
 }: Pick<CellContentProps, 'point' | 'selectedType' | 'dataItem'>) {
-	// Type guard to ensure we're working with OccurrenceData
+	// If we have data and it's not a comparison structure
 	if (dataItem && !isComparisonData(dataItem)) {
+		// The data structure might be either a simple object with count/percentage
+		// or a nested structure with current_period
 		const occurrenceData = dataItem as OccurrenceData;
 		const count = occurrenceData.count ?? 0;
 		const percentage = occurrenceData.percentage ?? 0;
+
+		return (
+			<React.Fragment>
+				<td className="font-medium px-2 py-1.5">
+					{formatCrashPoint(point, selectedType)}
+				</td>
+				<td className="px-2 py-1.5">{count}</td>
+				<td className="px-2 py-1.5">
+					<Badge
+						className={cn(
+							'px-2.5 py-0.5 text-xs font-semibold',
+							getPercentageBadgeColor(
+								percentage,
+								point,
+								selectedType
+							)
+						)}
+					>
+						{percentage.toFixed(2)}%
+					</Badge>
+				</td>
+			</React.Fragment>
+		);
+	}
+
+	// Handle situation where we have comparison data structure but need to show it as regular
+	if (dataItem && isComparisonData(dataItem)) {
+		// Extract count and percentage from the current period or directly from data
+		const currentData =
+			'current_period' in dataItem ? dataItem.current_period : dataItem;
+
+		const count = currentData.count ?? 0;
+		const percentage = currentData.percentage ?? 0;
 
 		return (
 			<React.Fragment>
@@ -112,8 +147,66 @@ export function ComparisonCell({
 		);
 	}
 
-	const currentData = dataItem.current_period;
-	const comparison = dataItem.comparison;
+	// Handle both formats - either direct data object with comparison field
+	// or the OccurrenceComparisonData structure with current_period
+	const currentData =
+		'current_period' in dataItem ? dataItem.current_period : dataItem;
+
+	// Define a type for the comparison data to avoid using 'any'
+	type ComparisonFields = {
+		count_diff?: number;
+		count_change?: number;
+		percentage_diff?: number;
+		percentage_change?: number;
+		count_percent_change?: number;
+	};
+
+	const comparisonObj =
+		'current_period' in dataItem
+			? dataItem.comparison
+			: (dataItem as { comparison: ComparisonFields }).comparison;
+
+	// Get count difference - prefer count_diff but fallback to count_change
+	let countDiff = 0;
+	if (
+		'count_diff' in comparisonObj &&
+		comparisonObj.count_diff !== undefined
+	) {
+		countDiff = comparisonObj.count_diff;
+	} else if (
+		'count_change' in comparisonObj &&
+		comparisonObj.count_change !== undefined
+	) {
+		countDiff = comparisonObj.count_change;
+	}
+
+	// Get percentage change based on analysis type
+	let percentChange = 0;
+	if (analyzeBy === 'games') {
+		if (
+			'count_percent_change' in comparisonObj &&
+			comparisonObj.count_percent_change !== undefined
+		) {
+			percentChange = comparisonObj.count_percent_change;
+		} else if (
+			'percentage_change' in comparisonObj &&
+			comparisonObj.percentage_change !== undefined
+		) {
+			percentChange = comparisonObj.percentage_change;
+		}
+	} else {
+		if (
+			'percentage_diff' in comparisonObj &&
+			comparisonObj.percentage_diff !== undefined
+		) {
+			percentChange = comparisonObj.percentage_diff;
+		} else if (
+			'percentage_change' in comparisonObj &&
+			comparisonObj.percentage_change !== undefined
+		) {
+			percentChange = comparisonObj.percentage_change;
+		}
+	}
 
 	return (
 		<React.Fragment>
@@ -125,11 +218,11 @@ export function ComparisonCell({
 				<span
 					className={cn(
 						'text-sm font-medium',
-						getChangeTextColor(comparison.count_diff)
+						getChangeTextColor(countDiff)
 					)}
 				>
-					{getChangeSymbol(comparison.count_diff)}
-					{comparison.count_diff}
+					{getChangeSymbol(countDiff)}
+					{Math.abs(countDiff)}
 				</span>
 			</td>
 			<td className="px-2 py-1.5">
@@ -150,24 +243,11 @@ export function ComparisonCell({
 				<span
 					className={cn(
 						'text-sm font-medium flex items-center',
-						getComparisonTextColor(
-							analyzeBy === 'games'
-								? comparison.count_percent_change
-								: comparison.percentage_diff
-						)
+						getComparisonTextColor(percentChange)
 					)}
 				>
-					{getPercentChangeIcon(
-						analyzeBy === 'games'
-							? comparison.count_percent_change
-							: comparison.percentage_diff
-					)}
-					{Math.abs(
-						analyzeBy === 'games'
-							? comparison.count_percent_change
-							: comparison.percentage_diff
-					).toFixed(2)}
-					%
+					{getPercentChangeIcon(percentChange)}
+					{Math.abs(percentChange).toFixed(2)}%
 				</span>
 			</td>
 		</React.Fragment>

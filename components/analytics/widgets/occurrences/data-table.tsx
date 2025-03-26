@@ -112,17 +112,8 @@ export function DataTable({
 							}
 
 							// Now handle both comparison and regular data
-							let dataItem = dataRaw;
-
-							// If in non-comparison mode but the data is a comparison object,
-							// we need to extract just the current_period
-							if (
-								!showComparison &&
-								'current_period' in dataRaw
-							) {
-								dataItem = dataRaw.current_period;
-							}
-
+							// If showComparison is true, use ComparisonCell
+							// If showComparison is false, use RegularCell regardless of data type
 							return (
 								<TableRow
 									key={pointKey}
@@ -139,7 +130,7 @@ export function DataTable({
 										<RegularCell
 											point={point}
 											selectedType={selectedType}
-											dataItem={dataItem}
+											dataItem={dataRaw}
 										/>
 									)}
 								</TableRow>

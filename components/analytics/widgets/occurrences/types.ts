@@ -43,20 +43,43 @@ export interface CellContentProps {
 	point: number;
 	selectedType: 'current' | 'unique';
 	pointKey: string;
-	dataItem?: OccurrenceComparisonData | OccurrenceData | null | undefined;
+	dataItem?:
+		| OccurrenceData
+		| OccurrenceComparisonData
+		| {
+				count: number;
+				percentage: number;
+				comparison: {
+					count_change?: number;
+					count_diff?: number;
+					percentage_change?: number;
+					percentage_diff?: number;
+					count_percent_change?: number;
+				};
+		  }
+		| null
+		| undefined;
 	showComparison: boolean;
 	analyzeBy: 'games' | 'time';
 }
 
 // Helper function to check if the data is comparison data
-export function isComparisonData(
-	data: unknown
-): data is OccurrenceComparisonData {
+export function isComparisonData(data: unknown): data is
+	| OccurrenceComparisonData
+	| {
+			comparison: {
+				count_change?: number;
+				count_diff?: number;
+				percentage_change?: number;
+				percentage_diff?: number;
+				count_percent_change?: number;
+				[key: string]: number | undefined;
+			};
+	  } {
 	return (
 		data !== null &&
 		typeof data === 'object' &&
-		'current_period' in data &&
-		'previous_period' in data &&
-		'comparison' in data
+		(('current_period' in data && 'comparison' in data) ||
+			('comparison' in data && 'count' in data && 'percentage' in data))
 	);
 }

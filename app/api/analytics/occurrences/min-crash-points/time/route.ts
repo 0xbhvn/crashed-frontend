@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
 		// Construct the API URL without query parameters
 		const backendUrl = getApiUrl(
-			'analytics/occurrences/min-crash-points/time'
+			'analytics/occurrences/min-crash-points/batch'
 		);
 
 		// Forward timezone header from client if present (important for time-based queries)
@@ -39,7 +39,12 @@ export async function POST(request: NextRequest) {
 		const backendResponse = await fetch(backendUrl, {
 			method: 'POST',
 			headers,
-			body: JSON.stringify({ values, hours }),
+			body: JSON.stringify({
+				values,
+				hours,
+				by_time: true,
+				comparison: true,
+			}),
 			cache: 'no-store',
 		});
 

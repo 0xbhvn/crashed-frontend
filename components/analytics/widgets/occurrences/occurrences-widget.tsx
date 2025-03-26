@@ -34,6 +34,9 @@ export function OccurrencesTable({ className }: BaseWidgetProps) {
 	const [hoursInput, setHoursInput] = useState(hours.toString());
 	const [showComparison, setShowComparison] = useState(true);
 
+	// State to handle temporary loading when toggling comparison
+	const [isTogglingComparison, setIsTogglingComparison] = useState(false);
+
 	// Update input values when limit/hours change externally
 	useEffect(() => {
 		setLimitInput(limit.toString());
@@ -105,7 +108,6 @@ export function OccurrencesTable({ className }: BaseWidgetProps) {
 		analyzeBy,
 		limit,
 		hours,
-		comparison: showComparison,
 	});
 
 	// Generate Excel export configuration
@@ -134,6 +136,19 @@ export function OccurrencesTable({ className }: BaseWidgetProps) {
 		});
 	};
 
+	// Handle comparison toggle
+	const toggleComparison = (value: boolean) => {
+		// If turning comparison back on, show a loading state
+		if (value) {
+			setIsTogglingComparison(true);
+			// Clear the toggling state after a short delay to simulate data loading
+			setTimeout(() => {
+				setIsTogglingComparison(false);
+			}, 300);
+		}
+		setShowComparison(value);
+	};
+
 	// Render content
 	const renderContent = () => {
 		if (occurrencesError) {
@@ -160,7 +175,7 @@ export function OccurrencesTable({ className }: BaseWidgetProps) {
 					limitInput={limitInput}
 					hoursInput={hoursInput}
 					showComparison={showComparison}
-					setShowComparison={setShowComparison}
+					setShowComparison={toggleComparison}
 					handleLimitInputChange={handleLimitInputChange}
 					handleHoursInputChange={handleHoursInputChange}
 					applyLimitChange={applyLimitChange}
@@ -176,7 +191,7 @@ export function OccurrencesTable({ className }: BaseWidgetProps) {
 					showComparison={showComparison}
 					pointsToShow={pointsToShow}
 					occurrencesData={occurrencesData || undefined}
-					isLoading={occurrencesLoading}
+					isLoading={occurrencesLoading || isTogglingComparison}
 				/>
 			</div>
 		);

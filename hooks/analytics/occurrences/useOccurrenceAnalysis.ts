@@ -2,11 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getApiHeaders } from '@/lib/api-config';
-import type {
-	OccurrencesData,
-	OccurrenceData,
-	OccurrenceComparisonData,
-} from '@/utils/analytics-types';
+import type { OccurrencesData } from '@/utils/analytics-types';
 
 interface UseOccurrenceAnalysisProps {
 	values: number[];
@@ -31,23 +27,33 @@ export function useOccurrenceAnalysis({
 		setIsLoading(true);
 		setError(null);
 		try {
-			// Determine base endpoints
-			const minPointsBase = '/api/analytics/occurrences/min-crash-points';
-			const exactFloorsBase = '/api/analytics/occurrences/exact-floors';
+			// Determine base endpoints for batch requests
+			const minPointsEndpoint =
+				'/api/analytics/occurrences/min-crash-points';
+			const exactFloorsEndpoint =
+				'/api/analytics/occurrences/exact-floors';
 
 			// Add time suffix if analyzing by time
-			const minPointsEndpoint =
-				analyzeBy === 'games' ? minPointsBase : `${minPointsBase}/time`;
-			const exactFloorsEndpoint =
-				analyzeBy === 'games'
-					? exactFloorsBase
-					: `${exactFloorsBase}/time`;
+			const minPointsUrl =
+				analyzeBy === 'time'
+					? `${minPointsEndpoint}/time`
+					: minPointsEndpoint;
+			const exactFloorsUrl =
+				analyzeBy === 'time'
+					? `${exactFloorsEndpoint}/time`
+					: exactFloorsEndpoint;
 
-			// Set parameters based on analysis type
-			const params =
+			// Set parameters based on analysis type - always request comparison data
+			// This ensures we have data regardless of the comparison display setting
+			const minPointsParams =
 				analyzeBy === 'games'
-					? { values, limit, comparison }
-					: { values, hours, comparison };
+					? { values, limit, comparison: true }
+					: { values, hours, comparison: true };
+
+			const exactFloorsParams =
+				analyzeBy === 'games'
+					? { values, limit, comparison: true }
+					: { values, hours, comparison: true };
 
 			// Prepare headers - only include timezone for time-based queries
 			const headers = { ...getApiHeaders() } as Record<string, string>;
@@ -57,15 +63,15 @@ export function useOccurrenceAnalysis({
 
 			// Call both APIs simultaneously
 			const [minPointsResponse, exactFloorsResponse] = await Promise.all([
-				fetch(minPointsEndpoint, {
+				fetch(minPointsUrl, {
 					method: 'POST',
 					headers,
-					body: JSON.stringify(params),
+					body: JSON.stringify(minPointsParams),
 				}),
-				fetch(exactFloorsEndpoint, {
+				fetch(exactFloorsUrl, {
 					method: 'POST',
 					headers,
-					body: JSON.stringify(params),
+					body: JSON.stringify(exactFloorsParams),
 				}),
 			]);
 
@@ -104,47 +110,136 @@ export function useOccurrenceAnalysis({
 			// Process the API responses into the expected format
 			const processedData: OccurrencesData = {};
 
-			// Normalize all keys to be consistent
-			const normalizeKeys = (
-				data: Record<string, OccurrenceData | OccurrenceComparisonData>
-			): Record<string, OccurrenceData | OccurrenceComparisonData> => {
-				const result: Record<
-					string,
-					OccurrenceData | OccurrenceComparisonData
-				> = {};
-				// Convert keys from the API response to match our format
-				for (const key of Object.keys(data || {})) {
-					// Strip any .0 suffix for consistency
-					const numericKey = Number.parseFloat(key).toString();
-					// Store with both original format and with decimal point for UI access
-					const normalizedKey = Number.isInteger(
-						Number.parseFloat(key)
-					)
-						? `${numericKey}.0`
-						: numericKey;
-					result[normalizedKey] = data[key];
-				}
-				return result;
-			};
+			// Extract the occurrences data from the response
+			const minPointsOccurrences = minPointsData.data?.occurrences || {};
+			const exactFloorsOccurrences =
+				exactFloorsData.data?.occurrences || {};
 
-			// Normalize both data sets
-			const normalizedMinPoints = normalizeKeys(minPointsData.data || {});
-			const normalizedExactFloors = normalizeKeys(
-				exactFloorsData.data || {}
-			);
-
-			// Create a set of all keys from both normalized responses
-			const allKeys = new Set([
-				...Object.keys(normalizedMinPoints),
-				...Object.keys(normalizedExactFloors),
+			// Create a set of all keys from both responses, ensuring we have all requested values
+			const allPoints = new Set([
+				...Object.keys(minPointsOccurrences),
+				...Object.keys(exactFloorsOccurrences),
+				...values.map((v) => v.toString()),
 			]);
 
-			// Process each key
-			for (const key of allKeys) {
-				processedData[key] = {
-					current: normalizedMinPoints[key],
-					unique: normalizedExactFloors[key],
-				};
+			// Process each crash point value
+			for (const rawPoint of allPoints) {
+				// Normalize point format (ensure consistent keys with .0 for integers)
+				const point = Number.isInteger(Number(rawPoint))
+					? `${rawPoint}.0`
+					: rawPoint;
+
+				// Create an entry for this point if it doesn't exist
+				if (!processedData[point]) {
+					processedData[point] = {};
+				}
+
+				// Get matching keys for both response formats
+				const minPointKey = minPointsOccurrences[rawPoint]
+					? rawPoint
+					: point;
+				const exactFloorKey = exactFloorsOccurrences[rawPoint]
+					? rawPoint
+					: point;
+
+				// Add min crash point data if available
+				if (minPointsOccurrences[minPointKey]) {
+					if ('comparison' in minPointsOccurrences[minPointKey]) {
+						if (comparison) {
+							// Format for comparison display
+							processedData[point].current = {
+								current_period:
+									minPointsOccurrences[minPointKey],
+								previous_period:
+									minPointsOccurrences[minPointKey]
+										.comparison,
+								comparison: {
+									count_diff:
+										minPointsOccurrences[minPointKey]
+											.comparison.count_change || 0,
+									percentage_diff:
+										minPointsOccurrences[minPointKey]
+											.comparison.percentage_change || 0,
+									count_percent_change:
+										minPointsOccurrences[minPointKey]
+											.comparison.percentage_change || 0,
+								},
+							};
+						} else {
+							// For non-comparison display, just use the current data
+							// We're purposely not using the comparison data here
+							processedData[point].current = {
+								count: minPointsOccurrences[minPointKey].count,
+								percentage:
+									minPointsOccurrences[minPointKey]
+										.percentage,
+								total_games:
+									minPointsOccurrences[minPointKey]
+										.total_games,
+								first_game_time:
+									minPointsOccurrences[minPointKey]
+										.first_game_time,
+								last_game_time:
+									minPointsOccurrences[minPointKey]
+										.last_game_time,
+							};
+						}
+					} else {
+						// Direct data with no comparison
+						processedData[point].current =
+							minPointsOccurrences[minPointKey];
+					}
+				}
+
+				// Add exact floor data if available
+				if (exactFloorsOccurrences[exactFloorKey]) {
+					if ('comparison' in exactFloorsOccurrences[exactFloorKey]) {
+						if (comparison) {
+							// Format for comparison display
+							processedData[point].unique = {
+								current_period:
+									exactFloorsOccurrences[exactFloorKey],
+								previous_period:
+									exactFloorsOccurrences[exactFloorKey]
+										.comparison,
+								comparison: {
+									count_diff:
+										exactFloorsOccurrences[exactFloorKey]
+											.comparison.count_change || 0,
+									percentage_diff:
+										exactFloorsOccurrences[exactFloorKey]
+											.comparison.percentage_change || 0,
+									count_percent_change:
+										exactFloorsOccurrences[exactFloorKey]
+											.comparison.percentage_change || 0,
+								},
+							};
+						} else {
+							// For non-comparison display, just use the current data
+							// We're purposely not using the comparison data here
+							processedData[point].unique = {
+								count: exactFloorsOccurrences[exactFloorKey]
+									.count,
+								percentage:
+									exactFloorsOccurrences[exactFloorKey]
+										.percentage,
+								total_games:
+									exactFloorsOccurrences[exactFloorKey]
+										.total_games,
+								first_game_time:
+									exactFloorsOccurrences[exactFloorKey]
+										.first_game_time,
+								last_game_time:
+									exactFloorsOccurrences[exactFloorKey]
+										.last_game_time,
+							};
+						}
+					} else {
+						// Direct data with no comparison
+						processedData[point].unique =
+							exactFloorsOccurrences[exactFloorKey];
+					}
+				}
 			}
 
 			setData(processedData);
@@ -158,7 +253,8 @@ export function useOccurrenceAnalysis({
 		} finally {
 			setIsLoading(false);
 		}
-	}, [values, analyzeBy, limit, hours, comparison]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [values, analyzeBy, limit, hours]);
 
 	useEffect(() => {
 		fetchData();

@@ -21,7 +21,9 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Construct the API URL without query parameters
-		const backendUrl = getApiUrl('analytics/occurrences/min-crash-points');
+		const backendUrl = getApiUrl(
+			'analytics/occurrences/min-crash-points/batch'
+		);
 
 		// For game count-based queries, don't include timezone header
 		const headers = getApiHeadersWithoutTimezone();
@@ -30,7 +32,12 @@ export async function POST(request: NextRequest) {
 		const backendResponse = await fetch(backendUrl, {
 			method: 'POST',
 			headers,
-			body: JSON.stringify({ values, limit }),
+			body: JSON.stringify({
+				values,
+				games: limit,
+				by_time: false,
+				comparison: true,
+			}),
 			cache: 'no-store',
 		});
 
