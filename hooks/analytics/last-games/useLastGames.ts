@@ -24,14 +24,12 @@ export function useBatchLastGames({
 	const fetchData = useCallback(async () => {
 		// Prevent multiple concurrent fetches
 		if (isLoading) {
-			console.log('Skipping fetch - already loading');
 			return;
 		}
 
 		setIsLoading(true);
 		setError(null);
 		try {
-			console.log('Fetching data for values:', values);
 			// Call both APIs and process the responses
 			const minPointsResponse = await fetch(
 				'/api/analytics/last-games/min-crash-points',
@@ -136,15 +134,9 @@ export function useBatchLastGames({
 					currentGame: minPointEntry?.game || null,
 					uniqueGame: exactFloorEntry?.game || null,
 				};
-
-				console.log(
-					`Processed data for value ${value}:`,
-					processedData[value]
-				);
 			}
 
 			setData(processedData);
-			console.log('Final processed data:', processedData);
 		} catch (err) {
 			console.error('Error fetching batch data:', err);
 			setError(

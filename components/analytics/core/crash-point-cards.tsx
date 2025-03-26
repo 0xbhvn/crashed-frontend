@@ -142,10 +142,6 @@ export function CrashPointCards({
 		// Skip if the selectedType hasn't actually changed to prevent unnecessary updates
 		if (selectedTypeRef.current === selectedType) return;
 
-		console.log(
-			`Tab changed from ${selectedTypeRef.current} to ${selectedType}`
-		);
-
 		// Update our ref with the new type first to prevent re-entry
 		selectedTypeRef.current = selectedType;
 
@@ -163,9 +159,6 @@ export function CrashPointCards({
 				const point = newDisplayPoints[i];
 				if (point !== Math.floor(point)) {
 					const flooredPoint = Math.floor(point);
-					console.log(
-						`Flooring point ${point} to ${flooredPoint} for unique mode`
-					);
 
 					// Remember original value to restore later
 					originalPointsRef.current[flooredPoint] = point;
@@ -206,9 +199,6 @@ export function CrashPointCards({
 				const point = newDisplayPoints[i];
 				if (originalPointsRef.current[point]) {
 					const originalValue = originalPointsRef.current[point];
-					console.log(
-						`Restoring point ${point} to original ${originalValue} for current mode`
-					);
 
 					// Update the point in our copy
 					newDisplayPoints[i] = originalValue;

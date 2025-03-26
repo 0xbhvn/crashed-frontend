@@ -72,15 +72,6 @@ export function LastGamesTable({
 		values: allCrashPoints,
 	});
 
-	// Add a useEffect that logs when values change
-	useEffect(() => {
-		// This will help us confirm that values are being properly updated
-		console.log(
-			'allCrashPoints updated:',
-			allCrashPoints.sort((a, b) => a - b)
-		);
-	}, [allCrashPoints]);
-
 	// Update time ago strings every second
 	useEffect(() => {
 		if (!batchData) return;
@@ -134,13 +125,6 @@ export function LastGamesTable({
 
 	// Handle crash point changes from the cards
 	const handleCrashPointAdded = (newPoint: number) => {
-		console.log(
-			'Adding new crash point:',
-			newPoint,
-			'Current allCrashPoints:',
-			allCrashPoints
-		);
-
 		// For unique streak (exact value), we floor decimal values
 		const uniquePointValue = Math.floor(newPoint);
 		// For current streak, we keep the exact value
@@ -156,10 +140,6 @@ export function LastGamesTable({
 
 				// Add currentPointValue if needed
 				if (!prev.includes(currentPointValue)) {
-					console.log(
-						'Adding current point to all crash points:',
-						currentPointValue
-					);
 					newAllPoints.push(currentPointValue);
 					changed = true;
 				}
@@ -169,10 +149,6 @@ export function LastGamesTable({
 					uniquePointValue !== currentPointValue &&
 					!prev.includes(uniquePointValue)
 				) {
-					console.log(
-						'Adding unique point to all crash points:',
-						uniquePointValue
-					);
 					newAllPoints.push(uniquePointValue);
 					changed = true;
 				}
@@ -186,10 +162,6 @@ export function LastGamesTable({
 					!CURRENT_STREAK_POINTS.includes(currentPointValue) &&
 					!prev.includes(currentPointValue)
 				) {
-					console.log(
-						'Adding to customCurrentPoints:',
-						currentPointValue
-					);
 					return [...prev, currentPointValue].sort((a, b) => a - b);
 				}
 				return prev;
@@ -201,10 +173,6 @@ export function LastGamesTable({
 					!UNIQUE_STREAK_POINTS.includes(uniquePointValue) &&
 					!prev.includes(uniquePointValue)
 				) {
-					console.log(
-						'Adding to customUniquePoints:',
-						uniquePointValue
-					);
 					return [...prev, uniquePointValue].sort((a, b) => a - b);
 				}
 				return prev;

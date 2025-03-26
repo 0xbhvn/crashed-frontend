@@ -34,7 +34,7 @@ export function useWebSocketGames(): UseWebSocketGamesResult {
 	// Options for the WebSocket connection
 	const { lastMessage, readyState } = useWebSocket(socketUrl, {
 		onOpen: () => {
-			console.log('WebSocket connection established');
+			// WebSocket connection established
 		},
 		onError: (event) => {
 			console.error('WebSocket error:', event);
@@ -43,7 +43,7 @@ export function useWebSocketGames(): UseWebSocketGamesResult {
 			);
 		},
 		onClose: () => {
-			console.log('WebSocket connection closed');
+			// WebSocket connection closed
 		},
 		// Reconnect on connection loss
 		shouldReconnect: () => true,

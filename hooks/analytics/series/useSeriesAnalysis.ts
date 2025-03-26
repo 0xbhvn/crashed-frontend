@@ -120,9 +120,6 @@ export function useSeriesAnalysis({
 							potentialArrayFields.length > 0 &&
 							Array.isArray(potentialArrayFields[0])
 						) {
-							console.log(
-								'Found alternative data array, using it instead'
-							);
 							setData(potentialArrayFields[0] as SeriesData[]);
 						} else {
 							// Set empty array if we can't find suitable data

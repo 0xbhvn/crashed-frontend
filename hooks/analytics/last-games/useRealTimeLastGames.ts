@@ -56,7 +56,6 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 			for (const value of values) {
 				// Handle completely new values
 				if (apiData[value] && !localData[value]) {
-					console.log(`Adding new data for value ${value}`);
 					updatedData[value] = apiData[value];
 					hasChanges = true;
 					// Remove from loading values
@@ -93,7 +92,6 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 
 			// Update local data only if there are changes
 			if (hasChanges) {
-				console.log('Updating local data with new values');
 				setLocalData(updatedData);
 			}
 		}
@@ -106,8 +104,6 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 	useEffect(() => {
 		// Only refresh if we received a new game event
 		if (!latestGame) return;
-
-		console.log('New game detected, refreshing data:', latestGame.gameId);
 
 		// Skip if we're already refreshing
 		if (isRefreshingRef.current) return;
@@ -135,8 +131,6 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 
 		if (!valuesChanged) return;
 
-		console.log('Values changed, refreshing data:', values);
-
 		// Find new values that were added
 		const newValues = values.filter(
 			(val) => !prevValuesRef.current.includes(val)
@@ -148,7 +142,6 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 			for (const val of newValues) {
 				loadingValuesRef.current.add(val);
 			}
-			console.log('New values being loaded:', newValues);
 		}
 
 		// Update the previous values reference
