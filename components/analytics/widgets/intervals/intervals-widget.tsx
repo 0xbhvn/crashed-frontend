@@ -33,11 +33,24 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 		data: intervalsData,
 		isLoading,
 		error,
+		refreshData,
 	} = useRealTimeIntervalsAnalysis({
 		value,
 		intervalMinutes: selectedInterval,
 		hours,
 	});
+
+	// Log data received for debugging
+	React.useEffect(() => {
+		console.log(
+			`IntervalsWidget received data: ${intervalsData?.length || 0} items`
+		);
+		// If we have no data but aren't loading, try refreshing once
+		if ((!intervalsData || intervalsData.length === 0) && !isLoading) {
+			console.log('No intervals data received, trying to refresh...');
+			refreshData();
+		}
+	}, [intervalsData, isLoading, refreshData]);
 
 	// Calculate total occurrences from intervals data
 	const totalOccurrences = React.useMemo(() => {
@@ -102,7 +115,10 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 			setCurrentTime(new Date());
 		}, 1000);
 
-		return () => clearInterval(interval);
+		// Cleanup function to prevent memory leaks
+		return () => {
+			clearInterval(interval);
+		};
 	}, []);
 
 	// Calculate totals for each hour

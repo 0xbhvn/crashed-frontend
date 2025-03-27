@@ -9,6 +9,7 @@ import {
 	LastGamesTable,
 	SeriesWidget,
 	IntervalsWidget,
+	TabWrapper,
 } from '@/components/analytics/widgets';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -17,6 +18,9 @@ export default function AnalyticsPage() {
 	const [selectedType, setSelectedType] = useState<'current' | 'unique'>(
 		'current'
 	);
+
+	// Use the activeTab value directly as the key to force remounting
+	const componentKey = activeTab;
 
 	return (
 		<div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
@@ -70,20 +74,28 @@ export default function AnalyticsPage() {
 
 				<div className="w-full">
 					{activeTab === 'streaks' && (
-						<LastGamesTable
-							className="w-full"
-							selectedType={selectedType}
-							setSelectedType={setSelectedType}
-						/>
+						<TabWrapper key={`streaks-${componentKey}`}>
+							<LastGamesTable
+								className="w-full"
+								selectedType={selectedType}
+								setSelectedType={setSelectedType}
+							/>
+						</TabWrapper>
 					)}
 					{activeTab === 'occurrences' && (
-						<OccurrencesTable className="w-full" />
+						<TabWrapper key={`occurrences-${componentKey}`}>
+							<OccurrencesTable className="w-full" />
+						</TabWrapper>
 					)}
 					{activeTab === 'series' && (
-						<SeriesWidget className="w-full" />
+						<TabWrapper key={`series-${componentKey}`}>
+							<SeriesWidget className="w-full" />
+						</TabWrapper>
 					)}
 					{activeTab === 'interval' && (
-						<IntervalsWidget className="w-full" />
+						<TabWrapper key={`interval-${componentKey}`}>
+							<IntervalsWidget className="w-full" />
+						</TabWrapper>
 					)}
 				</div>
 			</main>

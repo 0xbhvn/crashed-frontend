@@ -38,6 +38,15 @@ export function IntervalsTable({
 	hourTotals,
 	currentTime,
 }: IntervalsTableProps) {
+	// Debug log when component renders
+	React.useEffect(() => {
+		console.log('IntervalsTable rendering:', {
+			hourLabels: hourLabels.length,
+			hasGridData: Object.keys(gridData).length > 0,
+			isLoading,
+		});
+	}, [gridData, hourLabels, isLoading]);
+
 	// Get the interval columns
 	const intervalColumns = React.useMemo(() => {
 		return getIntervalColumns(intervalMinutes);
@@ -158,7 +167,7 @@ export function IntervalsTable({
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{isLoading && hourLabels.length === 0 ? (
+					{isLoading ? (
 						<TableRow>
 							<TableCell
 								colSpan={intervalColumns.length + 2}
@@ -180,6 +189,14 @@ export function IntervalsTable({
 							>
 								<div className="text-muted-foreground">
 									No data available
+									<br />
+									<button
+										onClick={() => window.location.reload()}
+										className="text-sm text-primary hover:underline mt-2"
+										type="button"
+									>
+										Refresh page
+									</button>
 								</div>
 							</TableCell>
 						</TableRow>

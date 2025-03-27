@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { useIntervalsAnalysis } from './useIntervalsAnalysis';
-import { useAnalytics } from '@/context/analytics-context';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { getApiHeaders } from '@/lib/api-config';
 import type { IntervalData } from '@/utils/analytics-types';
+import { useAnalytics } from '@/context/analytics-context';
 
 interface UseRealTimeIntervalsAnalysisProps {
 	value: number;
@@ -14,80 +14,148 @@ export function useRealTimeIntervalsAnalysis({
 	intervalMinutes = 10,
 	hours = 24,
 }: UseRealTimeIntervalsAnalysisProps) {
-	// Keep local copy of data to prevent loading states
-	const [localData, setLocalData] = useState<IntervalData[]>([]);
+	const [data, setData] = useState<IntervalData[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<Error | null>(null);
 
-	// Track the last game we processed
-	const lastProcessedGameRef = useRef<string | null>(null);
-
-	// Keep track of when the data was last reloaded
-	const lastRefreshTimeRef = useRef<number>(Date.now());
+	// Track if we're currently fetching data to prevent duplicate requests
+	const isFetchingRef = useRef(false);
+	const isMountedRef = useRef(true);
 
 	// Get real-time game updates from the context
 	const { latestGame } = useAnalytics();
 
-	// Get data from the API
-	const {
-		data: apiData,
-		isLoading: apiLoading,
-		error: apiError,
-		fetchData,
-	} = useIntervalsAnalysis({
-		value,
-		intervalMinutes,
-		hours,
-	});
+	// Keep track of the last processed game to avoid duplicates
+	const lastProcessedGameRef = useRef<string | null>(null);
 
-	// Initialize local data with API data
-	useEffect(() => {
-		if (apiData && apiData.length > 0 && localData.length === 0) {
-			setLocalData(apiData);
-		}
-	}, [apiData, localData]);
+	const fetchData = useCallback(async () => {
+		if (isFetchingRef.current || !isMountedRef.current) return;
 
-	// Update local data with API data, preserving UI state
-	useEffect(() => {
-		if (apiData && localData.length > 0) {
-			// Only update if data has actually changed
-			if (JSON.stringify(apiData) !== JSON.stringify(localData)) {
-				setLocalData(apiData);
+		isFetchingRef.current = true;
+		setIsLoading(data.length === 0); // Only show loading on initial fetch
+
+		try {
+			const queryParams = new URLSearchParams({
+				interval_minutes: intervalMinutes.toString(),
+				hours: hours.toString(),
+			});
+
+			const headers = { ...getApiHeaders() } as Record<string, string>;
+			headers['X-Timezone'] = 'Asia/Kolkata';
+
+			const response = await fetch(
+				`/api/analytics/intervals/min-crash-point/${value}?${queryParams.toString()}`,
+				{
+					method: 'GET',
+					headers,
+					cache: 'no-store',
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error(
+					`API responded with status: ${response.status}`
+				);
+			}
+
+			const responseData = await response.json();
+
+			if (responseData.status === 'error') {
+				throw new Error(
+					responseData.message || 'Error in intervals analysis data'
+				);
+			}
+
+			if (
+				responseData.data?.intervals &&
+				Array.isArray(responseData.data.intervals)
+			) {
+				if (isMountedRef.current) {
+					setData(responseData.data.intervals);
+				}
+			}
+		} catch (err) {
+			console.error('API request failed:', err);
+			if (isMountedRef.current) {
+				setError(
+					err instanceof Error
+						? err
+						: new Error('Failed to fetch data')
+				);
+			}
+		} finally {
+			if (isMountedRef.current) {
+				setIsLoading(false);
+				isFetchingRef.current = false;
 			}
 		}
-	}, [apiData, localData]);
+	}, [value, intervalMinutes, hours, data.length]);
 
-	// Silently reload data when a new game arrives
+	// Function to update a specific interval's data
+	const updateInterval = useCallback(
+		(gameTime: string, crashPoint: number) => {
+			setData((prevData) => {
+				// Find the interval that contains this game time (using interval_start)
+				const intervalIndex = prevData.findIndex((interval) => {
+					const gameDate = new Date(gameTime);
+					const intervalStart = new Date(interval.interval_start);
+					const intervalEnd = new Date(interval.interval_end);
+					return gameDate >= intervalStart && gameDate < intervalEnd;
+				});
+
+				if (intervalIndex === -1) return prevData;
+
+				// Create a new array with the updated interval
+				const newData = [...prevData];
+				const interval = { ...newData[intervalIndex] };
+
+				// Update the interval's statistics
+				interval.total_games++;
+				if (crashPoint >= value) {
+					interval.count++;
+				}
+				interval.percentage =
+					(interval.count / interval.total_games) * 100;
+
+				newData[intervalIndex] = interval;
+				return newData;
+			});
+		},
+		[value]
+	);
+
+	// Initial data load
 	useEffect(() => {
-		if (!latestGame) return;
+		isMountedRef.current = true;
+		fetchData();
+
+		return () => {
+			isMountedRef.current = false;
+		};
+	}, [fetchData]);
+
+	// Handle real-time updates
+	useEffect(() => {
+		if (!latestGame || !isMountedRef.current) return;
 
 		// Skip if we've already processed this game
-		if (lastProcessedGameRef.current === latestGame.gameId) {
-			return;
-		}
+		if (lastProcessedGameRef.current === latestGame.gameId) return;
 
-		// Prevent excessive API calls (at most once every 2 seconds)
-		const now = Date.now();
-		const timeSinceLastRefresh = now - lastRefreshTimeRef.current;
+		// Update the last processed game
+		lastProcessedGameRef.current = latestGame.gameId;
 
-		if (timeSinceLastRefresh < 2000) {
-			// Throttle API calls by setting a timeout
-			const timeoutMs = 2000 - timeSinceLastRefresh;
-			setTimeout(() => {
-				fetchData();
-				lastRefreshTimeRef.current = Date.now();
-				lastProcessedGameRef.current = latestGame.gameId;
-			}, timeoutMs);
-		} else {
-			// Reload immediately if throttle period has passed
-			fetchData();
-			lastRefreshTimeRef.current = Date.now();
-			lastProcessedGameRef.current = latestGame.gameId;
-		}
-	}, [latestGame, fetchData]);
+		// Update the specific interval that contains this game
+		updateInterval(latestGame.beginTime, latestGame.crashPoint);
+	}, [latestGame, updateInterval]);
+
+	const refreshData = useCallback(() => {
+		return fetchData();
+	}, [fetchData]);
 
 	return {
-		data: localData,
-		isLoading: apiLoading && localData.length === 0,
-		error: apiError,
-		refreshData: fetchData,
+		data,
+		isLoading,
+		error,
+		refreshData,
 	};
 }
