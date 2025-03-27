@@ -32,6 +32,7 @@ export interface IntervalsHtmlConfig {
 	gridData: IntervalGridData;
 	hourTotals: Record<string, HourTotal>;
 	formatHourLabel: (hourKey: string) => string;
+	subtitle?: string; // Optional custom subtitle
 }
 
 /**
@@ -49,12 +50,15 @@ export function generateIntervalsHtmlConfig(
 		gridData,
 		hourTotals,
 		formatHourLabel,
+		subtitle,
 	} = config;
 
 	// Build HTML chart config with custom heatmap rendering
 	const htmlConfig: HtmlChartConfig = {
 		title: `Intervals Analysis for Crash Point ${value}x`,
-		subtitle: `Games with crash point below ${value}x by time interval`,
+		subtitle:
+			subtitle ||
+			`Games with crash point below ${value}x by time interval`,
 		configTable: {
 			entries: [
 				{ parameter: 'Crash Point', value },
