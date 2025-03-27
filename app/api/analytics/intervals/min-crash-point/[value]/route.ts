@@ -67,15 +67,6 @@ export async function GET(
 		);
 		backendUrlWithParams.searchParams.append('hours', hours);
 
-		// Log the API request for debugging
-		console.log('Intervals API request:', {
-			url: backendUrlWithParams.toString(),
-			value,
-			intervalMinutes,
-			hours,
-			timezone: headers['X-Timezone'],
-		});
-
 		const backendResponse = await fetch(backendUrlWithParams.toString(), {
 			method: 'GET',
 			headers,
@@ -93,9 +84,6 @@ export async function GET(
 
 		// Get the response data
 		const data = await backendResponse.json();
-
-		// Log the raw data for debugging
-		console.log('Intervals API response:', JSON.stringify(data, null, 2));
 
 		// Check if data is structured as expected - the new format has data.data as an object with intervals array
 		if (!data.data) {

@@ -33,18 +33,14 @@ export function useWebSocketGames(): UseWebSocketGamesResult {
 
 	// Options for the WebSocket connection
 	const { lastMessage, readyState } = useWebSocket(socketUrl, {
-		onOpen: () => {
-			console.log('WebSocket connection established');
-		},
+		onOpen: () => {},
 		onError: (event) => {
 			console.error('WebSocket error:', event);
 			toast.error(
 				'WebSocket connection error. Real-time updates may not work.'
 			);
 		},
-		onClose: () => {
-			console.log('WebSocket connection closed');
-		},
+		onClose: () => {},
 		// Reconnect on connection loss
 		shouldReconnect: () => true,
 		reconnectAttempts: 10,

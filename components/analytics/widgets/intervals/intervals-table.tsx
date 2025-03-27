@@ -38,15 +38,6 @@ export function IntervalsTable({
 	hourTotals,
 	currentTime,
 }: IntervalsTableProps) {
-	// Debug log when component renders
-	React.useEffect(() => {
-		console.log('IntervalsTable rendering:', {
-			hourLabels: hourLabels.length,
-			hasGridData: Object.keys(gridData).length > 0,
-			isLoading,
-		});
-	}, [gridData, hourLabels, isLoading]);
-
 	// Get the interval columns
 	const intervalColumns = React.useMemo(() => {
 		return getIntervalColumns(intervalMinutes);

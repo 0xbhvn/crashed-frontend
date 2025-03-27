@@ -40,14 +40,10 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 		hours,
 	});
 
-	// Log data received for debugging
+	// Try refreshing if no data is available
 	React.useEffect(() => {
-		console.log(
-			`IntervalsWidget received data: ${intervalsData?.length || 0} items`
-		);
 		// If we have no data but aren't loading, try refreshing once
 		if ((!intervalsData || intervalsData.length === 0) && !isLoading) {
-			console.log('No intervals data received, trying to refresh...');
 			refreshData();
 		}
 	}, [intervalsData, isLoading, refreshData]);
