@@ -28,6 +28,12 @@ export function useRealTimeIntervalsAnalysis({
 	// Keep track of the last processed game to avoid duplicates
 	const lastProcessedGameRef = useRef<string | null>(null);
 
+	// Track the most recent interval end time to detect when we need a new interval
+	const latestIntervalEndRef = useRef<string | null>(null);
+
+	// Track time of last full refresh to limit frequency
+	const lastFullRefreshRef = useRef<number>(Date.now());
+
 	const fetchData = useCallback(async () => {
 		if (isFetchingRef.current || !isMountedRef.current) return;
 
@@ -71,7 +77,38 @@ export function useRealTimeIntervalsAnalysis({
 				Array.isArray(responseData.data.intervals)
 			) {
 				if (isMountedRef.current) {
-					setData(responseData.data.intervals);
+					const intervals = responseData.data.intervals;
+					setData(intervals);
+
+					// Record the latest interval end time for detecting when we need to fetch new intervals
+					if (intervals.length > 0) {
+						// Find the most recent interval (should be at the beginning of the array)
+						const mostRecentInterval = intervals.reduce(
+							(
+								latest: IntervalData | null,
+								current: IntervalData
+							) => {
+								const latestEnd = latest
+									? new Date(latest.interval_end).getTime()
+									: 0;
+								const currentEnd = new Date(
+									current.interval_end
+								).getTime();
+								return currentEnd > latestEnd
+									? current
+									: latest;
+							},
+							null
+						);
+
+						if (mostRecentInterval) {
+							latestIntervalEndRef.current =
+								mostRecentInterval.interval_end;
+						}
+					}
+
+					// Update last full refresh time
+					lastFullRefreshRef.current = Date.now();
 				}
 			}
 		} catch (err) {
@@ -91,25 +128,56 @@ export function useRealTimeIntervalsAnalysis({
 		}
 	}, [value, intervalMinutes, hours, data.length]);
 
-	// Function to update a specific interval's data
+	// Function to update a specific interval's data using the game's end time
 	const updateInterval = useCallback(
-		(gameTime: string, crashPoint: number) => {
+		(gameEndTime: string, crashPoint: number) => {
 			setData((prevData) => {
-				// Find the interval that contains this game time (using interval_start)
+				if (!prevData || prevData.length === 0) return prevData;
+
+				// Convert the game end time to a Date object
+				const gameDate = new Date(gameEndTime);
+
+				// Find the interval that contains this game time (using game's end time)
 				const intervalIndex = prevData.findIndex((interval) => {
-					const gameDate = new Date(gameTime);
 					const intervalStart = new Date(interval.interval_start);
 					const intervalEnd = new Date(interval.interval_end);
+
+					// Use endTime and compare with interval boundaries
 					return gameDate >= intervalStart && gameDate < intervalEnd;
 				});
 
-				if (intervalIndex === -1) return prevData;
+				// If we can't find a matching interval, check if we need a data refresh
+				if (intervalIndex === -1) {
+					// Check if the game time is more recent than our latest interval
+					const latestIntervalEnd = latestIntervalEndRef.current
+						? new Date(latestIntervalEndRef.current)
+						: null;
+
+					// If the game is newer than our most recent interval, we need new data
+					// But limit refreshes to avoid hammering the API
+					const timeSinceLastRefresh =
+						Date.now() - lastFullRefreshRef.current;
+					if (
+						latestIntervalEnd &&
+						gameDate > latestIntervalEnd &&
+						timeSinceLastRefresh > 30000
+					) {
+						// Schedule a refresh for the next tick to avoid state updates during render
+						setTimeout(() => {
+							if (isMountedRef.current) {
+								fetchData();
+							}
+						}, 0);
+					}
+
+					return prevData;
+				}
 
 				// Create a new array with the updated interval
 				const newData = [...prevData];
 				const interval = { ...newData[intervalIndex] };
 
-				// Update the interval's statistics
+				// Update the interval's statistics based on crash point
 				interval.total_games++;
 				if (crashPoint >= value) {
 					interval.count++;
@@ -121,7 +189,7 @@ export function useRealTimeIntervalsAnalysis({
 				return newData;
 			});
 		},
-		[value]
+		[value, fetchData]
 	);
 
 	// Initial data load
@@ -144,9 +212,29 @@ export function useRealTimeIntervalsAnalysis({
 		// Update the last processed game
 		lastProcessedGameRef.current = latestGame.gameId;
 
-		// Update the specific interval that contains this game
-		updateInterval(latestGame.beginTime, latestGame.crashPoint);
+		// Update the specific interval that contains this game using the game's end time
+		updateInterval(latestGame.endTime, latestGame.crashPoint);
 	}, [latestGame, updateInterval]);
+
+	// Periodically check if we need to refresh data to get new intervals
+	useEffect(() => {
+		const checkInterval = setInterval(() => {
+			const now = new Date();
+			const latestIntervalEnd = latestIntervalEndRef.current
+				? new Date(latestIntervalEndRef.current)
+				: null;
+
+			// If current time is past the latest interval end + buffer, refresh
+			if (
+				latestIntervalEnd &&
+				now > new Date(latestIntervalEnd.getTime() + 60000)
+			) {
+				fetchData();
+			}
+		}, 60000); // Check every minute
+
+		return () => clearInterval(checkInterval);
+	}, [fetchData]);
 
 	const refreshData = useCallback(() => {
 		return fetchData();
