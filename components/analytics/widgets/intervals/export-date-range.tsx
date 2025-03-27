@@ -244,7 +244,7 @@ export function DateRangeExport({ value, onOpenChange }: DateRangeExportProps) {
 				variant="ghost"
 				size="sm"
 				onClick={() => handleOpenChange(true)}
-				className="justify-start rounded-none w-full h-9 px-3 text-sm font-normal hover:bg-muted/50"
+				className="justify-start rounded-none w-full h-9 px-2 py-1.5 text-sm font-normal hover:bg-muted/50"
 			>
 				<CalendarIcon className="mr-2 h-4 w-4" />
 				Export by Date Range
