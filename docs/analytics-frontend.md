@@ -32,16 +32,17 @@ The project utilizes the following key libraries:
   /api                     # API route handlers
     /analytics             # Analytics API routes
       /last-games          # Last games analysis endpoints
+        /exact-floors      # Exact floor values endpoints
+        /min-crash-points  # Minimum crash points endpoints
       /occurrences         # Occurrences analysis endpoints
       /series              # Series analysis endpoints
       /intervals           # Intervals analysis endpoints
     /games                 # Games data API routes
-
 /components
   /analytics               # Analytics-specific components
     /core                  # Core analytics components
-      AnalyticsFilters.tsx # Filters for analytics views
-      CrashPointCards.tsx  # Cards displaying crash point stats (ACTIVE DEVELOPMENT)
+      analytics-card.tsx   # Card wrapper for analytics widgets
+      crash-point-cards.tsx # Cards displaying crash point stats (ACTIVE DEVELOPMENT)
     /widgets               # Widget components
       /last-games          # Last games components
         data-table.tsx     # Table component for last games
@@ -66,6 +67,10 @@ The project utilizes the following key libraries:
   export-button.tsx        # Export functionality component
   games-table-wrapper.tsx  # Wrapper for games table
   theme-toggle.tsx         # Theme toggle component
+  react-scan.tsx           # Component for scanning React components
+
+/context
+  analytics-context.tsx    # Context provider for analytics state
 
 /hooks
   /analytics               # Analytics-specific hooks
@@ -96,7 +101,7 @@ The analytics dashboard is implemented as a single-page application with tab-bas
 
 **Implementation:**
 
-- Located in `components/analytics/core/CrashPointCards.tsx`
+- Located in `components/analytics/core/crash-point-cards.tsx`
 - Displays quick-view cards for selected crash points
 - Shows real-time streak counts and last seen information
 - Supports dynamic editing of displayed crash points
@@ -228,13 +233,30 @@ The frontend uses Next.js API routes as proxies to the backend:
 2. **Error Handling**: Consistent error response format
 3. **Request Validation**: Input validation before forwarding to backend
 
+**Last Games API Routes:**
+- `/api/analytics/last-games/exact-floors`
+- `/api/analytics/last-games/min-crash-points`
+
+**Occurrences API Routes:**
+- `/api/analytics/occurrences/exact-floors`
+- `/api/analytics/occurrences/min-crash-points`
+
+**Series API Routes:**
+- `/api/analytics/series/without-min-crash-point/[value]`
+
+**Intervals API Routes:**
+- `/api/analytics/intervals/min-crash-points/[value]`
+
 ### Backend Communication
 
 The application communicates with the backend through:
 
 1. **HTTP Requests**: For data fetching and configuration
 2. **WebSocket**: For real-time updates
-3. **API Config**: Centralized in `lib/api-config.ts`
+3. **API Config**: Centralized in `lib/api-config.ts` with:
+   - `getApiUrl()`: Constructs full API URLs
+   - `getApiHeaders()`: Provides common headers including timezone
+   - `getApiHeadersWithoutTimezone()`: Provides headers without timezone
 
 ## Responsive Design
 
