@@ -249,18 +249,21 @@ export function DateRangeExport({
 	};
 
 	return (
-		<div className="p-2">
-			<div className="flex items-center justify-between border-b pb-2 mb-3">
-				<div className="text-sm font-medium">Export Date Range</div>
+		<div className="p-4">
+			<div className="flex items-center justify-between border-b pb-3 mb-4">
+				<div className="text-base font-medium">Export Date Range</div>
 			</div>
 
-			<div className="mb-4">
+			<div className="mb-5">
+				<div className="text-sm text-muted-foreground mb-2">
+					Select a date range
+				</div>
 				<Popover>
 					<PopoverTrigger asChild>
 						<Button
 							variant="outline"
 							className={cn(
-								'w-full justify-start text-left font-normal',
+								'w-full h-10 justify-start text-left font-normal',
 								!date && 'text-muted-foreground'
 							)}
 						>
@@ -303,18 +306,19 @@ export function DateRangeExport({
 			</div>
 
 			{!isDateRangeValid && date?.from && date?.to && (
-				<div className="text-xs text-red-500 mb-2">
+				<div className="text-sm text-red-500 mb-4 px-1">
 					Date range cannot exceed maximum of 7 days
 				</div>
 			)}
 
 			{error && (
-				<div className="text-xs text-red-500 mb-2">{error.message}</div>
+				<div className="text-sm text-red-500 mb-4 px-1">
+					{error.message}
+				</div>
 			)}
 
 			<Button
-				size="sm"
-				className="w-full h-8"
+				className="w-full h-10"
 				onClick={handleExport}
 				disabled={
 					isLoading ||
@@ -326,7 +330,7 @@ export function DateRangeExport({
 			>
 				{isExporting ? (
 					<>
-						<Loader2 className="mr-2 h-3 w-3 animate-spin" />
+						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 						Exporting...
 					</>
 				) : (
