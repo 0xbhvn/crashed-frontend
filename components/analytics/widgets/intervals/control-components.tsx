@@ -3,19 +3,17 @@
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ExportButton } from '@/components/export-button';
 import { INTERVAL_OPTIONS } from '@/utils/export-utils/types';
 import type { IntervalDuration } from '@/utils/export-utils/types';
 import type { ExcelExportConfig } from '@/utils/export-utils/excel';
 import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
 import { DateRangeExport } from './export-date-range';
+import { ExportButton } from '@/components/export-button';
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from '@/components/ui/popover';
-import { DownloadIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 export interface IntervalsControlsProps {
 	value: number;
@@ -39,6 +37,7 @@ export interface IntervalsControlsProps {
 export function IntervalsControls({
 	inputValue,
 	value,
+	hours,
 	hoursInputValue,
 	selectedInterval,
 	onValueInputChange,
@@ -165,56 +164,20 @@ export function IntervalsControls({
 								/>
 								{isHovering && !isOpen && (
 									<div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 bg-background border rounded shadow-sm whitespace-nowrap">
-										Hold for export options
+										Hold for date range export
 									</div>
 								)}
 							</div>
 						</PopoverTrigger>
 						<PopoverContent
-							className="p-0 w-52"
+							className="p-0 w-96"
 							align="end"
 						>
 							<div className="flex flex-col py-1">
-								<Button
-									variant="ghost"
-									size="sm"
-									className="justify-start rounded-none text-sm font-normal h-9 px-3 hover:bg-muted/50"
-									onClick={async () => {
-										setIsOpen(false);
-										try {
-											const excelConfig =
-												await getExcelConfig();
-											const { exportToExcel } =
-												await import(
-													'@/utils/export-utils/excel'
-												);
-											await exportToExcel(excelConfig);
-
-											if (getChartConfig) {
-												const chartConfig =
-													await getChartConfig();
-												const { generateChartHtml } =
-													await import(
-														'@/utils/export-utils/chart-html'
-													);
-												generateChartHtml(chartConfig);
-											}
-										} catch (err) {
-											console.error(
-												'Export failed:',
-												err
-											);
-										}
-									}}
-								>
-									<DownloadIcon className="mr-2 h-4 w-4" />
-									Export Current View
-								</Button>
 								<DateRangeExport
 									value={value}
-									onOpenChange={(open) => {
-										if (!open) setIsOpen(false);
-									}}
+									selectedInterval={selectedInterval}
+									hours={hours}
 								/>
 							</div>
 						</PopoverContent>

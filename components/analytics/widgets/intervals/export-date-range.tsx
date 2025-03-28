@@ -7,8 +7,8 @@ import {
 	startOfDay,
 	endOfDay,
 	addDays,
-	isBefore,
 	isAfter,
+	differenceInDays,
 } from 'date-fns';
 import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -20,15 +20,6 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDateRangeIntervalsAnalysis } from '@/hooks/analytics/intervals';
 import { exportToExcel } from '@/utils/export-utils/excel';
 import { generateChartHtml } from '@/utils/export-utils/chart-html';
@@ -38,52 +29,52 @@ import type { IntervalDuration } from '@/utils/export-utils/types';
 import type { IntervalGridData } from '@/utils/analytics-types';
 import { getIntervalColumns, formatHourLabel } from './intervals-utils';
 import type { HourTotalsMap } from './types';
+import type { DateRange } from 'react-day-picker';
 
 interface DateRangeExportProps {
 	value: number;
-	onOpenChange?: (isOpen: boolean) => void;
+	selectedInterval: IntervalDuration;
+	hours?: number;
 }
 
-export function DateRangeExport({ value, onOpenChange }: DateRangeExportProps) {
-	// Dialog state
-	const [isOpen, setIsOpen] = React.useState(false);
-
-	// Handle dialog open change
-	const handleOpenChange = (open: boolean) => {
-		setIsOpen(open);
-		onOpenChange?.(open);
-	};
-
-	// Export settings
-	const [startDate, setStartDate] = React.useState<Date>(
-		startOfDay(sub(new Date(), { days: 6 }))
+export function DateRangeExport({
+	value,
+	selectedInterval,
+	hours = 24,
+}: DateRangeExportProps) {
+	// Calculate default start date based on hours
+	const defaultStartDate = React.useMemo(
+		() => startOfDay(sub(new Date(), { hours: hours })),
+		[hours]
 	);
-	const [endDate, setEndDate] = React.useState<Date>(endOfDay(new Date()));
-	const [selectedInterval, setSelectedInterval] =
-		React.useState<IntervalDuration>(10);
 
-	// Popover states for datepickers to fix closing behavior
-	const [startDateOpen, setStartDateOpen] = React.useState<boolean>(false);
-	const [endDateOpen, setEndDateOpen] = React.useState<boolean>(false);
+	// Date range state
+	const [date, setDate] = React.useState<DateRange | undefined>({
+		from: defaultStartDate,
+		to: endOfDay(new Date()),
+	});
 
 	// Export status
 	const [isExporting, setIsExporting] = React.useState(false);
 
-	// Validate if the date range exceeds 7 days
+	// Validate if the date range exceeds 7 days (inclusive of start and end dates)
 	const isDateRangeValid = React.useMemo(() => {
-		const maxEndDate = addDays(startDate, 7);
-		return !isAfter(endDate, maxEndDate);
-	}, [startDate, endDate]);
+		if (!date?.from || !date?.to) return false;
+		// Calculate inclusive day difference
+		const diffDays = differenceInDays(date.to, date.from) + 1;
+		return diffDays <= 7;
+	}, [date]);
 
 	// Format dates for API
-	const formattedStartDate = React.useMemo(
-		() => format(startDate, 'yyyy-MM-dd'),
-		[startDate]
-	);
-	const formattedEndDate = React.useMemo(
-		() => format(endDate, 'yyyy-MM-dd'),
-		[endDate]
-	);
+	const formattedStartDate = React.useMemo(() => {
+		if (!date?.from) return format(defaultStartDate, 'yyyy-MM-dd');
+		return format(date.from, 'yyyy-MM-dd');
+	}, [date, defaultStartDate]);
+
+	const formattedEndDate = React.useMemo(() => {
+		if (!date?.to) return format(new Date(), 'yyyy-MM-dd');
+		return format(date.to, 'yyyy-MM-dd');
+	}, [date]);
 
 	// Use the hook for fetching data
 	const { fetchData, isLoading, error } = useDateRangeIntervalsAnalysis({
@@ -93,16 +84,36 @@ export function DateRangeExport({ value, onOpenChange }: DateRangeExportProps) {
 		endDate: formattedEndDate,
 	});
 
-	// Handle interval change
-	const handleIntervalChange = (value: string) => {
-		setSelectedInterval(Number(value) as IntervalDuration);
+	// Handle date selection with proper constraints
+	const handleDateChange = (newDate: DateRange | undefined) => {
+		if (!newDate?.from) {
+			setDate(undefined);
+			return;
+		}
+
+		// Ensure we have a start date
+		const startDate = startOfDay(newDate.from);
+		let endDate = newDate.to ? endOfDay(newDate.to) : undefined;
+
+		// If we have both dates, check max range
+		if (endDate) {
+			// Calculate max date (6 days after start date to make 7 days total inclusive)
+			const maxDate = endOfDay(addDays(startDate, 6));
+
+			// If end date exceeds max range, cap it
+			if (isAfter(endDate, maxDate)) {
+				endDate = maxDate;
+			}
+		}
+
+		setDate({ from: startDate, to: endDate });
 	};
 
 	// Process export data
-	const processExportData = async () => {
-		// Check if date range is valid
-		if (!isDateRangeValid) {
-			toast.error('Date range cannot exceed maximum of 7 days');
+	const handleExport = async () => {
+		// Check if date range is valid and complete
+		if (!isDateRangeValid || !date?.from || !date?.to) {
+			toast.error('Please select a valid date range (maximum of 7 days)');
 			return;
 		}
 
@@ -117,7 +128,7 @@ export function DateRangeExport({ value, onOpenChange }: DateRangeExportProps) {
 				return;
 			}
 
-			// Convert interval data into a grid format (same as in intervals-widget.tsx)
+			// Convert interval data into a grid format
 			const gridData: IntervalGridData = {};
 			for (const interval of intervalsData) {
 				try {
@@ -194,9 +205,9 @@ export function DateRangeExport({ value, onOpenChange }: DateRangeExportProps) {
 
 			// Special filename for date range export
 			excelConfig.fileName = `intervals_${value}x_${format(
-				startDate,
+				date.from,
 				'yyyyMMdd'
-			)}_to_${format(endDate, 'yyyyMMdd')}.xlsx`;
+			)}_to_${format(date.to, 'yyyyMMdd')}.xlsx`;
 
 			// Export Excel file
 			await exportToExcel(excelConfig);
@@ -214,22 +225,21 @@ export function DateRangeExport({ value, onOpenChange }: DateRangeExportProps) {
 				hourTotals,
 				formatHourLabel,
 				subtitle: `Date range: ${format(
-					startDate,
+					date.from,
 					'MMM dd, yyyy'
-				)} to ${format(endDate, 'MMM dd, yyyy')}`,
+				)} to ${format(date.to, 'MMM dd, yyyy')}`,
 			});
 
 			// Special filename for date range export
 			htmlConfig.fileName = `intervals_${value}x_${format(
-				startDate,
+				date.from,
 				'yyyyMMdd'
-			)}_to_${format(endDate, 'yyyyMMdd')}.html`;
+			)}_to_${format(date.to, 'yyyyMMdd')}.html`;
 
 			// Generate HTML chart
 			generateChartHtml(htmlConfig);
 
 			toast.success('Export completed successfully!');
-			handleOpenChange(false);
 		} catch (err) {
 			console.error('Export failed:', err);
 			toast.error('Export failed. Please try again.');
@@ -239,292 +249,90 @@ export function DateRangeExport({ value, onOpenChange }: DateRangeExportProps) {
 	};
 
 	return (
-		<>
-			<Button
-				variant="ghost"
-				size="sm"
-				onClick={() => handleOpenChange(true)}
-				className="justify-start rounded-none w-full h-9 px-2 py-1.5 text-sm font-normal hover:bg-muted/50"
-			>
-				<CalendarIcon className="mr-2 h-4 w-4" />
-				Export by Date Range
-			</Button>
+		<div className="p-2">
+			<div className="flex items-center justify-between border-b pb-2 mb-3">
+				<div className="text-sm font-medium">Export Date Range</div>
+			</div>
 
-			<Dialog
-				open={isOpen}
-				onOpenChange={handleOpenChange}
-			>
-				<DialogContent className="sm:max-w-[425px]">
-					<DialogHeader>
-						<DialogTitle>
-							Export Intervals by Date Range
-						</DialogTitle>
-						<DialogDescription>
-							Select a date range to export intervals data.
-							Maximum of 7 days.
-						</DialogDescription>
-					</DialogHeader>
-
-					<div className="grid gap-4 py-4">
-						<div className="space-y-2">
-							<span
-								id="interval-label"
-								className="text-sm font-medium"
-							>
-								Interval
-							</span>
-							<Tabs
-								aria-labelledby="interval-label"
-								value={selectedInterval.toString()}
-								onValueChange={handleIntervalChange}
-							>
-								<TabsList className="grid w-full grid-cols-3 bg-muted/50 p-0.5">
-									<TabsTrigger
-										value="10"
-										className="data-[state=active]:bg-black data-[state=active]:text-white"
-									>
-										10m
-									</TabsTrigger>
-									<TabsTrigger
-										value="15"
-										className="data-[state=active]:bg-black data-[state=active]:text-white"
-									>
-										15m
-									</TabsTrigger>
-									<TabsTrigger
-										value="30"
-										className="data-[state=active]:bg-black data-[state=active]:text-white"
-									>
-										30m
-									</TabsTrigger>
-								</TabsList>
-							</Tabs>
-						</div>
-
-						<div className="grid grid-cols-2 gap-4">
-							<div className="space-y-2">
-								<span
-									id="start-date-label"
-									className="text-sm font-medium"
-								>
-									Start Date
-								</span>
-								<Popover
-									open={startDateOpen}
-									onOpenChange={setStartDateOpen}
-								>
-									<PopoverTrigger asChild>
-										<Button
-											aria-labelledby="start-date-label"
-											variant="outline"
-											className={cn(
-												'w-full justify-start text-left font-normal',
-												!startDate &&
-													'text-muted-foreground'
-											)}
-										>
-											<CalendarIcon className="mr-2 h-4 w-4" />
-											{startDate ? (
-												format(
-													startDate,
-													'MMM dd, yyyy'
-												)
-											) : (
-												<span>Pick a date</span>
-											)}
-										</Button>
-									</PopoverTrigger>
-									<PopoverContent
-										className="w-auto p-0"
-										align="start"
-										side="bottom"
-										sideOffset={4}
-									>
-										<Calendar
-											mode="single"
-											selected={startDate}
-											onSelect={(date) => {
-												if (date) {
-													const newStartDate =
-														startOfDay(date);
-													setStartDate(newStartDate);
-
-													// If end date is before new start date, adjust it
-													if (
-														isBefore(
-															endDate,
-															newStartDate
-														)
-													) {
-														setEndDate(
-															endOfDay(
-																newStartDate
-															)
-														);
-													}
-
-													// If date range exceeds 7 days, adjust end date
-													const maxEndDate = addDays(
-														newStartDate,
-														7
-													);
-													if (
-														isAfter(
-															endDate,
-															maxEndDate
-														)
-													) {
-														setEndDate(
-															endOfDay(maxEndDate)
-														);
-													}
-
-													// Close the popover
-													setStartDateOpen(false);
-												}
-											}}
-											initialFocus
-											disabled={(date) =>
-												date > new Date()
-											}
-											classNames={{
-												day_selected:
-													'bg-black text-white hover:bg-black hover:text-white focus:bg-black focus:text-white',
-											}}
-										/>
-									</PopoverContent>
-								</Popover>
-							</div>
-
-							<div className="space-y-2">
-								<span
-									id="end-date-label"
-									className="text-sm font-medium"
-								>
-									End Date
-								</span>
-								<Popover
-									open={endDateOpen}
-									onOpenChange={setEndDateOpen}
-								>
-									<PopoverTrigger asChild>
-										<Button
-											aria-labelledby="end-date-label"
-											variant="outline"
-											className={cn(
-												'w-full justify-start text-left font-normal',
-												!endDate &&
-													'text-muted-foreground'
-											)}
-										>
-											<CalendarIcon className="mr-2 h-4 w-4" />
-											{endDate ? (
-												format(endDate, 'MMM dd, yyyy')
-											) : (
-												<span>Pick a date</span>
-											)}
-										</Button>
-									</PopoverTrigger>
-									<PopoverContent
-										className="w-auto p-0"
-										align="start"
-										side="bottom"
-										sideOffset={4}
-									>
-										<Calendar
-											mode="single"
-											selected={endDate}
-											onSelect={(date) => {
-												if (date) {
-													// Ensure the date is within valid range
-													if (
-														isBefore(
-															date,
-															startDate
-														)
-													)
-														return;
-
-													// If date range exceeds 7 days, don't allow
-													const maxEndDate = addDays(
-														startDate,
-														7
-													);
-													if (
-														isAfter(
-															date,
-															maxEndDate
-														)
-													) {
-														setEndDate(
-															endOfDay(maxEndDate)
-														);
-													} else {
-														setEndDate(
-															endOfDay(date)
-														);
-													}
-
-													// Close the popover
-													setEndDateOpen(false);
-												}
-											}}
-											initialFocus
-											disabled={(date) =>
-												date < startDate ||
-												date > new Date() ||
-												date > addDays(startDate, 7)
-											}
-											classNames={{
-												day_selected:
-													'bg-black text-white hover:bg-black hover:text-white focus:bg-black focus:text-white',
-											}}
-										/>
-									</PopoverContent>
-								</Popover>
-							</div>
-						</div>
-
-						{!isDateRangeValid && (
-							<div className="text-sm text-red-500">
-								Date range cannot exceed maximum of 7 days
-							</div>
-						)}
-
-						{error && (
-							<div className="text-sm text-red-500">
-								{error.message}
-							</div>
-						)}
-					</div>
-
-					<DialogFooter>
+			<div className="mb-4">
+				<Popover>
+					<PopoverTrigger asChild>
 						<Button
-							type="button"
 							variant="outline"
-							onClick={() => handleOpenChange(false)}
+							className={cn(
+								'w-full justify-start text-left font-normal',
+								!date && 'text-muted-foreground'
+							)}
 						>
-							Cancel
-						</Button>
-						<Button
-							type="button"
-							onClick={processExportData}
-							disabled={
-								isLoading || isExporting || !isDateRangeValid
-							}
-						>
-							{isExporting ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Exporting...
-								</>
+							<CalendarIcon className="mr-2 h-4 w-4" />
+							{date?.from ? (
+								date.to ? (
+									<>
+										{format(date.from, 'MMM dd, yyyy')} -{' '}
+										{format(date.to, 'MMM dd, yyyy')}
+									</>
+								) : (
+									format(date.from, 'MMM dd, yyyy')
+								)
 							) : (
-								'Export'
+								<span>Pick a date range</span>
 							)}
 						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
-		</>
+					</PopoverTrigger>
+					<PopoverContent
+						className="w-auto p-0"
+						align="start"
+					>
+						<Calendar
+							initialFocus
+							mode="range"
+							defaultMonth={date?.from}
+							selected={date}
+							onSelect={handleDateChange}
+							numberOfMonths={2}
+							disabled={(day) => isAfter(day, new Date())}
+							classNames={{
+								day_selected:
+									'bg-black text-white hover:bg-black hover:text-white focus:bg-black focus:text-white',
+								day_range_middle:
+									'bg-muted aria-selected:bg-muted/80 aria-selected:text-muted-foreground hover:bg-muted hover:text-muted-foreground focus:bg-muted focus:text-muted-foreground',
+							}}
+						/>
+					</PopoverContent>
+				</Popover>
+			</div>
+
+			{!isDateRangeValid && date?.from && date?.to && (
+				<div className="text-xs text-red-500 mb-2">
+					Date range cannot exceed maximum of 7 days
+				</div>
+			)}
+
+			{error && (
+				<div className="text-xs text-red-500 mb-2">{error.message}</div>
+			)}
+
+			<Button
+				size="sm"
+				className="w-full h-8"
+				onClick={handleExport}
+				disabled={
+					isLoading ||
+					isExporting ||
+					!isDateRangeValid ||
+					!date?.from ||
+					!date?.to
+				}
+			>
+				{isExporting ? (
+					<>
+						<Loader2 className="mr-2 h-3 w-3 animate-spin" />
+						Exporting...
+					</>
+				) : (
+					'Export'
+				)}
+			</Button>
+		</div>
 	);
 }
