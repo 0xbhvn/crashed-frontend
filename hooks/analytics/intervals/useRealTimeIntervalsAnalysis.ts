@@ -38,7 +38,7 @@ export function useRealTimeIntervalsAnalysis({
 		if (isFetchingRef.current || !isMountedRef.current) return;
 
 		isFetchingRef.current = true;
-		setIsLoading(data.length === 0); // Only show loading on initial fetch
+		setIsLoading(true); // Always show loading when fetching
 
 		try {
 			const queryParams = new URLSearchParams({
@@ -126,7 +126,7 @@ export function useRealTimeIntervalsAnalysis({
 				isFetchingRef.current = false;
 			}
 		}
-	}, [value, intervalMinutes, hours, data.length]);
+	}, [value, intervalMinutes, hours]);
 
 	// Function to update a specific interval's data using the game's end time
 	const updateInterval = useCallback(
@@ -195,7 +195,7 @@ export function useRealTimeIntervalsAnalysis({
 	// Initial data load
 	useEffect(() => {
 		isMountedRef.current = true;
-		fetchData();
+		fetchData(); // Don't clear data before fetching
 
 		return () => {
 			isMountedRef.current = false;
