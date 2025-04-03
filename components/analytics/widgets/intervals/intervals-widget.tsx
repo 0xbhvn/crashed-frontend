@@ -9,7 +9,7 @@ import { IntervalsControls } from './control-components';
 import { IntervalsTable } from './intervals-table';
 import { useRealTimeIntervalsAnalysis } from '@/hooks/analytics';
 import type { IntervalDuration } from '@/utils/export-utils/types';
-import type { IntervalGridData } from '@/utils/analytics-types';
+import type { IntervalGridData, IntervalData } from '@/utils/analytics-types';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 import type { ExcelExportConfig } from '@/utils/export-utils/excel';
 import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
@@ -226,6 +226,20 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 			intervalColumns.push(i);
 		}
 
+		// Filter out undefined values from gridData
+		const definedGridData: Record<
+			string,
+			Record<string, IntervalData>
+		> = {};
+		for (const [hourKey, hourData] of Object.entries(gridData)) {
+			definedGridData[hourKey] = {};
+			for (const [intervalKey, interval] of Object.entries(hourData)) {
+				if (interval) {
+					definedGridData[hourKey][intervalKey] = interval;
+				}
+			}
+		}
+
 		// Use the dedicated utility to generate the HTML config
 		return generateIntervalsHtmlConfig({
 			value,
@@ -233,7 +247,7 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 			intervalMinutes: selectedInterval,
 			intervalColumns,
 			hourLabels,
-			gridData,
+			gridData: definedGridData,
 			hourTotals,
 			formatHourLabel: (hourKey: string) => {
 				try {
