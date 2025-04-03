@@ -75,19 +75,53 @@ export function isGameAboveCrashPoint(
 	return game.crashPoint >= crashPoint;
 }
 
-// Interval data structure
+// Type for individual interval data (time-based)
 export interface IntervalData {
 	interval_start: string;
 	interval_end: string;
 	count: number;
 	total_games: number;
 	percentage: number;
-	interval_minutes: number;
 }
 
-// Organized grid data for intervals
+// New Type for individual game-set interval data
+export interface GameSetIntervalData {
+	set_number: number;
+	start_game: string;
+	end_game: string;
+	count: number;
+	total_games: number; // Should be the same as games_per_set
+	percentage: number;
+	start_time: string;
+	end_time: string;
+}
+
+// Type for the grid data structure used in the Intervals widget (time-based)
 export interface IntervalGridData {
-	[hour: string]: {
-		[intervalMinutes: string]: IntervalData;
+	[hourKey: string]: {
+		[intervalKey: string]: IntervalData | undefined;
 	};
+}
+
+// New Type for the grid data structure (game-set based)
+// Keyed by set number string for consistency with table rendering if needed
+export interface GameSetIntervalGridData {
+	[setNumberKey: string]: GameSetIntervalData | undefined;
+}
+
+// Type for the API response structure (both time and game-set, check context)
+export interface IntervalsAnalysisResponse {
+	status: string;
+	data?: {
+		min_value?: number;
+		interval_minutes?: number;
+		hours?: number;
+		games_per_set?: number;
+		total_games?: number;
+		start_date?: string;
+		end_date?: string;
+		count?: number;
+		intervals: (IntervalData | GameSetIntervalData)[];
+	};
+	message?: string;
 }

@@ -25,8 +25,14 @@ export const CURRENT_STREAK_POINTS = [
 export const UNIQUE_STREAK_POINTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 // Interval durations used in the IntervalsWidget
-export const INTERVAL_OPTIONS = [10, 15, 30] as const;
-export type IntervalDuration = (typeof INTERVAL_OPTIONS)[number];
+export type IntervalDuration = 10 | 15 | 30; // Defined directly
+export const INTERVAL_OPTIONS: IntervalDuration[] = [10, 15, 30];
+
+// Type for game set size options
+export type GameSetSize = 10 | 20 | 25 | 50;
+
+// Constants for export/display if needed
+export const GAME_SET_SIZE_OPTIONS: GameSetSize[] = [10, 20, 25, 50];
 
 // Common pattern for all widget and table component props
 export interface BaseWidgetProps {
