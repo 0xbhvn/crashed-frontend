@@ -62,5 +62,4 @@ export interface ExportConfig {
 	limit: number;
 	hours: number;
 	sortBy: 'time' | 'length';
-	showCircles: boolean;
 }

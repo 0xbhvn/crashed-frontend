@@ -92,7 +92,7 @@ export const getExcelConfig = async ({
 		},
 	];
 
-	// Create configuration for Excel export
+	// Define configuration for Excel export
 	const excelConfig: ExcelExportConfig = {
 		fileName: `series_analysis_${format(
 			new Date(),
@@ -160,49 +160,47 @@ export const getExcelConfig = async ({
 		],
 	};
 
-	// Add follow games sheet if needed
-	if (currentConfig.showCircles) {
-		// Flatten follow games data
-		const followGamesData = [];
-		for (const series of exportData) {
-			if (series.followGames && series.followGames.length > 0) {
-				for (const game of series.followGames) {
-					// Split game data (format is typically "#GAMEID@CRASHPOINTx")
-					const parts = String(game).split('@');
-					const gameId = parts[0];
-					const crashPoint = parts.length > 1 ? parts[1] : '';
+	// Add follow games sheet unconditionally (each streak has 1 follow game)
+	// Flatten follow games data
+	const followGamesData = [];
+	for (const series of exportData) {
+		if (series.followGames && series.followGames.length > 0) {
+			for (const game of series.followGames) {
+				// Split game data (format is typically "#GAMEID@CRASHPOINTx")
+				const parts = String(game).split('@');
+				const gameId = parts[0];
+				const crashPoint = parts.length > 1 ? parts[1] : '';
 
-					followGamesData.push({
-						series: `${series.startGameId}-${series.endGameId}`,
-						gameId: gameId,
-						crashPoint: crashPoint,
-					});
-				}
+				followGamesData.push({
+					series: `${series.startGameId}-${series.endGameId}`,
+					gameId: gameId,
+					crashPoint: crashPoint,
+				});
 			}
 		}
-
-		// Add follow games sheet
-		excelConfig.sheets.push({
-			name: 'Follow Games',
-			columns: [
-				{ header: 'Series', key: 'series', width: 25 },
-				{ header: 'Game ID', key: 'gameId', width: 15 },
-				{ header: 'Crash Point', key: 'crashPoint', width: 15 },
-			],
-			data:
-				followGamesData.length > 0
-					? followGamesData
-					: [
-							{
-								series: 'No follow games data available',
-								gameId: '',
-								crashPoint: '',
-							},
-					  ],
-			autoFilter: true,
-			freezeHeader: true,
-		});
 	}
+
+	// Add follow games sheet
+	excelConfig.sheets.push({
+		name: 'Follow Games',
+		columns: [
+			{ header: 'Series', key: 'series', width: 25 },
+			{ header: 'Game ID', key: 'gameId', width: 15 },
+			{ header: 'Crash Point', key: 'crashPoint', width: 15 },
+		],
+		data:
+			followGamesData.length > 0
+				? followGamesData
+				: [
+						{
+							series: 'No follow games data available',
+							gameId: '',
+							crashPoint: '',
+						},
+				  ],
+		autoFilter: true,
+		freezeHeader: true,
+	});
 
 	// Add configuration sheet
 	excelConfig.sheets.push({
@@ -222,10 +220,6 @@ export const getExcelConfig = async ({
 			{
 				parameter: 'Sort By',
 				value: currentConfig.sortBy === 'time' ? 'Time' : 'Length',
-			},
-			{
-				parameter: 'Show Follow Games',
-				value: currentConfig.showCircles ? 'Yes' : 'No',
 			},
 		],
 		autoFilter: false,

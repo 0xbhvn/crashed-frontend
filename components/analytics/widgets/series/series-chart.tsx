@@ -10,7 +10,6 @@ import {
 	XAxis,
 	YAxis,
 	ReferenceLine,
-	LabelList,
 } from 'recharts';
 
 import {
@@ -18,7 +17,6 @@ import {
 	ChartTooltip,
 	type ChartConfig,
 } from '@/components/ui/chart';
-import { FollowStreakLabel } from './chart-components';
 
 // This is our chart configuration
 export const chartConfig = {
@@ -43,7 +41,6 @@ interface SeriesChartProps {
 	value: number;
 	sortBy: 'time' | 'length';
 	pulseClass: string;
-	showCircles: boolean;
 	medianLength: number;
 }
 
@@ -52,7 +49,6 @@ export function SeriesChart({
 	value,
 	sortBy,
 	pulseClass,
-	showCircles,
 	medianLength,
 }: SeriesChartProps) {
 	return (
@@ -186,26 +182,14 @@ export function SeriesChart({
 										</div>
 										{item.followCount > 0 && (
 											<>
-												<p className="text-xs mt-1">
-													Followed by:{' '}
-													<span className="font-medium">
-														{item.followCount}
-													</span>{' '}
-													{item.followCount === 1
-														? 'game'
-														: 'games'}{' '}
-													above {value}x
-												</p>
-												{/* Show the actual games that followed only if circles are visible */}
-												{showCircles &&
-													item.followGames &&
+												{/* Show the actual games that followed */}
+												{item.followGames &&
 													item.followGames.length >
 														0 && (
 														<div className="text-xs mt-2 border-t border-border/30 pt-1.5">
 															<div className="font-medium mb-1">
-																Games that
-																followed {value}
-																x:
+																Immediate{' '}
+																{value}x crash:
 															</div>
 															<div className="rounded overflow-hidden border border-border/30">
 																<table className="w-full">
@@ -301,20 +285,6 @@ export function SeriesChart({
 								/>
 							);
 						})}
-						{/* Conditionally render label list based on showCircles state */}
-						{showCircles && (
-							<LabelList
-								dataKey="followCount"
-								position="top"
-								offset={10}
-								content={(props) => (
-									<FollowStreakLabel
-										{...props}
-										showCircles={showCircles}
-									/>
-								)}
-							/>
-						)}
 					</Bar>
 				</BarChart>
 			</ChartContainer>

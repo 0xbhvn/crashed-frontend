@@ -42,7 +42,6 @@ export function SeriesWidget({
 	const [hoursInput, setHoursInput] = React.useState(hours.toString());
 	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('games');
 	const [pulseClass, setPulseClass] = React.useState<string>('');
-	const [showCircles, setShowCircles] = React.useState<boolean>(true);
 
 	// Track which data set to display (separate from the tab state)
 	const [activeDataMode, setActiveDataMode] = React.useState<
@@ -65,7 +64,7 @@ export function SeriesWidget({
 	});
 
 	// Determine which data to use based on activeDataMode
-	const { data, isLoading, error, totalOccurrences } = React.useMemo(() => {
+	const { data, isLoading, error } = React.useMemo(() => {
 		return activeDataMode === 'games' ? gamesData : timeData;
 	}, [activeDataMode, gamesData, timeData]);
 
@@ -182,11 +181,6 @@ export function SeriesWidget({
 		timeData.refreshData();
 	};
 
-	// Toggle circles visibility
-	const toggleCirclesVisibility = () => {
-		setShowCircles(!showCircles);
-	};
-
 	// Function to handle tab change properly
 	const handleTabChange = (value: string) => {
 		const newAnalyzeBy = value as 'games' | 'time';
@@ -244,13 +238,6 @@ export function SeriesWidget({
 		return Array.isArray(data) ? data.slice(0, 5) : [];
 	}, [data]);
 
-	// Calculate the biggest gap
-	const biggestGap = React.useMemo(() => {
-		if (!data || !Array.isArray(data) || data.length === 0) return 0;
-		// Always sort by length to get the biggest gap
-		return Math.max(...data.map((series) => series.length));
-	}, [data]);
-
 	// Calculate median length for the reference line
 	const medianLength = React.useMemo(() => {
 		if (!chartData || chartData.length === 0) return 0;
@@ -289,9 +276,8 @@ export function SeriesWidget({
 			limit,
 			hours,
 			sortBy,
-			showCircles,
 		}),
-		[value, activeDataMode, limit, hours, sortBy, showCircles]
+		[value, activeDataMode, limit, hours, sortBy]
 	);
 
 	// Generate Excel export configuration
@@ -419,10 +405,6 @@ export function SeriesWidget({
 									? 'Time'
 									: 'Length',
 						},
-						{
-							parameter: 'Show Follow Games',
-							value: currentConfig.showCircles ? 'Yes' : 'No',
-						},
 					],
 				},
 				charts: [lengthChart, followChart],
@@ -456,105 +438,76 @@ export function SeriesWidget({
 		}, [currentConfig, gamesData, timeData, activeDataMode]);
 
 	return (
-		<Card className={cn('w-full', className)}>
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<div>
-					<CardTitle>Non-occurrence Series Analysis</CardTitle>
-					<CardDescription>
-						Series of games without crash point {value}x or higher
-					</CardDescription>
-				</div>
-				{!isLoading && !error && data && (
-					<div className="flex items-center gap-2">
-						<div className="flex items-center bg-muted px-3 py-1 rounded-md">
-							<span className="text-sm font-medium mr-1">
-								Total {value}x occurrences:
-							</span>
-							<span className="text-sm font-bold">
-								{totalOccurrences}
-							</span>
-						</div>
-						<div className="flex items-center bg-muted px-3 py-1 rounded-md">
-							<span className="text-sm font-medium mr-1">
-								Biggest gap:
-							</span>
-							<span className="text-sm font-bold">
-								{biggestGap}
-							</span>
-						</div>
-					</div>
-				)}
+		<Card className={cn('overflow-hidden', className)}>
+			<CardHeader className="bg-secondary/10">
+				<CardTitle>Series Analysis</CardTitle>
+				<CardDescription>
+					Consecutive games without a crash point of {value}x or
+					higher
+				</CardDescription>
 			</CardHeader>
-			<CardContent>
-				<SeriesControls
-					value={value}
-					inputValue={inputValue}
-					analyzeBy={analyzeBy}
-					limit={limit}
-					limitInput={limitInput}
-					hours={hours}
-					hoursInput={hoursInput}
-					sortBy={sortBy}
-					showCircles={showCircles}
-					onValueInputChange={handleValueInputChange}
-					onLimitInputChange={handleLimitInputChange}
-					onHoursInputChange={handleHoursInputChange}
-					applyValueChange={applyValueChange}
-					applyLimitChange={applyLimitChange}
-					applyHoursChange={applyHoursChange}
-					handleKeyDown={handleKeyDown}
-					toggleSortMode={toggleSortMode}
-					toggleCirclesVisibility={toggleCirclesVisibility}
-					handleTabChange={handleTabChange}
-					getExcelConfig={getExcelConfig}
-					getChartConfig={getChartConfig}
-					currentConfig={currentConfig}
-				/>
-
-				{isLoading && (
-					<div className="space-y-3">
-						<Skeleton className="h-[250px] w-full" />
-						<div className="space-y-2">
-							<Skeleton className="h-5 w-full" />
-							<Skeleton className="h-5 w-[90%]" />
-							<Skeleton className="h-5 w-[80%]" />
-						</div>
+			<CardContent className="p-6">
+				{isLoading ? (
+					<div className="space-y-6">
+						<Skeleton className="h-[350px] w-full" />
+						<Skeleton className="h-6 w-1/3" />
+						<Skeleton className="h-32 w-full" />
 					</div>
-				)}
-
-				{error && (
-					<div className="text-center py-10">
-						<p className="text-destructive">
-							Error: Failed to load data
-						</p>
+				) : error ? (
+					<div className="flex items-center justify-center h-[350px] text-muted-foreground">
+						Failed to load series data
 					</div>
-				)}
-
-				{!isLoading && !error && chartData.length === 0 && (
-					<div className="text-center py-10">
-						<p className="text-muted-foreground">
-							No series data found for the current criteria
-						</p>
-					</div>
-				)}
-
-				{!isLoading && !error && chartData.length > 0 && (
+				) : (
 					<>
-						<SeriesChart
-							chartData={chartData}
+						<SeriesControls
+							inputValue={inputValue}
 							value={value}
+							analyzeBy={analyzeBy}
+							limit={limit}
+							limitInput={limitInput}
+							hours={hours}
+							hoursInput={hoursInput}
 							sortBy={sortBy}
-							pulseClass={pulseClass}
-							showCircles={showCircles}
-							medianLength={medianLength}
+							onValueInputChange={handleValueInputChange}
+							onLimitInputChange={handleLimitInputChange}
+							onHoursInputChange={handleHoursInputChange}
+							applyValueChange={applyValueChange}
+							applyLimitChange={applyLimitChange}
+							applyHoursChange={applyHoursChange}
+							handleKeyDown={handleKeyDown}
+							toggleSortMode={toggleSortMode}
+							handleTabChange={handleTabChange}
+							getExcelConfig={getExcelConfig}
+							getChartConfig={getChartConfig}
+							currentConfig={{
+								value,
+								analyzeBy,
+								limit,
+								hours,
+								sortBy,
+							}}
 						/>
 
-						<SeriesTable
-							topSeries={topSeries}
-							value={value}
-							sortBy={sortBy}
-							showCircles={showCircles}
-						/>
+						{chartData.length > 0 ? (
+							<>
+								<SeriesChart
+									chartData={chartData}
+									value={value}
+									sortBy={sortBy}
+									pulseClass={pulseClass}
+									medianLength={medianLength}
+								/>
+								<SeriesTable
+									topSeries={topSeries}
+									value={value}
+									sortBy={sortBy}
+								/>
+							</>
+						) : (
+							<div className="flex items-center justify-center h-[350px] text-muted-foreground">
+								No series data available
+							</div>
+						)}
 					</>
 				)}
 			</CardContent>

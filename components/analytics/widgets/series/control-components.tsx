@@ -1,14 +1,7 @@
 'use client';
 
 import type * as React from 'react';
-import {
-	ArrowDownWideNarrow,
-	Clock,
-	Eye,
-	EyeOff,
-	Timer,
-	Dices,
-} from 'lucide-react';
+import { ArrowDownWideNarrow, Clock, Timer, Dices } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,7 +26,6 @@ export interface SeriesControlsProps {
 	hours: number;
 	hoursInput: string;
 	sortBy: 'time' | 'length';
-	showCircles: boolean;
 	onValueInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	onLimitInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	onHoursInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -45,7 +37,6 @@ export interface SeriesControlsProps {
 		applyFn: () => void
 	) => void;
 	toggleSortMode: () => void;
-	toggleCirclesVisibility: () => void;
 	handleTabChange: (value: string) => void;
 	getExcelConfig: () => Promise<ExcelExportConfig>;
 	getChartConfig: () => Promise<HtmlChartConfig>;
@@ -58,7 +49,6 @@ export function SeriesControls({
 	limitInput,
 	hoursInput,
 	sortBy,
-	showCircles,
 	onValueInputChange,
 	onLimitInputChange,
 	onHoursInputChange,
@@ -67,7 +57,6 @@ export function SeriesControls({
 	applyHoursChange,
 	handleKeyDown,
 	toggleSortMode,
-	toggleCirclesVisibility,
 	handleTabChange,
 	getExcelConfig,
 	getChartConfig,
@@ -116,29 +105,6 @@ export function SeriesControls({
 								<p>
 									Sort By:{' '}
 									{sortBy === 'time' ? 'Time' : 'Length'}
-								</p>
-							</TooltipContent>
-						</Tooltip>
-
-						{/* Follow circles toggle */}
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									onClick={toggleCirclesVisibility}
-									className="h-6 w-6 p-0"
-								>
-									{showCircles ? (
-										<Eye className="h-4 w-4 text-foreground" />
-									) : (
-										<EyeOff className="h-4 w-4 text-muted-foreground" />
-									)}
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>
-									Follow Circles: {showCircles ? 'ON' : 'OFF'}
 								</p>
 							</TooltipContent>
 						</Tooltip>
