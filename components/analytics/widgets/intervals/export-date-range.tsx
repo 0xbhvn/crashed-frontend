@@ -3,7 +3,6 @@
 import * as React from 'react';
 import {
 	format,
-	sub,
 	startOfDay,
 	endOfDay,
 	addDays,
@@ -41,26 +40,43 @@ import type { DateRange } from 'react-day-picker';
 interface DateRangeExportProps {
 	value: number;
 	selectedInterval: TimeIntervalDuration | GameIntervalSize;
-	hours?: number;
 	analyzeBy?: 'time' | 'games';
 }
 
 export function DateRangeExport({
 	value,
 	selectedInterval,
-	hours = 24,
 	analyzeBy = 'time',
 }: DateRangeExportProps) {
-	// Calculate default start date based on hours
-	const defaultStartDate = React.useMemo(
-		() => startOfDay(sub(new Date(), { hours: hours })),
-		[hours]
-	);
+	// Calculate default start date - adjusting days back to ensure it's within data range
+	const defaultStartDate = React.useMemo(() => {
+		// Use a direct approach to prevent timezone issues
+		const today = new Date();
 
-	// Date range state
-	const [date, setDate] = React.useState<DateRange | undefined>({
-		from: defaultStartDate,
-		to: endOfDay(new Date()),
+		// For games, go back 6 days instead of 7 to match available data range
+		if (analyzeBy === 'games') {
+			const pastDate = new Date(today);
+			pastDate.setDate(today.getDate() - 6);
+			pastDate.setHours(0, 0, 0, 0);
+			return pastDate;
+		}
+
+		// For time, just go back 1 day
+		const pastDate = new Date(today);
+		pastDate.setDate(today.getDate() - 1);
+		pastDate.setHours(0, 0, 0, 0);
+		return pastDate;
+	}, [analyzeBy]);
+
+	// Date range state - clone dates to prevent reference issues
+	const [date, setDate] = React.useState<DateRange | undefined>(() => {
+		const today = new Date();
+		today.setHours(23, 59, 59, 999); // End of day
+
+		return {
+			from: new Date(defaultStartDate),
+			to: today,
+		};
 	});
 
 	// Export status
@@ -102,11 +118,22 @@ export function DateRangeExport({
 		}
 
 		// Ensure we have a start date
-		const startDate = startOfDay(newDate.from);
+		let startDate = startOfDay(newDate.from);
 		let endDate = newDate.to ? endOfDay(newDate.to) : undefined;
+
+		// Check if start date is in the future, if so use today
+		const now = new Date();
+		if (startDate > now) {
+			startDate = startOfDay(now);
+		}
 
 		// If we have both dates, check max range
 		if (endDate) {
+			// If end date is in the future, cap it to today
+			if (endDate > now) {
+				endDate = endOfDay(now);
+			}
+
 			// Calculate max date (6 days after start date to make 7 days total inclusive)
 			const maxDate = endOfDay(addDays(startDate, 6));
 
@@ -325,6 +352,12 @@ export function DateRangeExport({
 
 			// Generate and export chart HTML
 			await generateChartHtml(htmlConfig);
+
+			toast.success(
+				`Export completed for ${
+					analyzeBy === 'time' ? 'time' : 'game'
+				} intervals!`
+			);
 		} catch (error) {
 			console.error('Export failed:', error);
 			toast.error(
@@ -341,7 +374,9 @@ export function DateRangeExport({
 				Export {analyzeBy === 'time' ? 'Date' : 'Game'} Range
 			</h2>
 			<p className="text-sm text-muted-foreground mb-4">
-				Select a date range to export detailed intervals data.
+				{analyzeBy === 'time'
+					? 'Select a date range to export detailed time intervals data.'
+					: 'Select a date range to export game data. Games played within this date range will be analyzed by set.'}
 				<br />
 				Maximum range: 7 days
 			</p>
@@ -377,17 +412,26 @@ export function DateRangeExport({
 									selected={date?.from}
 									onSelect={(day) => {
 										if (day) {
+											// Prevent selection of future dates
+											const selectedDay =
+												day > new Date()
+													? new Date()
+													: day;
 											const newDate: DateRange = {
-												from: day,
+												from: selectedDay,
 												to: date?.to,
 											};
 											handleDateChange(newDate);
 										}
 									}}
-									disabled={(dateObj) =>
-										dateObj > new Date() ||
-										dateObj < new Date('2023-01-01')
-									}
+									disabled={(dateObj) => {
+										// Ensure we're comparing with current date
+										const currentDate = new Date();
+										return (
+											dateObj > currentDate ||
+											dateObj < new Date('2023-01-01')
+										);
+									}}
 								/>
 							</PopoverContent>
 						</Popover>
@@ -419,19 +463,28 @@ export function DateRangeExport({
 									selected={date?.to}
 									onSelect={(day) => {
 										if (day && date?.from) {
+											// Prevent selection of future dates
+											const selectedDay =
+												day > new Date()
+													? new Date()
+													: day;
 											const newDate: DateRange = {
 												from: date.from,
-												to: day,
+												to: selectedDay,
 											};
 											handleDateChange(newDate);
 										}
 									}}
-									disabled={(dateObj) =>
-										dateObj > new Date() ||
-										dateObj <
-											(date?.from ||
-												new Date('2023-01-01'))
-									}
+									disabled={(dateObj) => {
+										// Ensure we're comparing with current date
+										const currentDate = new Date();
+										return (
+											dateObj > currentDate ||
+											dateObj <
+												(date?.from ||
+													new Date('2023-01-01'))
+										);
+									}}
 								/>
 							</PopoverContent>
 						</Popover>

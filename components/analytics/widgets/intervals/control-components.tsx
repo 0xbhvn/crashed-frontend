@@ -25,8 +25,10 @@ import { ExportButton } from '@/components/export-button';
 interface IntervalsControlsProps {
 	value: number;
 	inputValue: string;
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	hours: number;
 	hoursInputValue: string;
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	games: number;
 	gamesInputValue: string;
 	timeInterval: TimeIntervalDuration;
@@ -48,8 +50,10 @@ interface IntervalsControlsProps {
 export function IntervalsControls({
 	value,
 	inputValue,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	hours,
 	hoursInputValue,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	games,
 	gamesInputValue,
 	timeInterval,
@@ -237,7 +241,7 @@ export function IntervalsControls({
 											? timeInterval
 											: gameInterval
 									}
-									hours={analyzeBy === 'time' ? hours : games}
+									analyzeBy={analyzeBy}
 								/>
 							</div>
 						</PopoverContent>
