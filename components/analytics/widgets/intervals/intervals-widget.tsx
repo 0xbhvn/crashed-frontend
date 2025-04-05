@@ -489,14 +489,16 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 			}`}
 			className={className}
 			stats={
-				!(analyzeBy === 'time' ? timeIsLoading : gameIsLoading) &&
-				!(analyzeBy === 'time' ? timeError : gameError) &&
-				totalOccurrences !== undefined
-					? {
+				// Only hide stats if there's an error or if there's no data at all
+				(analyzeBy === 'time' ? !!timeError : !!gameError) ||
+				(analyzeBy === 'time'
+					? !timeIntervalsData?.length
+					: !gameIntervalsData?.length)
+					? undefined
+					: {
 							label: `Total ${value}x occurrences`,
 							value: totalOccurrences,
 					  }
-					: undefined
 			}
 		>
 			{renderContent()}
