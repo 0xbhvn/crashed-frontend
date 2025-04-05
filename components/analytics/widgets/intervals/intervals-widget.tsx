@@ -362,10 +362,11 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 	const currentConfig = React.useMemo(
 		() => ({
 			value,
-			hours,
-			intervalMinutes: timeInterval,
+			hours: analyzeBy === 'time' ? hours : games,
+			intervalMinutes: analyzeBy === 'time' ? timeInterval : gameInterval,
+			analyzeBy,
 		}),
-		[value, hours, timeInterval]
+		[value, hours, games, timeInterval, gameInterval, analyzeBy]
 	);
 
 	// Generate Excel export configuration

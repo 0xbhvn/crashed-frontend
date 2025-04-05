@@ -25,22 +25,31 @@ import { exportToExcel } from '@/utils/export-utils/excel';
 import { generateChartHtml } from '@/utils/export-utils/chart-html';
 import { getExcelConfig } from './excel-export';
 import { generateIntervalsHtmlConfig } from '@/utils/export-utils/intervals-html';
-import type { IntervalDuration } from '@/utils/export-utils/types';
-import type { IntervalGridData } from '@/utils/analytics-types';
-import { getIntervalColumns, formatHourLabel } from './intervals-utils';
+import type {
+	TimeIntervalDuration,
+	GameIntervalSize,
+} from '@/utils/export-utils/types';
+import type {
+	IntervalGridData,
+	IntervalData,
+	GameSetIntervalData,
+} from '@/utils/analytics-types';
+import { formatHourLabel } from './intervals-utils';
 import type { HourTotalsMap } from './types';
 import type { DateRange } from 'react-day-picker';
 
 interface DateRangeExportProps {
 	value: number;
-	selectedInterval: IntervalDuration;
+	selectedInterval: TimeIntervalDuration | GameIntervalSize;
 	hours?: number;
+	analyzeBy?: 'time' | 'games';
 }
 
 export function DateRangeExport({
 	value,
 	selectedInterval,
 	hours = 24,
+	analyzeBy = 'time',
 }: DateRangeExportProps) {
 	// Calculate default start date based on hours
 	const defaultStartDate = React.useMemo(
@@ -79,9 +88,10 @@ export function DateRangeExport({
 	// Use the hook for fetching data
 	const { fetchData, isLoading, error } = useDateRangeIntervalsAnalysis({
 		value,
-		intervalMinutes: selectedInterval,
+		intervalMinutes: selectedInterval as TimeIntervalDuration,
 		startDate: formattedStartDate,
 		endDate: formattedEndDate,
+		analyzeBy,
 	});
 
 	// Handle date selection with proper constraints
@@ -106,7 +116,13 @@ export function DateRangeExport({
 			}
 		}
 
-		setDate({ from: startDate, to: endDate });
+		// Use a properly typed DateRange object
+		if (endDate) {
+			setDate({ from: startDate, to: endDate });
+		} else {
+			// If endDate is undefined, just set the from date
+			setDate({ from: startDate, to: undefined });
+		}
 	};
 
 	// Process export data
@@ -130,60 +146,118 @@ export function DateRangeExport({
 
 			// Convert interval data into a grid format
 			const gridData: IntervalGridData = {};
-			for (const interval of intervalsData) {
-				try {
-					// Extract date parts from interval_start
-					const startDateTime = new Date(interval.interval_start);
 
-					// Format the hour key as YYYY-MM-DD HH for row identification
-					const hourKey = format(startDateTime, 'yyyy-MM-dd HH');
+			if (analyzeBy === 'time') {
+				// Process for time-based intervals
+				for (const interval of intervalsData) {
+					try {
+						// Type assertion to IntervalData for time-based intervals
+						const timeInterval = interval as IntervalData;
+						// Extract date parts from interval_start
+						const startDateTime = new Date(
+							timeInterval.interval_start
+						);
 
-					// Extract minute part to determine which column this belongs to
-					const startMinute = Number.parseInt(
-						format(startDateTime, 'mm'),
-						10
-					);
+						// Format the hour key as YYYY-MM-DD HH for row identification
+						const hourKey = format(startDateTime, 'yyyy-MM-dd HH');
 
-					// Map the minute to the correct column
-					const intervalKey = startMinute.toString().padStart(2, '0');
+						// Extract minute part to determine which column this belongs to
+						const startMinute = Number.parseInt(
+							format(startDateTime, 'mm'),
+							10
+						);
 
-					// Initialize hour row if it doesn't exist
-					if (!gridData[hourKey]) {
-						gridData[hourKey] = {};
+						// Map the minute to the correct column
+						const intervalKey = startMinute
+							.toString()
+							.padStart(2, '0');
+
+						// Initialize hour row if it doesn't exist
+						if (!gridData[hourKey]) {
+							gridData[hourKey] = {};
+						}
+
+						// Store interval data in the grid
+						gridData[hourKey][intervalKey] = timeInterval;
+					} catch {
+						// Skip problematic intervals
 					}
+				}
+			} else {
+				// Process for game-based intervals
+				const rangeSize = 100; // Group by 100 games
 
-					// Store interval data in the grid
-					gridData[hourKey][intervalKey] = interval;
-				} catch {
-					// Skip problematic intervals
+				for (const interval of intervalsData) {
+					try {
+						// Cast interval to GameSetIntervalData to access start_game
+						const gameInterval = interval as GameSetIntervalData;
+						// Find which "hundred" this game belongs to
+						const startGameId = gameInterval.start_game;
+						const gameHundred =
+							Math.floor(startGameId / rangeSize) * rangeSize;
+
+						// Create a key for this batch
+						const significantDigits = Math.floor(
+							gameHundred / 100
+						).toString();
+						const rowKey = `${significantDigits}xx`;
+
+						// Initialize batch row if it doesn't exist
+						if (!gridData[rowKey]) {
+							gridData[rowKey] = {};
+						}
+
+						// Calculate position based on game ID
+						const positionWithinRange =
+							gameInterval.start_game % rangeSize;
+						const gameIntervalSize = Number(selectedInterval);
+						const baseIndex = Math.floor(
+							positionWithinRange / gameIntervalSize
+						);
+						const columnKey = baseIndex.toString().padStart(2, '0');
+
+						// Create an IntervalData-compatible object from GameSetIntervalData
+						const adaptedInterval: IntervalData = {
+							interval_start: gameInterval.start_time,
+							interval_end: gameInterval.end_time,
+							count: gameInterval.count,
+							total_games: gameInterval.total_games,
+							percentage: gameInterval.percentage,
+						};
+
+						// Store interval data in the grid
+						gridData[rowKey][columnKey] = adaptedInterval;
+					} catch {
+						// Skip problematic intervals
+					}
 				}
 			}
 
-			// Get hour labels (row headers)
-			const hourLabels = Object.keys(gridData).sort((a, b) =>
+			// Get row labels (row headers) - for both time and game modes
+			const rowLabels = Object.keys(gridData).sort((a, b) =>
 				b.localeCompare(a)
 			);
 
-			// Calculate totals for each hour
-			const hourTotals: HourTotalsMap = {};
-			for (const hourKey of Object.keys(gridData)) {
-				const hourData = gridData[hourKey];
-				let hourCount = 0;
-				let hourTotalGames = 0;
+			// Calculate totals for each row
+			const rowTotals: HourTotalsMap = {};
+			for (const rowKey of Object.keys(gridData)) {
+				const rowData = gridData[rowKey];
+				let rowCount = 0;
+				let rowTotalGames = 0;
 
-				for (const interval of Object.values(hourData)) {
+				for (const interval of Object.values(rowData)) {
 					if (interval) {
-						hourCount += interval.count;
-						hourTotalGames += interval.total_games;
+						rowCount += interval.count;
+						rowTotalGames += interval.total_games;
 					}
 				}
 
-				hourTotals[hourKey] = {
-					count: hourCount,
-					totalGames: hourTotalGames,
+				rowTotals[rowKey] = {
+					count: rowCount,
+					totalGames: rowTotalGames,
 					percentage:
-						hourTotalGames > 0
-							? (hourCount / hourTotalGames) * 100
+						rowTotalGames > 0
+							? (rowCount / rowTotalGames) * 100
 							: 0,
 				};
 			}
@@ -191,152 +265,212 @@ export function DateRangeExport({
 			// Create export configuration
 			const exportConfig = {
 				value,
-				hours: 0, // Not applicable for date range
+				hours: 0, // Not applicable for date range - using 0 as a placeholder
 				intervalMinutes: selectedInterval,
+				analyzeBy,
 			};
 
 			// Generate Excel configuration
 			const excelConfig = getExcelConfig(
 				exportConfig,
 				gridData,
-				hourLabels,
-				hourTotals
+				rowLabels,
+				rowTotals
 			);
 
-			// Special filename for date range export
-			excelConfig.fileName = `intervals_${value}x_${format(
-				date.from,
-				'yyyyMMdd'
-			)}_to_${format(date.to, 'yyyyMMdd')}.xlsx`;
-
-			// Export Excel file
+			// Export to Excel
 			await exportToExcel(excelConfig);
 
-			// Generate HTML chart
-			const intervalColumns = getIntervalColumns(selectedInterval);
+			// Generate HTML chart configuration
+			const intervalColumns: number[] = [];
 
+			if (analyzeBy === 'time') {
+				for (let i = 0; i < 60; i += Number(selectedInterval)) {
+					intervalColumns.push(i);
+				}
+			} else {
+				const gameInterval = Number(selectedInterval);
+				const columnsPerRow = Math.floor(100 / gameInterval);
+
+				for (let i = 0; i < columnsPerRow; i++) {
+					intervalColumns.push(i);
+				}
+			}
+
+			// Filter out undefined values from gridData
+			const definedGridData: Record<
+				string,
+				Record<string, IntervalData>
+			> = {};
+			for (const [rowKey, rowData] of Object.entries(gridData)) {
+				definedGridData[rowKey] = {};
+				for (const [intervalKey, interval] of Object.entries(rowData)) {
+					if (interval) {
+						definedGridData[rowKey][intervalKey] = interval;
+					}
+				}
+			}
+
+			// Generate HTML chart configuration
 			const htmlConfig = generateIntervalsHtmlConfig({
 				value,
 				hours: 0, // Not applicable for date range
 				intervalMinutes: selectedInterval,
 				intervalColumns,
-				hourLabels,
-				gridData,
-				hourTotals,
+				hourLabels: rowLabels,
+				gridData: definedGridData,
+				hourTotals: rowTotals,
 				formatHourLabel,
-				subtitle: `Date range: ${format(
-					date.from,
-					'MMM dd, yyyy'
-				)} to ${format(date.to, 'MMM dd, yyyy')}`,
 			});
 
-			// Special filename for date range export
-			htmlConfig.fileName = `intervals_${value}x_${format(
-				date.from,
-				'yyyyMMdd'
-			)}_to_${format(date.to, 'yyyyMMdd')}.html`;
-
-			// Generate HTML chart
-			generateChartHtml(htmlConfig);
-
-			toast.success('Export completed successfully!');
-		} catch (err) {
-			console.error('Export failed:', err);
-			toast.error('Export failed. Please try again.');
+			// Generate and export chart HTML
+			await generateChartHtml(htmlConfig);
+		} catch (error) {
+			console.error('Export failed:', error);
+			toast.error(
+				'Failed to export data. Please try again or contact support.'
+			);
 		} finally {
 			setIsExporting(false);
 		}
 	};
 
 	return (
-		<div className="p-4">
-			<div className="flex items-center justify-between border-b pb-3 mb-4">
-				<div className="text-base font-medium">Export Date Range</div>
+		<div className="p-3">
+			<h2 className="text-base font-semibold mb-3">
+				Export {analyzeBy === 'time' ? 'Date' : 'Game'} Range
+			</h2>
+			<p className="text-sm text-muted-foreground mb-4">
+				Select a date range to export detailed intervals data.
+				<br />
+				Maximum range: 7 days
+			</p>
+
+			<div className="mb-6">
+				<div className="grid gap-2">
+					<div className="grid grid-cols-2 gap-2">
+						<Popover>
+							<PopoverTrigger asChild>
+								<Button
+									id="from"
+									variant="outline"
+									className={cn(
+										'justify-start text-left font-normal',
+										!date?.from && 'text-muted-foreground'
+									)}
+								>
+									<CalendarIcon className="mr-2 h-4 w-4" />
+									{date?.from ? (
+										format(date.from, 'PP')
+									) : (
+										<span>Start date</span>
+									)}
+								</Button>
+							</PopoverTrigger>
+							<PopoverContent
+								className="w-auto p-0"
+								align="start"
+							>
+								<Calendar
+									initialFocus
+									mode="single"
+									selected={date?.from}
+									onSelect={(day) => {
+										if (day) {
+											const newDate: DateRange = {
+												from: day,
+												to: date?.to,
+											};
+											handleDateChange(newDate);
+										}
+									}}
+									disabled={(dateObj) =>
+										dateObj > new Date() ||
+										dateObj < new Date('2023-01-01')
+									}
+								/>
+							</PopoverContent>
+						</Popover>
+						<Popover>
+							<PopoverTrigger asChild>
+								<Button
+									id="to"
+									variant="outline"
+									className={cn(
+										'justify-start text-left font-normal',
+										!date?.to && 'text-muted-foreground'
+									)}
+								>
+									<CalendarIcon className="mr-2 h-4 w-4" />
+									{date?.to ? (
+										format(date.to, 'PP')
+									) : (
+										<span>End date</span>
+									)}
+								</Button>
+							</PopoverTrigger>
+							<PopoverContent
+								className="w-auto p-0"
+								align="start"
+							>
+								<Calendar
+									initialFocus
+									mode="single"
+									selected={date?.to}
+									onSelect={(day) => {
+										if (day && date?.from) {
+											const newDate: DateRange = {
+												from: date.from,
+												to: day,
+											};
+											handleDateChange(newDate);
+										}
+									}}
+									disabled={(dateObj) =>
+										dateObj > new Date() ||
+										dateObj <
+											(date?.from ||
+												new Date('2023-01-01'))
+									}
+								/>
+							</PopoverContent>
+						</Popover>
+					</div>
+					{!isDateRangeValid && date?.from && date?.to && (
+						<p className="text-sm text-destructive">
+							Date range exceeds 7 days maximum
+						</p>
+					)}
+				</div>
 			</div>
 
-			<div className="mb-5">
-				<div className="text-sm text-muted-foreground mb-2">
-					Select a date range
-				</div>
-				<Popover>
-					<PopoverTrigger asChild>
-						<Button
-							variant="outline"
-							className={cn(
-								'w-full h-10 justify-start text-left font-normal',
-								!date && 'text-muted-foreground'
-							)}
-						>
-							<CalendarIcon className="mr-2 h-4 w-4" />
-							{date?.from ? (
-								date.to ? (
-									<>
-										{format(date.from, 'MMM dd, yyyy')} -{' '}
-										{format(date.to, 'MMM dd, yyyy')}
-									</>
-								) : (
-									format(date.from, 'MMM dd, yyyy')
-								)
-							) : (
-								<span>Pick a date range</span>
-							)}
-						</Button>
-					</PopoverTrigger>
-					<PopoverContent
-						className="w-auto p-0"
-						align="start"
-					>
-						<Calendar
-							initialFocus
-							mode="range"
-							defaultMonth={date?.from}
-							selected={date}
-							onSelect={handleDateChange}
-							numberOfMonths={2}
-							disabled={(day) => isAfter(day, new Date())}
-							classNames={{
-								day_selected:
-									'bg-black text-white hover:bg-black hover:text-white focus:bg-black focus:text-white',
-								day_range_middle:
-									'bg-muted aria-selected:bg-muted/80 aria-selected:text-muted-foreground hover:bg-muted hover:text-muted-foreground focus:bg-muted focus:text-muted-foreground',
-							}}
-						/>
-					</PopoverContent>
-				</Popover>
+			<div className="flex justify-end">
+				<Button
+					disabled={
+						isExporting ||
+						isLoading ||
+						!isDateRangeValid ||
+						!date?.from ||
+						!date?.to
+					}
+					onClick={handleExport}
+				>
+					{isExporting ? (
+						<>
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							Exporting...
+						</>
+					) : (
+						<>Export Data</>
+					)}
+				</Button>
 			</div>
-
-			{!isDateRangeValid && date?.from && date?.to && (
-				<div className="text-sm text-red-500 mb-4 px-1">
-					Date range cannot exceed maximum of 7 days
-				</div>
-			)}
 
 			{error && (
-				<div className="text-sm text-red-500 mb-4 px-1">
-					{error.message}
-				</div>
+				<p className="text-sm text-destructive mt-2">
+					{error.message || 'Failed to load data'}
+				</p>
 			)}
-
-			<Button
-				className="w-full h-10"
-				onClick={handleExport}
-				disabled={
-					isLoading ||
-					isExporting ||
-					!isDateRangeValid ||
-					!date?.from ||
-					!date?.to
-				}
-			>
-				{isExporting ? (
-					<>
-						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-						Exporting...
-					</>
-				) : (
-					'Export'
-				)}
-			</Button>
 		</div>
 	);
 }
