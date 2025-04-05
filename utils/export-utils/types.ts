@@ -24,9 +24,13 @@ export const CURRENT_STREAK_POINTS = [
 
 export const UNIQUE_STREAK_POINTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-// Interval durations used in the IntervalsWidget
-export type IntervalDuration = 10 | 15 | 30; // Defined directly
-export const INTERVAL_OPTIONS: IntervalDuration[] = [10, 15, 30];
+// Interval durations used in the IntervalsWidget for time-based analysis
+export type TimeIntervalDuration = 10 | 15 | 30;
+export const TIME_INTERVAL_OPTIONS: TimeIntervalDuration[] = [10, 15, 30];
+
+// Interval sizes used in the IntervalsWidget for games-based analysis
+export type GameIntervalSize = 20 | 25 | 50;
+export const GAME_INTERVAL_OPTIONS: GameIntervalSize[] = [20, 25, 50];
 
 // Type for game set size options
 export type GameSetSize = 10 | 20 | 25 | 50;

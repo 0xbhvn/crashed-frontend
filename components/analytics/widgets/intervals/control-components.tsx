@@ -3,49 +3,66 @@
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { INTERVAL_OPTIONS } from '@/utils/export-utils/types';
-import type { IntervalDuration } from '@/utils/export-utils/types';
+import type {
+	TimeIntervalDuration,
+	GameIntervalSize,
+} from '@/utils/export-utils/types';
 import type { ExcelExportConfig } from '@/utils/export-utils/excel';
 import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
+import {
+	TIME_INTERVAL_OPTIONS,
+	GAME_INTERVAL_OPTIONS,
+} from '@/utils/export-utils/types';
 import { DateRangeExport } from './export-date-range';
-import { ExportButton } from '@/components/export-button';
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from '@/components/ui/popover';
+import { ExportButton } from '@/components/export-button';
 
-export interface IntervalsControlsProps {
+interface IntervalsControlsProps {
 	value: number;
 	inputValue: string;
 	hours: number;
 	hoursInputValue: string;
-	selectedInterval: IntervalDuration;
-	onValueInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-	onHoursInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	games: number;
+	gamesInputValue: string;
+	timeInterval: TimeIntervalDuration;
+	gameInterval: GameIntervalSize;
+	analyzeBy: 'games' | 'time';
+	onValueInputChange: (value: string) => void;
+	onHoursInputChange: (value: string) => void;
+	onGamesInputChange: (value: string) => void;
 	applyValueChange: () => void;
 	applyHoursChange: () => void;
-	handleKeyDown: (
-		e: React.KeyboardEvent<HTMLInputElement>,
-		applyFn: () => void
-	) => void;
+	applyGamesChange: () => void;
+	handleKeyDown: (e: React.KeyboardEvent) => void;
 	onIntervalChange: (value: string) => void;
+	onAnalyzeByChange: (value: string) => void;
 	getExcelConfig: () => Promise<ExcelExportConfig>;
 	getChartConfig: () => Promise<HtmlChartConfig>;
 }
 
 export function IntervalsControls({
-	inputValue,
 	value,
+	inputValue,
 	hours,
 	hoursInputValue,
-	selectedInterval,
+	games,
+	gamesInputValue,
+	timeInterval,
+	gameInterval,
+	analyzeBy,
 	onValueInputChange,
 	onHoursInputChange,
+	onGamesInputChange,
 	applyValueChange,
 	applyHoursChange,
+	applyGamesChange,
 	handleKeyDown,
 	onIntervalChange,
+	onAnalyzeByChange,
 	getExcelConfig,
 	getChartConfig,
 }: IntervalsControlsProps) {
@@ -83,7 +100,7 @@ export function IntervalsControls({
 	}, []);
 
 	return (
-		<div className="flex flex-col sm:flex-row mb-4 gap-4 justify-between">
+		<div className="flex flex-col sm:flex-row mb-4 gap-4">
 			<div className="flex items-center gap-2">
 				<span className="text-sm font-medium">Crash Point</span>
 				<div className="flex items-center">
@@ -91,9 +108,9 @@ export function IntervalsControls({
 						id="value-input"
 						type="number"
 						value={inputValue}
-						onChange={onValueInputChange}
+						onChange={(e) => onValueInputChange(e.target.value)}
 						onBlur={applyValueChange}
-						onKeyDown={(e) => handleKeyDown(e, applyValueChange)}
+						onKeyDown={handleKeyDown}
 						className="w-20 h-8 text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 						min="1"
 						step="0.1"
@@ -101,26 +118,59 @@ export function IntervalsControls({
 				</div>
 			</div>
 
-			<div className="flex items-center gap-3">
+			<div className="flex items-center gap-3 flex-1">
+				<div className="flex-1" />
+
 				<div className="flex items-center gap-2">
-					<span className="text-sm font-medium whitespace-nowrap">
-						Hours
-					</span>
 					<div className="flex items-center">
 						<Input
-							id="hours-input"
-							type="number"
-							value={hoursInputValue}
-							onChange={onHoursInputChange}
-							onBlur={applyHoursChange}
-							onKeyDown={(e) =>
-								handleKeyDown(e, applyHoursChange)
+							id={
+								analyzeBy === 'time'
+									? 'hours-input'
+									: 'games-input'
 							}
-							className="w-16 h-8 text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+							type="number"
+							value={
+								analyzeBy === 'time'
+									? hoursInputValue
+									: gamesInputValue
+							}
+							onChange={(e) =>
+								analyzeBy === 'time'
+									? onHoursInputChange(e.target.value)
+									: onGamesInputChange(e.target.value)
+							}
+							onBlur={
+								analyzeBy === 'time'
+									? applyHoursChange
+									: applyGamesChange
+							}
+							onKeyDown={handleKeyDown}
+							className="w-24 h-8 text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 							min="1"
-							max="72"
+							max={analyzeBy === 'time' ? '72' : '10000'}
 						/>
 					</div>
+
+					<Tabs
+						value={analyzeBy}
+						onValueChange={onAnalyzeByChange}
+					>
+						<TabsList className="grid w-[180px] grid-cols-2 bg-muted/50 p-0.5">
+							<TabsTrigger
+								value="time"
+								className="data-[state=active]:bg-black data-[state=active]:text-white"
+							>
+								Hours
+							</TabsTrigger>
+							<TabsTrigger
+								value="games"
+								className="data-[state=active]:bg-black data-[state=active]:text-white"
+							>
+								Games
+							</TabsTrigger>
+						</TabsList>
+					</Tabs>
 				</div>
 
 				<div className="flex items-center gap-2">
@@ -128,17 +178,24 @@ export function IntervalsControls({
 						Interval
 					</span>
 					<Tabs
-						value={selectedInterval.toString()}
+						value={String(
+							analyzeBy === 'time' ? timeInterval : gameInterval
+						)}
 						onValueChange={onIntervalChange}
 					>
 						<TabsList className="grid w-[180px] grid-cols-3 bg-muted/50 p-0.5">
-							{INTERVAL_OPTIONS.map((duration) => (
+							{(analyzeBy === 'time'
+								? TIME_INTERVAL_OPTIONS
+								: GAME_INTERVAL_OPTIONS
+							).map((interval) => (
 								<TabsTrigger
-									key={duration}
-									value={duration.toString()}
+									key={interval}
+									value={interval.toString()}
 									className="data-[state=active]:bg-black data-[state=active]:text-white"
 								>
-									{duration}m
+									{analyzeBy === 'time'
+										? `${interval}m`
+										: interval}
 								</TabsTrigger>
 							))}
 						</TabsList>
@@ -176,8 +233,12 @@ export function IntervalsControls({
 							<div className="flex flex-col py-1">
 								<DateRangeExport
 									value={value}
-									selectedInterval={selectedInterval}
-									hours={hours}
+									selectedInterval={
+										analyzeBy === 'time'
+											? timeInterval
+											: gameInterval
+									}
+									hours={analyzeBy === 'time' ? hours : games}
 								/>
 							</div>
 						</PopoverContent>

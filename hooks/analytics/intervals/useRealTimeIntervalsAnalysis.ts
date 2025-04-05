@@ -21,6 +21,7 @@ export function useRealTimeIntervalsAnalysis({
 	// Track if we're currently fetching data to prevent duplicate requests
 	const isFetchingRef = useRef(false);
 	const isMountedRef = useRef(true);
+	const isInitialLoadRef = useRef(true);
 
 	// Get real-time game updates from the context
 	const { latestGame } = useAnalytics();
@@ -38,7 +39,10 @@ export function useRealTimeIntervalsAnalysis({
 		if (isFetchingRef.current || !isMountedRef.current) return;
 
 		isFetchingRef.current = true;
-		setIsLoading(true); // Always show loading when fetching
+		// Only show loading state on initial load
+		if (isInitialLoadRef.current) {
+			setIsLoading(true);
+		}
 
 		try {
 			const queryParams = new URLSearchParams({
@@ -79,6 +83,7 @@ export function useRealTimeIntervalsAnalysis({
 				if (isMountedRef.current) {
 					const intervals = responseData.data.intervals;
 					setData(intervals);
+					isInitialLoadRef.current = false;
 
 					// Record the latest interval end time for detecting when we need to fetch new intervals
 					if (intervals.length > 0) {
