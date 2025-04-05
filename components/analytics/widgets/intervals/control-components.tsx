@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Timer, Dices } from 'lucide-react';
 import type {
 	TimeIntervalDuration,
 	GameIntervalSize,
@@ -156,18 +157,18 @@ export function IntervalsControls({
 						value={analyzeBy}
 						onValueChange={onAnalyzeByChange}
 					>
-						<TabsList className="grid w-[180px] grid-cols-2 bg-muted/50 p-0.5">
+						<TabsList className="grid w-[100px] grid-cols-2 bg-muted/50 p-0.5">
 							<TabsTrigger
 								value="time"
 								className="data-[state=active]:bg-black data-[state=active]:text-white"
 							>
-								Hours
+								<Timer className="h-4 w-4" />
 							</TabsTrigger>
 							<TabsTrigger
 								value="games"
 								className="data-[state=active]:bg-black data-[state=active]:text-white"
 							>
-								Games
+								<Dices className="h-4 w-4" />
 							</TabsTrigger>
 						</TabsList>
 					</Tabs>

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { GitCompareIcon } from 'lucide-react';
+import { GitCompareIcon, Timer, Dices } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
 	Tooltip,
@@ -121,18 +121,18 @@ export function Controls({
 						setAnalyzeBy(value as 'games' | 'time')
 					}
 				>
-					<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
+					<TabsList className="grid w-[100px] grid-cols-2 bg-muted/50 p-0.5">
 						<TabsTrigger
 							value="games"
 							className="data-[state=active]:bg-black data-[state=active]:text-white"
 						>
-							Games
+							<Dices className="h-4 w-4" />
 						</TabsTrigger>
 						<TabsTrigger
 							value="time"
 							className="data-[state=active]:bg-black data-[state=active]:text-white"
 						>
-							Hours
+							<Timer className="h-4 w-4" />
 						</TabsTrigger>
 					</TabsList>
 				</Tabs>

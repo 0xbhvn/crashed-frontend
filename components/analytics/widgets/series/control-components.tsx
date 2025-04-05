@@ -1,7 +1,14 @@
 'use client';
 
 import type * as React from 'react';
-import { ArrowDownWideNarrow, Clock, Eye, EyeOff } from 'lucide-react';
+import {
+	ArrowDownWideNarrow,
+	Clock,
+	Eye,
+	EyeOff,
+	Timer,
+	Dices,
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -167,18 +174,18 @@ export function SeriesControls({
 					value={analyzeBy}
 					onValueChange={handleTabChange}
 				>
-					<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
+					<TabsList className="grid w-[100px] grid-cols-2 bg-muted/50 p-0.5">
 						<TabsTrigger
 							value="games"
 							className="data-[state=active]:bg-black data-[state=active]:text-white"
 						>
-							Games
+							<Dices className="h-4 w-4" />
 						</TabsTrigger>
 						<TabsTrigger
 							value="time"
 							className="data-[state=active]:bg-black data-[state=active]:text-white"
 						>
-							Hours
+							<Timer className="h-4 w-4" />
 						</TabsTrigger>
 					</TabsList>
 				</Tabs>
