@@ -179,9 +179,30 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 				}
 			}
 
-			// Mark the most recent interval in each row
+			// Find the most recent interval across all rows
+			let globalMostRecentInterval: {
+				rowKey: string;
+				columnKey: string;
+				date: Date;
+			} | null = null;
+
 			for (const rowKey in mostRecentIntervals) {
-				const { columnKey } = mostRecentIntervals[rowKey];
+				const { columnKey, date } = mostRecentIntervals[rowKey];
+				if (
+					!globalMostRecentInterval ||
+					date > globalMostRecentInterval.date
+				) {
+					globalMostRecentInterval = {
+						rowKey,
+						columnKey,
+						date,
+					};
+				}
+			}
+
+			// Mark only the globally most recent interval as active
+			if (globalMostRecentInterval) {
+				const { rowKey, columnKey } = globalMostRecentInterval;
 				if (grid[rowKey]?.[columnKey]) {
 					grid[rowKey][columnKey].is_most_recent = true;
 				}
