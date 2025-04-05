@@ -7,12 +7,19 @@ import { AlertCircle } from 'lucide-react';
 import { AnalyticsCard } from '../../core/analytics-card';
 import { IntervalsControls } from './control-components';
 import { IntervalsTable } from './intervals-table';
-import { useRealTimeIntervalsAnalysis } from '@/hooks/analytics';
+import {
+	useRealTimeIntervalsAnalysis,
+	useRealTimeGameSetIntervalsAnalysis,
+} from '@/hooks/analytics';
 import type {
 	TimeIntervalDuration,
 	GameIntervalSize,
 } from '@/utils/export-utils/types';
-import type { IntervalGridData, IntervalData } from '@/utils/analytics-types';
+import type {
+	IntervalGridData,
+	IntervalData,
+	// GameSetIntervalData,
+} from '@/utils/analytics-types';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 import type { ExcelExportConfig } from '@/utils/export-utils/excel';
 import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
@@ -37,43 +44,159 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 	const [gamesInputValue, setGamesInputValue] =
 		React.useState<string>('2000');
 
-	// Fetch data
+	// Fetch time-based data
 	const {
-		data: intervalsData,
-		isLoading,
-		error,
-		refreshData,
+		data: timeIntervalsData,
+		isLoading: timeIsLoading,
+		error: timeError,
+		refreshData: refreshTimeData,
 	} = useRealTimeIntervalsAnalysis({
 		value,
 		intervalMinutes: timeInterval,
 		hours,
 	});
 
+	// Fetch game-based data
+	const {
+		data: gameIntervalsData,
+		isLoading: gameIsLoading,
+		error: gameError,
+		refreshData: refreshGameData,
+	} = useRealTimeGameSetIntervalsAnalysis({
+		value,
+		gamesPerSet: gameInterval,
+		totalGames: games,
+	});
+
 	// Try refreshing if no data is available
 	React.useEffect(() => {
-		// If we have no data but aren't loading, try refreshing once
-		if ((!intervalsData || intervalsData.length === 0) && !isLoading) {
-			refreshData();
+		if (analyzeBy === 'time') {
+			if (
+				(!timeIntervalsData || timeIntervalsData.length === 0) &&
+				!timeIsLoading
+			) {
+				refreshTimeData();
+			}
+		} else {
+			if (
+				(!gameIntervalsData || gameIntervalsData.length === 0) &&
+				!gameIsLoading
+			) {
+				refreshGameData();
+			}
 		}
-	}, [intervalsData, isLoading, refreshData]);
+	}, [
+		analyzeBy,
+		timeIntervalsData,
+		timeIsLoading,
+		refreshTimeData,
+		gameIntervalsData,
+		gameIsLoading,
+		refreshGameData,
+	]);
 
-	// Calculate total occurrences frov  m intervals data
+	// Calculate total occurrences from intervals data
 	const totalOccurrences = React.useMemo(() => {
-		if (!intervalsData || intervalsData.length === 0) return 0;
-		return intervalsData.reduce(
-			(total, interval) => total + interval.count,
-			0
-		);
-	}, [intervalsData]);
+		const data =
+			analyzeBy === 'time' ? timeIntervalsData : gameIntervalsData;
+		if (!data || data.length === 0) return 0;
+		return data.reduce((total, interval) => total + interval.count, 0);
+	}, [analyzeBy, timeIntervalsData, gameIntervalsData]);
 
 	// Convert interval data into a grid format for easier rendering
 	const gridData = React.useMemo<IntervalGridData>(() => {
-		if (!intervalsData || intervalsData.length === 0) return {};
+		if (!timeIntervalsData && !gameIntervalsData) return {};
+
+		if (analyzeBy === 'games') {
+			if (!gameIntervalsData || gameIntervalsData.length === 0) return {};
+
+			const grid: IntervalGridData = {};
+			// For tracking the most recent interval in each row
+			const mostRecentIntervals: Record<
+				string,
+				{ date: Date; columnKey: string }
+			> = {};
+
+			// Process each game set from the API response
+			for (const interval of gameIntervalsData) {
+				try {
+					// Calculate which batch this set belongs to based on actual game IDs
+					const rangeSize = 100; // Group by 100 games
+
+					// Find which "hundred" this game belongs to
+					const startGameId = interval.start_game;
+					const gameHundred =
+						Math.floor(startGameId / rangeSize) * rangeSize;
+
+					// Create a key for this batch using the new format: 80118xx
+					// Extract the significant digits and add 'xx' suffix
+					const significantDigits = Math.floor(
+						gameHundred / 100
+					).toString();
+					const rowKey = `${significantDigits}xx`;
+
+					// Initialize batch row if it doesn't exist
+					if (!grid[rowKey]) {
+						grid[rowKey] = {};
+					}
+
+					// Calculate position based on the game ID's position within the range
+					// For games per set of 25, we'll have 4 columns (00-24, 25-49, 50-74, 75-99)
+					const positionWithinRange = interval.start_game % rangeSize;
+					const baseIndex = Math.floor(
+						positionWithinRange / gameInterval
+					);
+					const columnKey = baseIndex.toString().padStart(2, '0');
+
+					// Store interval data in the grid with all the expected fields
+					grid[rowKey][columnKey] = {
+						interval_start: interval.start_time,
+						interval_end: interval.end_time,
+						count: interval.count,
+						total_games: interval.total_games,
+						percentage: interval.percentage,
+						// Add a flag for the most recent interval (will set later)
+						is_most_recent: false,
+					};
+
+					// Keep track of the most recent interval in each row
+					const endDate = new Date(interval.end_time);
+					if (
+						!mostRecentIntervals[rowKey] ||
+						endDate > mostRecentIntervals[rowKey].date
+					) {
+						mostRecentIntervals[rowKey] = {
+							date: endDate,
+							columnKey,
+						};
+					}
+				} catch (error) {
+					console.error(
+						'Error processing interval:',
+						error,
+						interval
+					);
+				}
+			}
+
+			// Mark the most recent interval in each row
+			for (const rowKey in mostRecentIntervals) {
+				const { columnKey } = mostRecentIntervals[rowKey];
+				if (grid[rowKey]?.[columnKey]) {
+					grid[rowKey][columnKey].is_most_recent = true;
+				}
+			}
+
+			return grid;
+		}
+
+		// Time-based analysis
+		if (!timeIntervalsData || timeIntervalsData.length === 0) return {};
 
 		const grid: IntervalGridData = {};
 
 		// Process each interval from the API response
-		for (const interval of intervalsData) {
+		for (const interval of timeIntervalsData) {
 			try {
 				// Extract date parts from interval_start
 				const startDate = parseISO(interval.interval_start);
@@ -104,10 +227,10 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 		}
 
 		return grid;
-	}, [intervalsData]);
+	}, [analyzeBy, timeIntervalsData, gameIntervalsData, gameInterval]);
 
-	// Get hour labels (row headers)
-	const hourLabels = React.useMemo(() => {
+	// Get row labels
+	const rowLabels = React.useMemo(() => {
 		return Object.keys(gridData).sort((a, b) => b.localeCompare(a)); // Sort in descending order
 	}, [gridData]);
 
@@ -126,29 +249,29 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 		};
 	}, []);
 
-	// Calculate totals for each hour
-	const hourTotals = React.useMemo<HourTotalsMap>(() => {
+	// Calculate totals for each row
+	const rowTotals = React.useMemo<HourTotalsMap>(() => {
 		const totals: HourTotalsMap = {};
 
-		// Calculate totals for each hour
-		for (const hourKey of Object.keys(gridData)) {
-			const hourData = gridData[hourKey];
-			let hourCount = 0;
-			let hourTotalGames = 0;
+		// Calculate totals for each row
+		for (const rowKey of Object.keys(gridData)) {
+			const rowData = gridData[rowKey];
+			let rowCount = 0;
+			let rowTotalGames = 0;
 
-			// Sum up all intervals in this hour
-			for (const interval of Object.values(hourData)) {
+			// Sum up all intervals in this row
+			for (const interval of Object.values(rowData)) {
 				if (interval) {
-					hourCount += interval.count;
-					hourTotalGames += interval.total_games;
+					rowCount += interval.count;
+					rowTotalGames += interval.total_games;
 				}
 			}
 
-			totals[hourKey] = {
-				count: hourCount,
-				totalGames: hourTotalGames,
+			totals[rowKey] = {
+				count: rowCount,
+				totalGames: rowTotalGames,
 				percentage:
-					hourTotalGames > 0 ? (hourCount / hourTotalGames) * 100 : 0,
+					rowTotalGames > 0 ? (rowCount / rowTotalGames) * 100 : 0,
 			};
 		}
 
@@ -250,8 +373,8 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 		return getExcelConfigUtil(
 			currentConfig,
 			gridData,
-			hourLabels,
-			hourTotals
+			rowLabels,
+			rowTotals
 		);
 	};
 
@@ -268,11 +391,11 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 			string,
 			Record<string, IntervalData>
 		> = {};
-		for (const [hourKey, hourData] of Object.entries(gridData)) {
-			definedGridData[hourKey] = {};
-			for (const [intervalKey, interval] of Object.entries(hourData)) {
+		for (const [rowKey, rowData] of Object.entries(gridData)) {
+			definedGridData[rowKey] = {};
+			for (const [intervalKey, interval] of Object.entries(rowData)) {
 				if (interval) {
-					definedGridData[hourKey][intervalKey] = interval;
+					definedGridData[rowKey][intervalKey] = interval;
 				}
 			}
 		}
@@ -283,9 +406,9 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 			hours,
 			intervalMinutes: timeInterval,
 			intervalColumns,
-			hourLabels,
+			hourLabels: rowLabels,
 			gridData: definedGridData,
-			hourTotals,
+			hourTotals: rowTotals,
 			formatHourLabel: (hourKey: string) => {
 				try {
 					const date = parseISO(`${hourKey}:00:00`);
@@ -299,14 +422,20 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 
 	// Render content
 	const renderContent = () => {
-		if (error) {
+		const currentError = analyzeBy === 'time' ? timeError : gameError;
+		const currentIsLoading =
+			analyzeBy === 'time'
+				? timeIsLoading && !timeIntervalsData?.length // Only show loading if no data
+				: gameIsLoading && !gameIntervalsData?.length; // Only show loading if no data
+
+		if (currentError) {
 			return (
 				<Alert
 					variant="destructive"
 					className="mt-2"
 				>
 					<AlertCircle className="h-4 w-4" />
-					<AlertDescription>{error.message}</AlertDescription>
+					<AlertDescription>{currentError.message}</AlertDescription>
 				</Alert>
 			);
 		}
@@ -336,21 +465,18 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 					getChartConfig={getChartConfig}
 				/>
 
-				{analyzeBy === 'time' ? (
-					<IntervalsTable
-						intervalMinutes={timeInterval}
-						gridData={gridData}
-						hourLabels={hourLabels}
-						isLoading={isLoading}
-						value={value}
-						hourTotals={hourTotals}
-						currentTime={currentTime}
-					/>
-				) : (
-					<div className="flex items-center justify-center h-[400px] text-muted-foreground">
-						Coming soon...
-					</div>
-				)}
+				<IntervalsTable
+					intervalMinutes={
+						analyzeBy === 'time' ? timeInterval : gameInterval
+					}
+					gridData={gridData}
+					hourLabels={rowLabels}
+					isLoading={currentIsLoading}
+					value={value}
+					hourTotals={rowTotals}
+					currentTime={currentTime}
+					analyzeBy={analyzeBy}
+				/>
 			</div>
 		);
 	};
@@ -358,10 +484,14 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 	return (
 		<AnalyticsCard
 			title="Intervals Analysis"
-			description={`Games with crash point below ${value}x by time interval`}
+			description={`Games with crash point below ${value}x by ${
+				analyzeBy === 'time' ? 'time interval' : 'game set'
+			}`}
 			className={className}
 			stats={
-				!isLoading && !error && totalOccurrences !== undefined
+				!(analyzeBy === 'time' ? timeIsLoading : gameIsLoading) &&
+				!(analyzeBy === 'time' ? timeError : gameError) &&
+				totalOccurrences !== undefined
 					? {
 							label: `Total ${value}x occurrences`,
 							value: totalOccurrences,

@@ -4,6 +4,11 @@ import { format, parseISO } from 'date-fns';
 
 // Format hour label for display
 export function formatHourLabel(hourKey: string): string {
+	// Check if this is a game set row (starts with "Games ")
+	if (hourKey.startsWith('Games ')) {
+		return hourKey;
+	}
+
 	try {
 		const date = parseISO(`${hourKey}:00:00`);
 		return format(date, 'MMM dd, h a');

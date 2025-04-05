@@ -12,7 +12,7 @@ export function useRealTimeGameSetIntervalsAnalysis({
 	value,
 	gamesPerSet,
 	totalGames,
-	refreshInterval = 60000, // Default to refreshing every 60 seconds
+	refreshInterval = 5000, // Refresh every 5 seconds instead of 60
 }: UseRealTimeGameSetIntervalsAnalysisProps) {
 	const {
 		data: apiData,
@@ -25,9 +25,12 @@ export function useRealTimeGameSetIntervalsAnalysis({
 		totalGames,
 	});
 
-	// Initial data load
+	// Initial data load with a small delay to prevent flickering
 	useEffect(() => {
-		fetchData();
+		const timer = setTimeout(() => {
+			fetchData();
+		}, 100);
+		return () => clearTimeout(timer);
 	}, [fetchData]);
 
 	// Set up polling for refreshing data

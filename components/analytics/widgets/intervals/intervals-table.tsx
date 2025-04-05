@@ -11,7 +11,10 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { IntervalData, IntervalGridData } from '@/utils/analytics-types';
-import type { IntervalDuration } from '@/utils/export-utils/types';
+import type {
+	TimeIntervalDuration,
+	GameIntervalSize,
+} from '@/utils/export-utils/types';
 import type { HourTotalsMap } from './types';
 import {
 	formatHourLabel,
@@ -20,13 +23,14 @@ import {
 } from './intervals-utils';
 
 interface IntervalsTableProps {
-	intervalMinutes: IntervalDuration;
+	intervalMinutes: TimeIntervalDuration | GameIntervalSize;
 	gridData: IntervalGridData;
 	hourLabels: string[];
 	isLoading: boolean;
 	value: number;
 	hourTotals: HourTotalsMap;
 	currentTime: Date;
+	analyzeBy?: 'time' | 'games';
 }
 
 export function IntervalsTable({
@@ -37,11 +41,43 @@ export function IntervalsTable({
 	value,
 	hourTotals,
 	currentTime,
+	analyzeBy = 'time',
 }: IntervalsTableProps) {
 	// Get the interval columns
 	const intervalColumns = React.useMemo(() => {
 		return getIntervalColumns(intervalMinutes);
 	}, [intervalMinutes]);
+
+	// Check if we're in game sets mode
+	const isGameSetsMode = analyzeBy === 'games';
+
+	// Calculate how many game columns we need based on game interval size
+	const gameColumnCount = React.useMemo(() => {
+		// For game sets, calculate columns based on interval size (100/interval)
+		return isGameSetsMode ? Math.ceil(100 / Number(intervalMinutes)) : 0;
+	}, [isGameSetsMode, intervalMinutes]);
+
+	// Generate game column headers based on interval size
+	const gameColumnHeaders = React.useMemo(() => {
+		if (!isGameSetsMode) return [];
+
+		const columns = [];
+		const interval = Number(intervalMinutes);
+
+		for (let i = 0; i < gameColumnCount; i++) {
+			const start = i * interval;
+			const end = Math.min((i + 1) * interval - 1, 99);
+			columns.push({
+				key: `game-column-${i}`,
+				label: `${start.toString().padStart(2, '0')}-${end
+					.toString()
+					.padStart(2, '0')}`,
+				index: i,
+			});
+		}
+
+		return columns;
+	}, [isGameSetsMode, intervalMinutes, gameColumnCount]);
 
 	// Format interval data for display
 	const formatIntervalData = (data: IntervalData | undefined) => {
@@ -54,8 +90,13 @@ export function IntervalsTable({
 		}
 
 		// Check if this interval is currently active
+		// For time mode: check if interval_end is after current time
+		// For game mode: check using is_most_recent flag
 		const isCurrentInterval =
-			data.interval_end && new Date(data.interval_end) > currentTime;
+			data.interval_end &&
+			(analyzeBy === 'time'
+				? new Date(data.interval_end) > currentTime
+				: !!data.is_most_recent);
 
 		// Get the badge color based on percentage
 		const badgeColorClass = getPercentageBadgeColor(data.percentage, value);
@@ -139,21 +180,33 @@ export function IntervalsTable({
 				<TableHeader>
 					<TableRow>
 						<TableHead className="w-20 text-center border-r">
-							Hour
+							{isGameSetsMode ? 'Range' : 'Hour'}
 						</TableHead>
-						{intervalColumns.map((startMinute) => {
-							const endMinute = startMinute + intervalMinutes;
-							return (
-								<TableHead
-									key={startMinute}
-									className="text-center whitespace-nowrap"
-								>
-									{startMinute}-{endMinute}
-								</TableHead>
-							);
-						})}
+						{/* For game sets, show dynamic interval numbers based on selected interval */}
+						{isGameSetsMode
+							? gameColumnHeaders.map((column) => (
+									<TableHead
+										key={column.key}
+										className="text-center whitespace-nowrap"
+									>
+										{column.label}
+									</TableHead>
+							  ))
+							: // For time intervals, show minute ranges
+							  intervalColumns.map((startMinute) => {
+									const endMinute =
+										startMinute + Number(intervalMinutes);
+									return (
+										<TableHead
+											key={startMinute}
+											className="text-center whitespace-nowrap"
+										>
+											{startMinute}-{endMinute}
+										</TableHead>
+									);
+							  })}
 						<TableHead className="text-center whitespace-nowrap bg-muted/30 font-bold border-l-2 border-l-muted-foreground/20 pl-4">
-							Hour Total
+							{isGameSetsMode ? 'Range Total' : 'Hour Total'}
 						</TableHead>
 					</TableRow>
 				</TableHeader>
@@ -161,7 +214,11 @@ export function IntervalsTable({
 					{isLoading ? (
 						<TableRow>
 							<TableCell
-								colSpan={intervalColumns.length + 2}
+								colSpan={
+									isGameSetsMode
+										? gameColumnCount + 2
+										: intervalColumns.length + 2
+								}
 								className="h-24 text-center"
 							>
 								<div className="flex flex-col items-center justify-center gap-2">
@@ -175,7 +232,11 @@ export function IntervalsTable({
 					) : hourLabels.length === 0 ? (
 						<TableRow>
 							<TableCell
-								colSpan={intervalColumns.length + 2}
+								colSpan={
+									isGameSetsMode
+										? gameColumnCount + 2
+										: intervalColumns.length + 2
+								}
 								className="h-24 text-center"
 							>
 								<div className="text-muted-foreground">
@@ -197,23 +258,39 @@ export function IntervalsTable({
 								<TableCell className="font-medium text-center border-r">
 									{formatHourLabel(hourKey)}
 								</TableCell>
-								{intervalColumns.map((startMinute) => {
-									// Format the minute as a padded string to use as key in grid data
-									const intervalKey = startMinute
-										.toString()
-										.padStart(2, '0');
-
-									return (
-										<TableCell
-											key={`${hourKey}-${startMinute}`}
-											className="text-center"
-										>
-											{formatIntervalData(
-												gridData[hourKey]?.[intervalKey]
-											)}
-										</TableCell>
-									);
-								})}
+								{isGameSetsMode
+									? // For game sets, render dynamic game columns
+									  gameColumnHeaders.map((column) => {
+											const columnKey = column.index
+												.toString()
+												.padStart(2, '0');
+											const data =
+												gridData[hourKey]?.[columnKey];
+											return (
+												<TableCell
+													key={`${hourKey}-${column.key}`}
+													className="text-center"
+												>
+													{formatIntervalData(data)}
+												</TableCell>
+											);
+									  })
+									: // For time intervals, render interval columns
+									  intervalColumns.map((startMinute) => {
+											const columnKey = startMinute
+												.toString()
+												.padStart(2, '0');
+											const data =
+												gridData[hourKey]?.[columnKey];
+											return (
+												<TableCell
+													key={`${hourKey}-${columnKey}`}
+													className="text-center"
+												>
+													{formatIntervalData(data)}
+												</TableCell>
+											);
+									  })}
 								<TableCell className="text-center bg-muted/30 border-l-2 border-l-muted-foreground/20 pl-4">
 									{formatHourTotal(hourKey)}
 								</TableCell>

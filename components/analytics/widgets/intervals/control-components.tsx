@@ -102,7 +102,7 @@ export function IntervalsControls({
 	return (
 		<div className="flex flex-col sm:flex-row mb-4 gap-4">
 			<div className="flex items-center gap-2">
-				<span className="text-sm font-medium">Crash Point</span>
+				<span className="text-sm">Crash Point</span>
 				<div className="flex items-center">
 					<Input
 						id="value-input"
@@ -174,9 +174,7 @@ export function IntervalsControls({
 				</div>
 
 				<div className="flex items-center gap-2">
-					<span className="text-sm font-medium whitespace-nowrap">
-						Interval
-					</span>
+					<span className="text-sm whitespace-nowrap">Interval</span>
 					<Tabs
 						value={String(
 							analyzeBy === 'time' ? timeInterval : gameInterval

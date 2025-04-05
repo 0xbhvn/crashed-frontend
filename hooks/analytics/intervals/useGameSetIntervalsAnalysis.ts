@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { getApiHeaders } from '@/lib/api-config';
 import type { GameSetIntervalData } from '@/utils/analytics-types'; // We'll need to define this type
 
@@ -26,11 +26,18 @@ export function useGameSetIntervalsAnalysis({
 
 	// Track if we're currently fetching data to prevent duplicate requests
 	const isFetchingRef = useRef(false);
+	// Track latest data state to avoid dependency issues
+	const dataRef = useRef<GameSetIntervalData[]>([]);
+
+	// Update ref when data changes
+	useEffect(() => {
+		dataRef.current = data;
+	}, [data]);
 
 	const fetchData = useCallback(async (): Promise<GameSetIntervalData[]> => {
 		// Prevent multiple concurrent fetches
 		if (isFetchingRef.current) {
-			return data;
+			return dataRef.current;
 		}
 
 		// Set loading state and start fetching
@@ -110,7 +117,7 @@ export function useGameSetIntervalsAnalysis({
 			setIsLoading(false);
 			isFetchingRef.current = false;
 		}
-	}, [value, gamesPerSet, totalGames, data]); // Include data in deps to prevent stale returns
+	}, [value, gamesPerSet, totalGames]); // Remove data from deps to prevent loops
 
 	return { data, isLoading, error, fetchData };
 }

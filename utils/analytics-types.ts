@@ -82,15 +82,16 @@ export interface IntervalData {
 	count: number;
 	total_games: number;
 	percentage: number;
+	is_most_recent?: boolean;
 }
 
 // New Type for individual game-set interval data
 export interface GameSetIntervalData {
-	set_number: number;
-	start_game: string;
-	end_game: string;
+	set_id: number;
+	start_game: number;
+	end_game: number;
 	count: number;
-	total_games: number; // Should be the same as games_per_set
+	total_games: number;
 	percentage: number;
 	start_time: string;
 	end_time: string;
