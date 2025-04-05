@@ -2,6 +2,18 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { getApiUrl, getApiHeaders } from '@/lib/api-config';
 
+// Add a GET handler to support build-time static analysis
+export async function GET() {
+	return NextResponse.json(
+		{
+			status: 'error',
+			message:
+				'This endpoint requires a POST request with values array and hours parameter',
+		},
+		{ status: 405 }
+	);
+}
+
 export async function POST(request: NextRequest) {
 	try {
 		// Extract request body

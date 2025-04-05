@@ -73,3 +73,14 @@ export async function POST(request: NextRequest) {
 		);
 	}
 }
+
+// Add a GET handler to support build-time static analysis
+export async function GET() {
+	return NextResponse.json(
+		{
+			status: 'error',
+			message: 'This endpoint requires a POST request with values array',
+		},
+		{ status: 405 }
+	);
+}

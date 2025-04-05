@@ -1,4 +1,7 @@
-import type { IntervalDuration } from '@/utils/export-utils/types';
+import type {
+	TimeIntervalDuration,
+	GameIntervalSize,
+} from '@/utils/export-utils/types';
 import type { IntervalData } from '@/utils/analytics-types';
 
 // Interval hour total information
@@ -17,7 +20,8 @@ export interface HourTotalsMap {
 export interface IntervalsExportConfig {
 	value: number;
 	hours: number;
-	intervalMinutes: IntervalDuration;
+	intervalMinutes: TimeIntervalDuration | GameIntervalSize;
+	analyzeBy?: 'time' | 'games';
 }
 
 // Grid cell display type
