@@ -57,6 +57,11 @@ export function SeriesChart({
 	pulseClass,
 	percentiles,
 }: SeriesChartProps) {
+	// State to track which percentile is being hovered
+	const [hoveredPercentile, setHoveredPercentile] = React.useState<
+		number | null
+	>(null);
+
 	// Get faded versions of colors for reference lines and text
 	const getFadedColor = (ratio: number): string => {
 		let hue: number;
@@ -326,14 +331,32 @@ export function SeriesChart({
 								sortBy === 'time' &&
 								index === chartData.length - 1;
 
-							// Apply class for the latest bar if sorting by time
-							const className = isLatestBar ? pulseClass : '';
+							// Check if this bar should be highlighted based on percentile hovering
+							// Highlight bars that are greater than or equal to the hovered percentile
+							const isHighlighted =
+								hoveredPercentile !== null &&
+								entry.length >= hoveredPercentile;
+
+							// Apply classes based on conditions
+							let className = '';
+							if (isLatestBar) className += pulseClass;
+							if (isHighlighted)
+								className += ' opacity-100 brightness-110';
+
+							// Apply opacity to non-highlighted bars when a percentile is hovered
+							const opacity =
+								hoveredPercentile !== null
+									? isHighlighted
+										? 1
+										: 0.3
+									: 1;
 
 							return (
 								<Cell
 									key={`cell-${entry.seriesId}`}
 									fill={`hsl(${hue}, 90%, 50%)`}
 									className={className}
+									style={{ opacity }}
 								/>
 							);
 						})}
@@ -343,7 +366,11 @@ export function SeriesChart({
 
 			{/* Percentile legend */}
 			<div className="flex flex-wrap justify-center gap-4 mt-4 px-2 text-sm">
-				<div className="flex items-center">
+				<div
+					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
+					onMouseEnter={() => setHoveredPercentile(percentiles.p50)}
+					onMouseLeave={() => setHoveredPercentile(null)}
+				>
 					<span
 						className="inline-block w-4 h-0.5"
 						style={{ backgroundColor: p50FadedColor }}
@@ -352,7 +379,11 @@ export function SeriesChart({
 						P50: {Math.round(percentiles.p50)}
 					</span>
 				</div>
-				<div className="flex items-center">
+				<div
+					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
+					onMouseEnter={() => setHoveredPercentile(percentiles.p75)}
+					onMouseLeave={() => setHoveredPercentile(null)}
+				>
 					<span
 						className="inline-block w-4 h-0.5"
 						style={{ backgroundColor: p75FadedColor }}
@@ -361,7 +392,11 @@ export function SeriesChart({
 						P75: {Math.round(percentiles.p75)}
 					</span>
 				</div>
-				<div className="flex items-center">
+				<div
+					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
+					onMouseEnter={() => setHoveredPercentile(percentiles.p90)}
+					onMouseLeave={() => setHoveredPercentile(null)}
+				>
 					<span
 						className="inline-block w-4 h-0.5"
 						style={{ backgroundColor: p90FadedColor }}
@@ -370,7 +405,11 @@ export function SeriesChart({
 						P90: {Math.round(percentiles.p90)}
 					</span>
 				</div>
-				<div className="flex items-center">
+				<div
+					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
+					onMouseEnter={() => setHoveredPercentile(percentiles.p95)}
+					onMouseLeave={() => setHoveredPercentile(null)}
+				>
 					<span
 						className="inline-block w-4 h-0.5"
 						style={{ backgroundColor: p95FadedColor }}
@@ -379,7 +418,11 @@ export function SeriesChart({
 						P95: {Math.round(percentiles.p95)}
 					</span>
 				</div>
-				<div className="flex items-center">
+				<div
+					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
+					onMouseEnter={() => setHoveredPercentile(percentiles.p99)}
+					onMouseLeave={() => setHoveredPercentile(null)}
+				>
 					<span
 						className="inline-block w-4 h-0.5"
 						style={{ backgroundColor: p99FadedColor }}
