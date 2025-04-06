@@ -467,7 +467,7 @@ export function SeriesWidget({
 							</div>
 							<div className="flex items-center bg-muted px-3 py-1 rounded-md">
 								<span className="text-sm font-medium mr-1">
-									Biggest gap:
+									Longest series:
 								</span>
 								<span className="text-sm font-bold">
 									{percentiles.p99}
