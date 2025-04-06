@@ -64,7 +64,7 @@ export function SeriesWidget({
 	});
 
 	// Determine which data to use based on activeDataMode
-	const { data, isLoading, error } = React.useMemo(() => {
+	const { data, isLoading, error, totalOccurrences } = React.useMemo(() => {
 		return activeDataMode === 'games' ? gamesData : timeData;
 	}, [activeDataMode, gamesData, timeData]);
 
@@ -447,11 +447,35 @@ export function SeriesWidget({
 	return (
 		<Card className={cn('overflow-hidden', className)}>
 			<CardHeader className="bg-secondary/10">
-				<CardTitle>Series Analysis</CardTitle>
-				<CardDescription>
-					Consecutive games without a crash point of {value}x or
-					higher
-				</CardDescription>
+				<div className="flex flex-row items-center justify-between">
+					<div>
+						<CardTitle>Series Analysis</CardTitle>
+						<CardDescription>
+							Consecutive games without a crash point of {value}x
+							or higher
+						</CardDescription>
+					</div>
+					{!isLoading && !error && data && (
+						<div className="flex items-center gap-2">
+							<div className="flex items-center bg-muted px-3 py-1 rounded-md">
+								<span className="text-sm font-medium mr-1">
+									Total {value}x occurrences:
+								</span>
+								<span className="text-sm font-bold">
+									{totalOccurrences}
+								</span>
+							</div>
+							<div className="flex items-center bg-muted px-3 py-1 rounded-md">
+								<span className="text-sm font-medium mr-1">
+									Biggest gap:
+								</span>
+								<span className="text-sm font-bold">
+									{percentiles.p99}
+								</span>
+							</div>
+						</div>
+					)}
+				</div>
 			</CardHeader>
 			<CardContent className="p-6">
 				{isLoading ? (
