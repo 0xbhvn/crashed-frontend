@@ -2,19 +2,19 @@
 
 ```bash
 # Get series of games without crash points >= 10 in the last 1000 games
-curl -X GET "http://localhost:8000/api/analytics/series/without-min-crash-point/10" | jq .
+curl -X GET "https://crashed-backend-production.up.railway.app/api/analytics/series/without-min-crash-point/10" | jq .
 
 # Get series of games without crash points >= 10 in the last 2000 games, sorted by series length
-curl -X GET "http://localhost:8000/api/analytics/series/without-min-crash-point/10?limit=2000&sort_by=length" | jq .
+curl -X GET "https://crashed-backend-production.up.railway.app/api/analytics/series/without-min-crash-point/10?limit=2000&sort_by=length" | jq .
 
 # Get series of games without crash points >= 10 in the last 24 hours
-curl -X GET "http://localhost:8000/api/analytics/series/without-min-crash-point/10/time" | jq .
+curl -X GET "https://crashed-backend-production.up.railway.app/api/analytics/series/without-min-crash-point/10/time" | jq .
 
 # Get series of games without crash points >= 10 in the last 48 hours, sorted by series length
-curl -X GET "http://localhost:8000/api/analytics/series/without-min-crash-point/10/time?hours=48&sort_by=length" | jq .
+curl -X GET "https://crashed-backend-production.up.railway.app/api/analytics/series/without-min-crash-point/10/time?hours=48&sort_by=length" | jq .
 
 # Get series with timezone conversion
-curl -X GET "http://localhost:8000/api/analytics/series/without-min-crash-point/10" -H "X-Timezone: America/New_York" | jq .
+curl -X GET "https://crashed-backend-production.up.railway.app/api/analytics/series/without-min-crash-point/10" -H "X-Timezone: America/New_York" | jq .
           ]
         }
       },
