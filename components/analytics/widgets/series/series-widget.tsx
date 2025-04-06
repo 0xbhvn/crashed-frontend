@@ -238,22 +238,29 @@ export function SeriesWidget({
 		return Array.isArray(data) ? data.slice(0, 5) : [];
 	}, [data]);
 
-	// Calculate median length for the reference line
-	const medianLength = React.useMemo(() => {
-		if (!chartData || chartData.length === 0) return 0;
+	// Calculate percentile values for the reference lines
+	const percentiles = React.useMemo(() => {
+		if (!chartData || chartData.length === 0)
+			return { p50: 0, p75: 0, p90: 0, p95: 0, p99: 0 };
 
-		// Sort lengths and find median
+		// Sort lengths for percentile calculations
 		const sortedLengths = [...chartData]
 			.map((item) => item.length)
 			.sort((a, b) => a - b);
-		const middle = Math.floor(sortedLengths.length / 2);
 
-		// If even number of items, take average of middle two
-		if (sortedLengths.length % 2 === 0) {
-			return (sortedLengths[middle - 1] + sortedLengths[middle]) / 2;
-		}
-		// If odd number of items, take middle item
-		return sortedLengths[middle];
+		const getPercentile = (p: number) => {
+			const index = Math.ceil((sortedLengths.length - 1) * (p / 100));
+			return sortedLengths[index];
+		};
+
+		// Calculate P50 (median), P75, P90, P95, and P99
+		return {
+			p50: getPercentile(50),
+			p75: getPercentile(75),
+			p90: getPercentile(90),
+			p95: getPercentile(95),
+			p99: getPercentile(99),
+		};
 	}, [chartData]);
 
 	// Update pulse animation class periodically
@@ -495,7 +502,7 @@ export function SeriesWidget({
 									value={value}
 									sortBy={sortBy}
 									pulseClass={pulseClass}
-									medianLength={medianLength}
+									percentiles={percentiles}
 								/>
 								<SeriesTable
 									topSeries={topSeries}

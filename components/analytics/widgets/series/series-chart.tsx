@@ -36,12 +36,18 @@ export interface SeriesChartData {
 	followGames?: string[];
 }
 
-interface SeriesChartProps {
+export interface SeriesChartProps {
 	chartData: SeriesChartData[];
 	value: number;
 	sortBy: 'time' | 'length';
 	pulseClass: string;
-	medianLength: number;
+	percentiles: {
+		p50: number;
+		p75: number;
+		p90: number;
+		p95: number;
+		p99: number;
+	};
 }
 
 export function SeriesChart({
@@ -49,7 +55,7 @@ export function SeriesChart({
 	value,
 	sortBy,
 	pulseClass,
-	medianLength,
+	percentiles,
 }: SeriesChartProps) {
 	return (
 		<div
@@ -104,17 +110,72 @@ export function SeriesChart({
 							position: 'insideLeft',
 						}}
 					/>
+
+					{/* P50 (Median) Reference Line */}
 					<ReferenceLine
-						y={medianLength}
+						y={percentiles.p50}
 						stroke="#888"
 						strokeDasharray="3 3"
 						label={{
-							value: `Median: ${Math.round(medianLength)}`,
+							value: `P50: ${Math.round(percentiles.p50)}`,
 							position: 'insideTopRight',
 							fill: '#888',
 							fontSize: 12,
 						}}
 					/>
+
+					{/* P75 Reference Line */}
+					<ReferenceLine
+						y={percentiles.p75}
+						stroke="#5470c6"
+						strokeDasharray="3 3"
+						label={{
+							value: `P75: ${Math.round(percentiles.p75)}`,
+							position: 'insideTopRight',
+							fill: '#5470c6',
+							fontSize: 12,
+						}}
+					/>
+
+					{/* P90 Reference Line */}
+					<ReferenceLine
+						y={percentiles.p90}
+						stroke="#91cc75"
+						strokeDasharray="3 3"
+						label={{
+							value: `P90: ${Math.round(percentiles.p90)}`,
+							position: 'insideTopRight',
+							fill: '#91cc75',
+							fontSize: 12,
+						}}
+					/>
+
+					{/* P95 Reference Line */}
+					<ReferenceLine
+						y={percentiles.p95}
+						stroke="#fac858"
+						strokeDasharray="3 3"
+						label={{
+							value: `P95: ${Math.round(percentiles.p95)}`,
+							position: 'insideTopRight',
+							fill: '#fac858',
+							fontSize: 12,
+						}}
+					/>
+
+					{/* P99 Reference Line */}
+					<ReferenceLine
+						y={percentiles.p99}
+						stroke="#ee6666"
+						strokeDasharray="3 3"
+						label={{
+							value: `P99: ${Math.round(percentiles.p99)}`,
+							position: 'insideTopRight',
+							fill: '#ee6666',
+							fontSize: 12,
+						}}
+					/>
+
 					<ChartTooltip
 						content={(props) => {
 							if (!props.active || !props.payload?.length)
