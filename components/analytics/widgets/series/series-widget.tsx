@@ -263,6 +263,12 @@ export function SeriesWidget({
 		};
 	}, [chartData]);
 
+	// Calculate max length (true longest series)
+	const maxLength = React.useMemo(() => {
+		if (!chartData || chartData.length === 0) return 0;
+		return Math.max(...chartData.map((item) => item.length));
+	}, [chartData]);
+
 	// Update pulse animation class periodically
 	React.useEffect(() => {
 		if (sortBy !== 'time' || !chartData.length) return;
@@ -470,7 +476,7 @@ export function SeriesWidget({
 									Longest series:
 								</span>
 								<span className="text-sm font-bold">
-									{percentiles.p99}
+									{maxLength}
 								</span>
 							</div>
 						</div>
