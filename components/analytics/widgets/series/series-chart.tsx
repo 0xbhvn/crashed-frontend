@@ -57,6 +57,27 @@ export function SeriesChart({
 	pulseClass,
 	percentiles,
 }: SeriesChartProps) {
+	// Get faded versions of colors for reference lines and text
+	const getFadedColor = (ratio: number): string => {
+		let hue: number;
+		if (ratio < 1) {
+			// Below crash value: Blue to Green (240-120)
+			hue = 240 - ratio * 120;
+		} else {
+			// At or above crash value: Yellow to Red (60-0)
+			hue = Math.max(60 - (ratio - 1) * 30, 0);
+		}
+		// Lower saturation and higher lightness for a faded look
+		return `hsla(${hue}, 70%, 60%, 0.7)`;
+	};
+
+	// Faded colors for reference lines and text
+	const p50FadedColor = getFadedColor(percentiles.p50 / value);
+	const p75FadedColor = getFadedColor(percentiles.p75 / value);
+	const p90FadedColor = getFadedColor(percentiles.p90 / value);
+	const p95FadedColor = getFadedColor(percentiles.p95 / value);
+	const p99FadedColor = getFadedColor(percentiles.p99 / value);
+
 	return (
 		<div
 			className="w-full"
@@ -114,66 +135,36 @@ export function SeriesChart({
 					{/* P50 (Median) Reference Line */}
 					<ReferenceLine
 						y={percentiles.p50}
-						stroke="#888"
+						stroke={p50FadedColor}
 						strokeDasharray="3 3"
-						label={{
-							value: `P50: ${Math.round(percentiles.p50)}`,
-							position: 'insideTopRight',
-							fill: '#888',
-							fontSize: 12,
-						}}
 					/>
 
 					{/* P75 Reference Line */}
 					<ReferenceLine
 						y={percentiles.p75}
-						stroke="#5470c6"
+						stroke={p75FadedColor}
 						strokeDasharray="3 3"
-						label={{
-							value: `P75: ${Math.round(percentiles.p75)}`,
-							position: 'insideTopRight',
-							fill: '#5470c6',
-							fontSize: 12,
-						}}
 					/>
 
 					{/* P90 Reference Line */}
 					<ReferenceLine
 						y={percentiles.p90}
-						stroke="#91cc75"
+						stroke={p90FadedColor}
 						strokeDasharray="3 3"
-						label={{
-							value: `P90: ${Math.round(percentiles.p90)}`,
-							position: 'insideTopRight',
-							fill: '#91cc75',
-							fontSize: 12,
-						}}
 					/>
 
 					{/* P95 Reference Line */}
 					<ReferenceLine
 						y={percentiles.p95}
-						stroke="#fac858"
+						stroke={p95FadedColor}
 						strokeDasharray="3 3"
-						label={{
-							value: `P95: ${Math.round(percentiles.p95)}`,
-							position: 'insideTopRight',
-							fill: '#fac858',
-							fontSize: 12,
-						}}
 					/>
 
 					{/* P99 Reference Line */}
 					<ReferenceLine
 						y={percentiles.p99}
-						stroke="#ee6666"
+						stroke={p99FadedColor}
 						strokeDasharray="3 3"
-						label={{
-							value: `P99: ${Math.round(percentiles.p99)}`,
-							position: 'insideTopRight',
-							fill: '#ee6666',
-							fontSize: 12,
-						}}
 					/>
 
 					<ChartTooltip
@@ -349,6 +340,55 @@ export function SeriesChart({
 					</Bar>
 				</BarChart>
 			</ChartContainer>
+
+			{/* Percentile legend */}
+			<div className="flex flex-wrap justify-center gap-4 mt-4 px-2 text-sm">
+				<div className="flex items-center">
+					<span
+						className="inline-block w-4 h-0.5"
+						style={{ backgroundColor: p50FadedColor }}
+					/>
+					<span className="ml-1.5">
+						P50: {Math.round(percentiles.p50)}
+					</span>
+				</div>
+				<div className="flex items-center">
+					<span
+						className="inline-block w-4 h-0.5"
+						style={{ backgroundColor: p75FadedColor }}
+					/>
+					<span className="ml-1.5">
+						P75: {Math.round(percentiles.p75)}
+					</span>
+				</div>
+				<div className="flex items-center">
+					<span
+						className="inline-block w-4 h-0.5"
+						style={{ backgroundColor: p90FadedColor }}
+					/>
+					<span className="ml-1.5">
+						P90: {Math.round(percentiles.p90)}
+					</span>
+				</div>
+				<div className="flex items-center">
+					<span
+						className="inline-block w-4 h-0.5"
+						style={{ backgroundColor: p95FadedColor }}
+					/>
+					<span className="ml-1.5">
+						P95: {Math.round(percentiles.p95)}
+					</span>
+				</div>
+				<div className="flex items-center">
+					<span
+						className="inline-block w-4 h-0.5"
+						style={{ backgroundColor: p99FadedColor }}
+					/>
+					<span className="ml-1.5">
+						P99: {Math.round(percentiles.p99)}
+					</span>
+				</div>
+			</div>
 		</div>
 	);
 }
