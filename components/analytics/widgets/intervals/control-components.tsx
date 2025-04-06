@@ -163,16 +163,16 @@ export function IntervalsControls({
 					>
 						<TabsList className="grid w-[100px] grid-cols-2 bg-muted/50 p-0.5">
 							<TabsTrigger
-								value="time"
-								className="data-[state=active]:bg-black data-[state=active]:text-white"
-							>
-								<Timer className="h-4 w-4" />
-							</TabsTrigger>
-							<TabsTrigger
 								value="games"
 								className="data-[state=active]:bg-black data-[state=active]:text-white"
 							>
 								<Dices className="h-4 w-4" />
+							</TabsTrigger>
+							<TabsTrigger
+								value="time"
+								className="data-[state=active]:bg-black data-[state=active]:text-white"
+							>
+								<Timer className="h-4 w-4" />
 							</TabsTrigger>
 						</TabsList>
 					</Tabs>

@@ -37,7 +37,7 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 		React.useState<TimeIntervalDuration>(10);
 	const [gameInterval, setGameInterval] =
 		React.useState<GameIntervalSize>(25);
-	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('time');
+	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('games');
 	const [hours, setHours] = React.useState<number>(24);
 	const [hoursInputValue, setHoursInputValue] = React.useState<string>('24');
 	const [games, setGames] = React.useState<number>(2000);
