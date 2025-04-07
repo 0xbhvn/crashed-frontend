@@ -1,8 +1,6 @@
 # Get occurrences
 
 ```bash
->....                                                                                                                      
-
 # Get occurrences of floor value exactly 5 in the last 100 games
 curl -X GET "https://crashed-backend-production.up.railway.app/api/analytics/occurrences/exact-floor/5" | jq .
 
