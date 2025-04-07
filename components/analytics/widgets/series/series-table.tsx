@@ -27,8 +27,8 @@ export function SeriesTable({ topSeries, value, sortBy }: SeriesTableProps) {
 		<div className="mt-6">
 			<h4 className="text-sm font-medium mb-2">
 				{sortBy === 'length'
-					? `Longest series without ${value}x or higher:`
-					: `Most recent series without ${value}x or higher:`}
+					? `Longest series until ${value}x crash:`
+					: `Most recent series until ${value}x crash:`}
 			</h4>
 			<div className="overflow-x-auto">
 				<table className="w-full text-sm">
@@ -55,45 +55,55 @@ export function SeriesTable({ topSeries, value, sortBy }: SeriesTableProps) {
 						</tr>
 					</thead>
 					<tbody>
-						{topSeries.map((series) => (
-							<tr
-								key={`series-${series.start_game_id}-${series.end_game_id}`}
-								className="border-b border-border/30 hover:bg-muted/30"
-							>
-								<td className="py-2">{series.length} games</td>
-								<td className="py-2">
-									#{series.start_game_id}
-								</td>
-								<td className="py-2">#{series.end_game_id}</td>
-								<td className="py-2">
-									{format(
-										new Date(series.start_time),
-										'MMM d, yyyy h:mm a'
-									)}
-								</td>
-								<td className="py-2">
-									{format(
-										new Date(series.end_time),
-										'MMM d, yyyy h:mm a'
-									)}
-								</td>
-								<td className="py-2 font-medium">
-									{series.follow_streak?.games &&
-									series.follow_streak.games.length > 0
-										? typeof series.follow_streak
-												.games[0] === 'object'
-											? `${(
-													series.follow_streak
-														.games[0] as GameObject
-											  ).crash_point?.toFixed(2)}x`
-											: (
-													series.follow_streak
-														.games[0] as string
-											  ).split('@')[1]
-										: '-'}
-								</td>
-							</tr>
-						))}
+						{topSeries.map((series) => {
+							const isSingleGame = series.length === 1;
+
+							return (
+								<tr
+									key={`series-${series.start_game_id}-${series.end_game_id}`}
+									className="border-b border-border/30 hover:bg-muted/30"
+								>
+									<td className="py-2">
+										{isSingleGame
+											? '1 game'
+											: `${series.length} games`}
+									</td>
+									<td className="py-2">
+										#{series.start_game_id}
+									</td>
+									<td className="py-2">
+										#{series.end_game_id}
+									</td>
+									<td className="py-2">
+										{format(
+											new Date(series.start_time),
+											'MMM d, yyyy h:mm a'
+										)}
+									</td>
+									<td className="py-2">
+										{format(
+											new Date(series.end_time),
+											'MMM d, yyyy h:mm a'
+										)}
+									</td>
+									<td className="py-2 font-medium">
+										{series.follow_streak?.games &&
+										series.follow_streak.games.length > 0
+											? typeof series.follow_streak
+													.games[0] === 'object'
+												? `${(
+														series.follow_streak
+															.games[0] as GameObject
+												  ).crash_point?.toFixed(2)}x`
+												: (
+														series.follow_streak
+															.games[0] as string
+												  ).split('@')[1]
+											: '-'}
+									</td>
+								</tr>
+							);
+						})}
 					</tbody>
 				</table>
 			</div>
