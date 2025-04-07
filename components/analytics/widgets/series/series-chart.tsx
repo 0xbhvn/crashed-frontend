@@ -181,14 +181,18 @@ export function SeriesChart({
 								<div className="border-border/50 bg-background rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
 									<div className="p-2 space-y-1">
 										<p className="text-sm font-medium">
-											{item.length} games
+											{item.length === 1
+												? '1 game'
+												: `${item.length} games`}
 										</p>
 										<div className="rounded overflow-hidden border border-border/30 mt-2">
 											<table className="w-full">
 												<tbody>
 													<tr className="bg-muted/30">
 														<td className="px-2 py-1 font-medium">
-															Start Game
+															{item.length === 1
+																? 'Game'
+																: 'Start Game'}
 														</td>
 														<td className="px-2 py-1 text-right">
 															#
@@ -199,22 +203,26 @@ export function SeriesChart({
 															}
 														</td>
 													</tr>
-													<tr>
-														<td className="px-2 py-1 font-medium">
-															End Game
-														</td>
-														<td className="px-2 py-1 text-right">
-															#
-															{
-																item.seriesId.split(
-																	'-'
-																)[1]
-															}
-														</td>
-													</tr>
+													{item.length > 1 && (
+														<tr>
+															<td className="px-2 py-1 font-medium">
+																End Game
+															</td>
+															<td className="px-2 py-1 text-right">
+																#
+																{
+																	item.seriesId.split(
+																		'-'
+																	)[1]
+																}
+															</td>
+														</tr>
+													)}
 													<tr className="bg-muted/30">
 														<td className="px-2 py-1 font-medium">
-															Start Time
+															{item.length === 1
+																? 'Time'
+																: 'Start Time'}
 														</td>
 														<td className="px-2 py-1 text-right">
 															{format(
@@ -223,17 +231,19 @@ export function SeriesChart({
 															)}
 														</td>
 													</tr>
-													<tr>
-														<td className="px-2 py-1 font-medium">
-															End Time
-														</td>
-														<td className="px-2 py-1 text-right">
-															{format(
-																item.endTime,
-																'MMM d, yyyy h:mm a'
-															)}
-														</td>
-													</tr>
+													{item.length > 1 && (
+														<tr>
+															<td className="px-2 py-1 font-medium">
+																End Time
+															</td>
+															<td className="px-2 py-1 text-right">
+																{format(
+																	item.endTime,
+																	'MMM d, yyyy h:mm a'
+																)}
+															</td>
+														</tr>
+													)}
 												</tbody>
 											</table>
 										</div>
