@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { getApiUrl, getApiHeaders } from '@/lib/api-config';
 
 /**
  * GET handler for the games API endpoint
@@ -12,14 +13,12 @@ export async function GET(request: NextRequest) {
 	const per_page = searchParams.get('per_page') || '10';
 
 	// Construct the URL for the external API
-	const apiUrl = `https://crashed-backend-production.up.railway.app/api/games?per_page=${per_page}&page=${page}`;
+	const apiUrl = getApiUrl(`games?per_page=${per_page}&page=${page}`);
 
 	try {
 		// Fetch data from the external API
 		const response = await fetch(apiUrl, {
-			headers: {
-				'Content-Type': 'application/json',
-			},
+			headers: getApiHeaders(),
 			// Use the Node.js fetch implementation which isn't subject to browser CORS
 			cache: 'no-store', // Don't cache the response
 		});
