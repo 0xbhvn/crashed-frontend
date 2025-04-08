@@ -94,6 +94,22 @@ export function useOccurrenceAnalysis({
 			const minPointsData = await minPointsResponse.json();
 			const exactFloorsData = await exactFloorsResponse.json();
 
+			// Check if data is structured as expected
+			if (!minPointsData.data || typeof minPointsData.data !== 'object') {
+				throw new Error(
+					'Unexpected API structure: min points data is not an object'
+				);
+			}
+
+			if (
+				!exactFloorsData.data ||
+				typeof exactFloorsData.data !== 'object'
+			) {
+				throw new Error(
+					'Unexpected API structure: exact floors data is not an object'
+				);
+			}
+
 			// Check for error status in the responses
 			if (minPointsData.status === 'error') {
 				throw new Error(
@@ -111,9 +127,15 @@ export function useOccurrenceAnalysis({
 			const processedData: OccurrencesData = {};
 
 			// Extract the occurrences data from the response
-			const minPointsOccurrences = minPointsData.data?.occurrences || {};
+			// Backend now returns results instead of occurrences for batch endpoints
+			const minPointsOccurrences =
+				minPointsData.data?.results ||
+				minPointsData.data?.occurrences ||
+				{};
 			const exactFloorsOccurrences =
-				exactFloorsData.data?.occurrences || {};
+				exactFloorsData.data?.results ||
+				exactFloorsData.data?.occurrences ||
+				{};
 
 			// Create a set of all keys from both responses, ensuring we have all requested values
 			const allPoints = new Set([
