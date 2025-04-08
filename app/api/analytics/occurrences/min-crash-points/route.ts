@@ -73,12 +73,6 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json(data);
 		}
 
-		// For backward compatibility, if data.data contains results but not occurrences,
-		// add an occurrences field that points to the same object as results
-		if (data.data.results && !data.data.occurrences) {
-			data.data.occurrences = data.data.results;
-		}
-
 		// Return the data to the client
 		return NextResponse.json(data);
 	} catch (error) {
