@@ -126,16 +126,9 @@ export function useOccurrenceAnalysis({
 			// Process the API responses into the expected format
 			const processedData: OccurrencesData = {};
 
-			// Extract the occurrences data from the response
-			// Backend now returns results instead of occurrences for batch endpoints
-			const minPointsOccurrences =
-				minPointsData.data?.results ||
-				minPointsData.data?.occurrences ||
-				{};
-			const exactFloorsOccurrences =
-				exactFloorsData.data?.results ||
-				exactFloorsData.data?.occurrences ||
-				{};
+			// Extract the occurrences data from the response - now only using results
+			const minPointsOccurrences = minPointsData.data?.results || {};
+			const exactFloorsOccurrences = exactFloorsData.data?.results || {};
 
 			// Create a set of all keys from both responses, ensuring we have all requested values
 			const allPoints = new Set([
