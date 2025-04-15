@@ -20,8 +20,8 @@ export const GameSchema = z.object({
 
 	// ISO timestamps with timezone info
 	endTime: z.string().datetime({ offset: true }),
-	prepareTime: z.string().datetime({ offset: true }),
-	beginTime: z.string().datetime({ offset: true }),
+	prepareTime: z.string().datetime({ offset: true }).nullable(),
+	beginTime: z.string().datetime({ offset: true }).nullable(),
 });
 
 export const PaginationSchema = z.object({

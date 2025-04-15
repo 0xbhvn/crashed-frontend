@@ -76,6 +76,7 @@ export function useGamesData({
 				try {
 					rawData = await res.json();
 				} catch (parseError) {
+					console.error('Failed to parse API response:', parseError);
 					throw new Error('Failed to parse API response', {
 						cause: parseError,
 					});
@@ -90,11 +91,17 @@ export function useGamesData({
 					if (result.success) {
 						validatedData = result.data;
 					} else {
+						// Log detailed validation errors
+						console.error(
+							'API data validation failed:',
+							JSON.stringify(result.error.format(), null, 2)
+						);
 						// If validation fails, set flag and create empty response
 						setDataValidationIssues(true);
 						validatedData = createEmptyResponse(page, perPage);
 					}
-				} catch {
+				} catch (error) {
+					console.error('Unexpected error during validation:', error);
 					setDataValidationIssues(true);
 					// Create a minimal valid structure to prevent UI errors
 					validatedData = createEmptyResponse(page, perPage);
@@ -102,8 +109,9 @@ export function useGamesData({
 
 				setApiData(validatedData);
 				setError(null);
-			} catch {
+			} catch (error) {
 				// Log API fetch errors and update UI state
+				console.error('API fetch error:', error);
 				setError('Failed to load data. Please try again later.');
 				setApiData(createEmptyResponse(page, perPage));
 			} finally {
@@ -216,9 +224,8 @@ export function useGamesData({
 			const currentPage = page;
 			const currentPerPage = perPage;
 
-			// Instead of just fetching the last item of the previous page,
-			// we fetch the entire current page data but without showing loading state
-			(async () => {
+			// Inline the fetch functionality to avoid dependency issues
+			const fetchData = async () => {
 				try {
 					// Fetch the fresh data for the current page
 					const res = await fetch(
@@ -232,82 +239,56 @@ export function useGamesData({
 					const rawData = await res.json();
 					const result = ApiResponseSchema.safeParse(rawData);
 
-					if (!result.success) {
-						console.error('Validation errors during smart refresh');
-						return;
-					}
-
-					const freshData = result.data;
-
-					// Only update if we have both current and fresh data
-					if (apiData && freshData) {
-						// Compare the current and fresh data to see what's changed
-						const currentIds = apiData.data.map(
-							(game) => game.gameId
+					if (result.success) {
+						setApiData(result.data);
+					} else {
+						// Log detailed validation errors in the refresh scenario too
+						console.error(
+							'Validation errors during page refresh:',
+							JSON.stringify(result.error.format(), null, 2)
 						);
-						const freshIds = freshData.data.map(
-							(game) => game.gameId
-						);
-
-						// Check if any changes are needed
-						const needsUpdate = !arraysEqual(currentIds, freshIds);
-
-						if (needsUpdate) {
-							// Update only the data portion without showing loading state
-							setApiData({
-								...apiData,
-								data: freshData.data,
-								count: freshData.count,
-								pagination: freshData.pagination,
-							});
-						}
+						// Handle validation failure silently
+						setDataValidationIssues(true);
 					}
 				} catch {
-					// Fallback to full page refresh on error
-					await fetchFullPage(currentPage, currentPerPage);
+					// Fallback to full page refresh with loading indicator
+					try {
+						setLoading(true);
+						const res = await fetch(
+							`/api/games?per_page=${currentPerPage}&page=${currentPage}`
+						);
+
+						if (!res.ok) {
+							throw new Error(`API error: ${res.status}`);
+						}
+
+						const rawData = await res.json();
+						const result = ApiResponseSchema.safeParse(rawData);
+
+						if (result.success) {
+							setApiData(result.data);
+						} else {
+							// Add detailed error logging here too
+							console.error(
+								'Validation errors during fallback refresh:',
+								JSON.stringify(result.error.format(), null, 2)
+							);
+							// Handle validation failure silently
+							setDataValidationIssues(true);
+						}
+					} catch {
+						// Error already handled by setting error state
+						setError('Failed to refresh data. Please try again.');
+					} finally {
+						setLoading(false);
+					}
 				}
-			})();
+			};
+
+			// Execute the fetch
+			fetchData();
 		}
-	}, [needsPageRefresh, page, perPage, apiData]);
-
-	// Helper function to compare arrays
-	const arraysEqual = <T>(a: T[], b: T[]): boolean => {
-		if (a.length !== b.length) return false;
-		for (let i = 0; i < a.length; i++) {
-			if (a[i] !== b[i]) return false;
-		}
-		return true;
-	};
-
-	// Helper function to fetch a full page of data (used as fallback)
-	const fetchFullPage = async (pageNumber: number, itemsPerPage: number) => {
-		try {
-			setLoading(true);
-
-			const res = await fetch(
-				`/api/games?per_page=${itemsPerPage}&page=${pageNumber}`
-			);
-
-			if (!res.ok) {
-				throw new Error(`API error: ${res.status}`);
-			}
-
-			const rawData = await res.json();
-			const result = ApiResponseSchema.safeParse(rawData);
-
-			if (result.success) {
-				setApiData(result.data);
-			} else {
-				// Handle validation failure silently
-				setDataValidationIssues(true);
-			}
-		} catch {
-			// Error already handled by setting error state
-			setError('Failed to refresh data. Please try again.');
-		} finally {
-			setLoading(false);
-		}
-	};
+	}, [needsPageRefresh, page, perPage]);
 
 	return {
 		// Only combine WebSocket games with API data if they haven't been incorporated yet
