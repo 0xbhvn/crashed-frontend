@@ -101,17 +101,22 @@ export function generateLastGamesHtmlConfig(
           font-size: 12px;
           border: 1px solid;
         }
-        .probability-badge.high {
+        .probability-badge.blue {
+          background-color: rgba(59, 130, 246, 0.1);
+          color: rgb(30, 58, 138);
+          border-color: rgba(59, 130, 246, 0.5);
+        }
+        .probability-badge.green {
           background-color: rgba(34, 197, 94, 0.1);
           color: rgb(22, 101, 52);
           border-color: rgba(34, 197, 94, 0.5);
         }
-        .probability-badge.medium {
+        .probability-badge.yellow {
           background-color: rgba(234, 179, 8, 0.1);
           color: rgb(113, 63, 18);
           border-color: rgba(234, 179, 8, 0.5);
         }
-        .probability-badge.low {
+        .probability-badge.red {
           background-color: rgba(239, 68, 68, 0.1);
           color: rgb(153, 27, 27);
           border-color: rgba(239, 68, 68, 0.5);
@@ -163,10 +168,14 @@ export function generateLastGamesHtmlConfig(
 					// Get probability badge color
 					let probabilityBadgeClass = 'low';
 					if (probability !== undefined && probability !== null) {
-						if (probability > 50) {
-							probabilityBadgeClass = 'high';
-						} else if (probability > 30) {
-							probabilityBadgeClass = 'medium';
+						if (probability < 25) {
+							probabilityBadgeClass = 'blue';
+						} else if (probability < 50) {
+							probabilityBadgeClass = 'green';
+						} else if (probability < 75) {
+							probabilityBadgeClass = 'yellow';
+						} else {
+							probabilityBadgeClass = 'red';
 						}
 					}
 

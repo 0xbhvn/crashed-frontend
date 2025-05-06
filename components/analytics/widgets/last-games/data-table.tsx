@@ -22,6 +22,24 @@ export function DataTable({
 	isLoading,
 	isValueLoading,
 }: LastGamesDataTableProps) {
+	// Get probability badge color based on 4 stages
+	const getProbabilityBadgeColor = (
+		value: number | null | undefined
+	): string => {
+		if (value === null || value === undefined) return '';
+
+		if (value < 25) {
+			return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+		}
+		if (value < 50) {
+			return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+		}
+		if (value < 75) {
+			return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+		}
+		return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+	};
+
 	// Skeleton component for loading state
 	const TableSkeleton = () => {
 		return (
@@ -218,11 +236,9 @@ export function DataTable({
 													variant="outline"
 													className={cn(
 														'px-2.5 py-0.5 font-semibold',
-														probability > 50
-															? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-															: probability > 30
-															? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-															: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+														getProbabilityBadgeColor(
+															probability
+														)
 													)}
 												>
 													{probability.toFixed(2)}%

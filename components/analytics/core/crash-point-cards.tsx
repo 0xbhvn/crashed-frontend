@@ -363,6 +363,24 @@ export function CrashPointCards({
 		return !defaultPoints.includes(point);
 	};
 
+	// Get probability badge color based on 4 stages
+	const getProbabilityBadgeColor = (
+		value: number | null | undefined
+	): string => {
+		if (value === null || value === undefined) return '';
+
+		if (value < 25) {
+			return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+		}
+		if (value < 50) {
+			return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+		}
+		if (value < 75) {
+			return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+		}
+		return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+	};
+
 	return (
 		<div className="w-full mb-6">
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
@@ -468,65 +486,22 @@ export function CrashPointCards({
 											</div>
 										</div>
 
-										{/* Exact Value and Probability */}
-										<div className="flex flex-col items-end self-end gap-1">
+										{/* Exact Value */}
+										<div className="flex flex-col items-end self-end">
 											{isLoading ? (
-												<>
-													<Skeleton className="w-14 h-5 mb-1 rounded-sm" />
-													{selectedType ===
-														'current' && (
-														<Skeleton className="w-14 h-5 mb-1 rounded-sm" />
-													)}
-												</>
+												<Skeleton className="w-14 h-5 mb-1 rounded-sm" />
+											) : gameData &&
+											  exact !== undefined ? (
+												<div className="text-sm font-medium">
+													{formatExactCrash(exact)}x
+												</div>
 											) : (
-												<>
-													{gameData &&
-													exact !== undefined ? (
-														<div className="text-sm font-medium">
-															{formatExactCrash(
-																exact
-															)}
-															x
-														</div>
-													) : (
-														<div className="text-sm font-medium">
-															-
-														</div>
-													)}
-													{selectedType ===
-														'current' &&
-													probability !== undefined &&
-													probability !== null ? (
-														<Badge
-															variant="outline"
-															className={cn(
-																'px-2 py-0.5 text-sm font-medium',
-																probability > 50
-																	? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-																	: probability >
-																	  30
-																	? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-																	: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-															)}
-														>
-															{probability.toFixed(
-																2
-															)}
-															% chance
-														</Badge>
-													) : selectedType ===
-													  'current' ? (
-														<div className="text-sm font-medium">
-															-
-														</div>
-													) : null}
-												</>
+												<div className="text-sm font-medium">
+													-
+												</div>
 											)}
-											<div className="flex text-xs text-muted-foreground justify-between w-full">
-												<div>Exact Value</div>
-												{selectedType === 'current' && (
-													<div>Probability</div>
-												)}
+											<div className="text-xs text-muted-foreground">
+												Exact Value
 											</div>
 										</div>
 									</div>
@@ -552,21 +527,49 @@ export function CrashPointCards({
 											</div>
 										</div>
 
-										{/* Game ID (right side) */}
+										{/* Game ID and Probability (right side) */}
 										<div className="flex flex-col items-end">
-											{isLoading ? (
-												<Skeleton className="w-20 h-5 rounded-sm" />
-											) : gameData ? (
-												<div className="text-sm font-medium">
-													{`#${gameData.gameId}`}
-												</div>
-											) : (
-												<div className="text-sm font-medium">
-													-
-												</div>
-											)}
-											<div className="text-xs text-muted-foreground">
-												Last Game
+											<div className="flex items-center gap-2">
+												{isLoading ? (
+													<Skeleton className="w-20 h-5 rounded-sm" />
+												) : gameData ? (
+													<>
+														<div className="text-sm font-medium">
+															{`#${gameData.gameId}`}
+														</div>
+														{selectedType ===
+															'current' &&
+															probability !==
+																undefined &&
+															probability !==
+																null && (
+																<Badge
+																	variant="outline"
+																	className={cn(
+																		'px-2 py-0.5 text-sm font-medium',
+																		getProbabilityBadgeColor(
+																			probability
+																		)
+																	)}
+																>
+																	{probability.toFixed(
+																		2
+																	)}
+																	%
+																</Badge>
+															)}
+													</>
+												) : (
+													<div className="text-sm font-medium">
+														-
+													</div>
+												)}
+											</div>
+											<div className="text-xs text-muted-foreground flex gap-2">
+												<span>Last Game</span>
+												{selectedType === 'current' && (
+													<span>• Probability</span>
+												)}
 											</div>
 										</div>
 									</div>
