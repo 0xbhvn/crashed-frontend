@@ -56,7 +56,12 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 			for (const value of values) {
 				// Handle completely new values
 				if (apiData[value] && !localData[value]) {
-					updatedData[value] = apiData[value];
+					// For new values, use the complete API data including probability
+					updatedData[value] = {
+						...apiData[value],
+						currentProbability: apiData[value].currentProbability,
+						uniqueProbability: apiData[value].uniqueProbability,
+					};
 					hasChanges = true;
 					// Remove from loading values
 					loadingValuesRef.current.delete(value);
@@ -83,6 +88,9 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 						uniqueGame:
 							apiData[value].uniqueGame ||
 							localData[value].uniqueGame,
+						// Include probability values in the update
+						currentProbability: apiData[value].currentProbability,
+						uniqueProbability: apiData[value].uniqueProbability,
 					};
 					hasChanges = true;
 					// Remove from loading values
