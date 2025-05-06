@@ -34,9 +34,14 @@ export const getExcelConfig = async ({
 			selectedType === 'current'
 				? pointData?.currentGame
 				: pointData?.uniqueGame;
+
+		// Get probability based on selected type (only for current mode)
+		const probability =
+			selectedType === 'current' ? pointData?.currentProbability : null;
+
 		const exact = gameData?.crashPoint;
 
-		return {
+		const baseData = {
 			crashPoint:
 				selectedType === 'current'
 					? `≥ ${point}${point === Math.floor(point) ? '.0' : ''}`
@@ -51,12 +56,36 @@ export const getExcelConfig = async ({
 				? new Date(gameData.beginTime).toISOString()
 				: '-',
 		};
+
+		// Add probability only for current mode
+		if (selectedType === 'current') {
+			return {
+				...baseData,
+				probability:
+					probability !== null && probability !== undefined
+						? `${probability.toFixed(2)}%`
+						: '-',
+			};
+		}
+
+		return baseData;
 	});
 
 	// Define columns for Excel
-	const columns = [
+	const baseColumns = [
 		{ header: 'Crash Point', key: 'crashPoint', width: 15 },
 		{ header: 'Streak Count', key: 'streakCount', width: 15 },
+	];
+
+	// Add probability column only for current mode
+	const additionalColumns =
+		selectedType === 'current'
+			? [{ header: 'Probability', key: 'probability', width: 15 }]
+			: [];
+
+	const finalColumns = [
+		...baseColumns,
+		...additionalColumns,
 		{ header: 'Time Since', key: 'timeSince', width: 20 },
 		{ header: 'Last Game ID', key: 'lastGameId', width: 15 },
 		{ header: 'Exact Crash', key: 'exactCrash', width: 15 },
@@ -73,7 +102,7 @@ export const getExcelConfig = async ({
 		sheets: [
 			{
 				name: 'Last Games Data',
-				columns,
+				columns: finalColumns,
 				data: exportRows,
 				autoFilter: true,
 				freezeHeader: true,

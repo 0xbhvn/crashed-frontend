@@ -133,6 +133,8 @@ export function useBatchLastGames({
 					unique: exactFloorEntry?.games_since ?? 0,
 					currentGame: minPointEntry?.game || null,
 					uniqueGame: exactFloorEntry?.game || null,
+					currentProbability: minPointEntry?.probability || null,
+					uniqueProbability: exactFloorEntry?.probability || null,
 				};
 			}
 

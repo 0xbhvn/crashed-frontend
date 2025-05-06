@@ -18,6 +18,8 @@ export interface BatchGameData {
 	unique: number;
 	currentGame?: GameData | null;
 	uniqueGame?: GameData | null;
+	currentProbability?: number | null;
+	uniqueProbability?: number | null;
 }
 
 export interface BatchLastGamesData {
@@ -28,6 +30,7 @@ export interface BatchLastGamesData {
 export interface ApiGameResponse {
 	game: GameData | null;
 	games_since: number;
+	probability?: number;
 }
 
 // Occurrences API data structures

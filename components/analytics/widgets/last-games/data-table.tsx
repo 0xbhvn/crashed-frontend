@@ -46,6 +46,11 @@ export function DataTable({
 						<TableCell className="py-1">
 							<div className="h-4 w-12 animate-pulse rounded bg-muted" />
 						</TableCell>
+						{selectedType === 'current' && (
+							<TableCell className="py-1">
+								<div className="h-4 w-12 animate-pulse rounded bg-muted" />
+							</TableCell>
+						)}
 					</TableRow>
 				))}
 			</>
@@ -72,6 +77,11 @@ export function DataTable({
 						<TableHead className="px-2 py-1.5 w-[120px]">
 							Exact Crash
 						</TableHead>
+						{selectedType === 'current' && (
+							<TableHead className="px-2 py-1.5 w-[120px]">
+								Probability
+							</TableHead>
+						)}
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -91,6 +101,12 @@ export function DataTable({
 								selectedType === 'current'
 									? pointData?.currentGame
 									: pointData?.uniqueGame;
+
+							// Get the probability value based on selected type (only for current mode)
+							const probability =
+								selectedType === 'current'
+									? pointData?.currentProbability
+									: null;
 
 							const exact = gameData?.crashPoint;
 
@@ -131,6 +147,11 @@ export function DataTable({
 										<TableCell className="py-1">
 											<div className="h-4 w-12 animate-pulse rounded bg-muted" />
 										</TableCell>
+										{selectedType === 'current' && (
+											<TableCell className="py-1">
+												<div className="h-4 w-12 animate-pulse rounded bg-muted" />
+											</TableCell>
+										)}
 									</TableRow>
 								);
 							}
@@ -186,6 +207,29 @@ export function DataTable({
 											<span>{exact?.toFixed(2)}x</span>
 										)}
 									</TableCell>
+									{selectedType === 'current' && (
+										<TableCell>
+											{!probability ? (
+												<span className="text-muted-foreground">
+													-
+												</span>
+											) : (
+												<Badge
+													variant="outline"
+													className={cn(
+														'px-2.5 py-0.5 font-semibold',
+														probability > 50
+															? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+															: probability > 30
+															? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+															: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+													)}
+												>
+													{probability.toFixed(2)}%
+												</Badge>
+											)}
+										</TableCell>
+									)}
 								</TableRow>
 							);
 						})

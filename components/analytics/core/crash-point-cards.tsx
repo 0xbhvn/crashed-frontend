@@ -381,6 +381,12 @@ export function CrashPointCards({
 							? pointData?.currentGame
 							: pointData?.uniqueGame;
 
+					// Get probability data based on selected type
+					const probability =
+						selectedType === 'current'
+							? pointData?.currentProbability
+							: null;
+
 					const exact = gameData?.crashPoint;
 					const isCustom = isCustomPoint(point);
 
@@ -462,33 +468,67 @@ export function CrashPointCards({
 											</div>
 										</div>
 
-										{/* Exact Value moved to top section */}
-										{isLoading ? (
-											<div className="flex flex-col items-end self-end">
-												<Skeleton className="w-14 h-5 mb-1 rounded-sm" />
-												<div className="text-xs text-muted-foreground">
-													Exact Value
-												</div>
+										{/* Exact Value and Probability */}
+										<div className="flex flex-col items-end self-end gap-1">
+											{isLoading ? (
+												<>
+													<Skeleton className="w-14 h-5 mb-1 rounded-sm" />
+													{selectedType ===
+														'current' && (
+														<Skeleton className="w-14 h-5 mb-1 rounded-sm" />
+													)}
+												</>
+											) : (
+												<>
+													{gameData &&
+													exact !== undefined ? (
+														<div className="text-sm font-medium">
+															{formatExactCrash(
+																exact
+															)}
+															x
+														</div>
+													) : (
+														<div className="text-sm font-medium">
+															-
+														</div>
+													)}
+													{selectedType ===
+														'current' &&
+													probability !== undefined &&
+													probability !== null ? (
+														<Badge
+															variant="outline"
+															className={cn(
+																'px-2 py-0.5 text-sm font-medium',
+																probability > 50
+																	? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+																	: probability >
+																	  30
+																	? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+																	: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+															)}
+														>
+															{probability.toFixed(
+																2
+															)}
+															% chance
+														</Badge>
+													) : selectedType ===
+													  'current' ? (
+														<div className="text-sm font-medium">
+															-
+														</div>
+													) : null}
+												</>
+											)}
+											<div className="flex text-xs text-muted-foreground justify-between w-full">
+												<div>Exact Value</div>
+												{selectedType === 'current' && (
+													<div>Probability</div>
+												)}
 											</div>
-										) : gameData && exact !== undefined ? (
-											<div className="flex flex-col items-end self-end">
-												<div className="text-sm font-medium">
-													{formatExactCrash(exact)}x
-												</div>
-												<div className="text-xs text-muted-foreground">
-													Exact Value
-												</div>
-											</div>
-										) : (
-											<div className="flex flex-col items-end self-end">
-												<div className="text-sm font-medium">
-													-
-												</div>
-												<div className="text-xs text-muted-foreground">
-													Exact Value
-												</div>
-											</div>
-										)}
+										</div>
 									</div>
 
 									{/* Bottom section: Game ID and time ago */}

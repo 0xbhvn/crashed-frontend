@@ -14,6 +14,8 @@ export interface PointData {
 	unique: number;
 	currentGame?: GameData | null;
 	uniqueGame?: GameData | null;
+	currentProbability?: number | null;
+	uniqueProbability?: number | null;
 }
 
 // Interface for last games export configuration
@@ -91,12 +93,36 @@ export function generateLastGamesHtmlConfig(
           background-color: rgba(59, 130, 246, 0.2);
           color: rgb(30, 58, 138);
         }
+        .probability-badge {
+          display: inline-block;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-weight: 600;
+          font-size: 12px;
+          border: 1px solid;
+        }
+        .probability-badge.high {
+          background-color: rgba(34, 197, 94, 0.1);
+          color: rgb(22, 101, 52);
+          border-color: rgba(34, 197, 94, 0.5);
+        }
+        .probability-badge.medium {
+          background-color: rgba(234, 179, 8, 0.1);
+          color: rgb(113, 63, 18);
+          border-color: rgba(234, 179, 8, 0.5);
+        }
+        .probability-badge.low {
+          background-color: rgba(239, 68, 68, 0.1);
+          color: rgb(153, 27, 27);
+          border-color: rgba(239, 68, 68, 0.5);
+        }
       </style>
       <table class="lastgames-table">
         <thead>
           <tr>
             <th>Crash Point</th>
             <th>Streak Count</th>
+            ${selectedType === 'current' ? '<th>Probability</th>' : ''}
             <th>Time Since</th>
             <th>Last Game</th>
             <th>Exact Crash</th>
@@ -113,6 +139,13 @@ export function generateLastGamesHtmlConfig(
 						selectedType === 'current'
 							? pointData?.currentGame
 							: pointData?.uniqueGame;
+
+					// Get probability based on selected type (only for current mode)
+					const probability =
+						selectedType === 'current'
+							? pointData?.currentProbability
+							: null;
+
 					const exact = gameData?.crashPoint;
 
 					// Get streak badge color
@@ -127,6 +160,29 @@ export function generateLastGamesHtmlConfig(
 						}
 					}
 
+					// Get probability badge color
+					let probabilityBadgeClass = 'low';
+					if (probability !== undefined && probability !== null) {
+						if (probability > 50) {
+							probabilityBadgeClass = 'high';
+						} else if (probability > 30) {
+							probabilityBadgeClass = 'medium';
+						}
+					}
+
+					// Build probability cell HTML if in current mode
+					const probabilityCell =
+						selectedType === 'current'
+							? `<td>${
+									probability !== undefined &&
+									probability !== null
+										? `<span class="probability-badge ${probabilityBadgeClass}">${probability.toFixed(
+												2
+										  )}%</span>`
+										: '-'
+							  }</td>`
+							: '';
+
 					return `
               <tr>
                 <td>${
@@ -135,6 +191,7 @@ export function generateLastGamesHtmlConfig(
 						: `= ${point}${point === Math.floor(point) ? '.0' : ''}`
 				}</td>
                 <td><span class="streak-badge ${badgeClass}">${streakValue}</span></td>
+                ${probabilityCell}
                 <td>${
 					!gameData
 						? 'No data'
@@ -154,6 +211,9 @@ export function generateLastGamesHtmlConfig(
 			columns: [
 				{ header: 'Crash Point', key: 'crashPoint' },
 				{ header: 'Streak Count', key: 'streakCount' },
+				...(selectedType === 'current'
+					? [{ header: 'Probability', key: 'probability' }]
+					: []),
 				{ header: 'Time Since', key: 'timeSince' },
 				{ header: 'Last Game ID', key: 'lastGameId' },
 				{ header: 'Exact Crash', key: 'exactCrash' },
@@ -165,9 +225,13 @@ export function generateLastGamesHtmlConfig(
 					selectedType === 'current'
 						? pointData?.currentGame
 						: pointData?.uniqueGame;
+				const probability =
+					selectedType === 'current'
+						? pointData?.currentProbability
+						: null;
 				const exact = gameData?.crashPoint;
 
-				return {
+				const baseData = {
 					crashPoint:
 						selectedType === 'current'
 							? `≥ ${point}${
@@ -183,6 +247,19 @@ export function generateLastGamesHtmlConfig(
 					lastGameId: !gameData ? '-' : `#${gameData.gameId}`,
 					exactCrash: !gameData ? '-' : `${exact?.toFixed(2)}x`,
 				};
+
+				// Add probability only for current mode
+				if (selectedType === 'current') {
+					return {
+						...baseData,
+						probability:
+							probability !== undefined && probability !== null
+								? `${probability.toFixed(2)}%`
+								: '-',
+					};
+				}
+
+				return baseData;
 			}),
 		},
 		fileName: `lastgames_analysis_${format(
