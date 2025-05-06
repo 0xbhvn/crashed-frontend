@@ -99,27 +99,22 @@ export function generateLastGamesHtmlConfig(
           border-radius: 4px;
           font-weight: 600;
           font-size: 12px;
-          border: 1px solid;
         }
         .probability-badge.blue {
-          background-color: rgba(59, 130, 246, 0.1);
+          background-color: rgba(59, 130, 246, 0.2);
           color: rgb(30, 58, 138);
-          border-color: rgba(59, 130, 246, 0.5);
         }
         .probability-badge.green {
-          background-color: rgba(34, 197, 94, 0.1);
+          background-color: rgba(34, 197, 94, 0.2);
           color: rgb(22, 101, 52);
-          border-color: rgba(34, 197, 94, 0.5);
         }
         .probability-badge.yellow {
-          background-color: rgba(234, 179, 8, 0.1);
+          background-color: rgba(234, 179, 8, 0.2);
           color: rgb(113, 63, 18);
-          border-color: rgba(234, 179, 8, 0.5);
         }
         .probability-badge.red {
-          background-color: rgba(239, 68, 68, 0.1);
+          background-color: rgba(239, 68, 68, 0.2);
           color: rgb(153, 27, 27);
-          border-color: rgba(239, 68, 68, 0.5);
         }
       </style>
       <table class="lastgames-table">

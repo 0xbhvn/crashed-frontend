@@ -462,6 +462,25 @@ export function CrashPointCards({
 														? streakValue
 														: '-'}
 												</Badge>
+
+												{selectedType === 'current' &&
+													!isLoading &&
+													probability !== undefined &&
+													probability !== null && (
+														<Badge
+															className={cn(
+																'px-5 py-2.5 font-semibold text-3xl h-12',
+																getProbabilityBadgeColor(
+																	probability
+																)
+															)}
+														>
+															{probability.toFixed(
+																2
+															)}
+															%
+														</Badge>
+													)}
 											</div>
 											<div className="text-sm text-muted-foreground mt-1">
 												{selectedType === 'current'
@@ -533,43 +552,17 @@ export function CrashPointCards({
 												{isLoading ? (
 													<Skeleton className="w-20 h-5 rounded-sm" />
 												) : gameData ? (
-													<>
-														<div className="text-sm font-medium">
-															{`#${gameData.gameId}`}
-														</div>
-														{selectedType ===
-															'current' &&
-															probability !==
-																undefined &&
-															probability !==
-																null && (
-																<Badge
-																	variant="outline"
-																	className={cn(
-																		'px-2 py-0.5 text-sm font-medium',
-																		getProbabilityBadgeColor(
-																			probability
-																		)
-																	)}
-																>
-																	{probability.toFixed(
-																		2
-																	)}
-																	%
-																</Badge>
-															)}
-													</>
+													<div className="text-sm font-medium">
+														{`#${gameData.gameId}`}
+													</div>
 												) : (
 													<div className="text-sm font-medium">
 														-
 													</div>
 												)}
 											</div>
-											<div className="text-xs text-muted-foreground flex gap-2">
-												<span>Last Game</span>
-												{selectedType === 'current' && (
-													<span>• Probability</span>
-												)}
+											<div className="text-xs text-muted-foreground">
+												Last Game
 											</div>
 										</div>
 									</div>

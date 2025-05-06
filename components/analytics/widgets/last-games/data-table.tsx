@@ -233,7 +233,6 @@ export function DataTable({
 												</span>
 											) : (
 												<Badge
-													variant="outline"
 													className={cn(
 														'px-2.5 py-0.5 font-semibold',
 														getProbabilityBadgeColor(
