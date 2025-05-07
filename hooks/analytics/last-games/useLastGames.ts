@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { getApiHeaders } from '@/lib/api-config';
-import type {
-	BatchLastGamesData,
-	ApiGameResponse,
-} from '@/utils/analytics-types';
+import type { BatchLastGamesData } from '@/utils/analytics-types';
 
 // Helper function for retry mechanism with exponential backoff
 async function fetchWithRetry(
@@ -14,39 +11,50 @@ async function fetchWithRetry(
 	maxRetries = 3
 ) {
 	let retries = 0;
+	let lastError: Error | null = null;
 
 	while (retries < maxRetries) {
 		try {
-			const response = await fetch(url, options);
+			// Always add a timeout to prevent hanging requests
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-			// If successful, return the response
-			if (response.ok) {
+			const fetchOptions = {
+				...options,
+				signal: controller.signal,
+			};
+
+			try {
+				const response = await fetch(url, fetchOptions);
+				clearTimeout(timeoutId);
 				return response;
+			} catch (error) {
+				clearTimeout(timeoutId);
+				throw error; // Re-throw to be caught by the outer try/catch
 			}
-
-			// If we get a 504 Gateway Timeout, retry
-			if (response.status === 504) {
-				retries++;
-				if (retries >= maxRetries) {
-					return response; // Return the failing response if max retries reached
-				}
-
-				// Exponential backoff: 1s, 2s, 4s...
-				const delay = 2 ** (retries - 1) * 1000;
-				console.log(
-					`Gateway timeout (504). Retrying in ${delay}ms... (${retries}/${maxRetries})`
-				);
-				await new Promise((resolve) => setTimeout(resolve, delay));
-				continue;
-			}
-
-			// For other error statuses, don't retry
-			return response;
 		} catch (error) {
+			// Store the last error for reporting
+			lastError =
+				error instanceof Error
+					? error
+					: new Error('Unknown network error');
+			console.error(
+				`Network error (attempt ${retries + 1}/${maxRetries}):`,
+				lastError.message
+			);
+
 			// Network errors get retried
 			retries++;
 			if (retries >= maxRetries) {
-				throw error;
+				// Create a more descriptive error
+				const enhancedError = new Error(
+					`Failed to fetch after ${maxRetries} attempts: ${lastError.message} (${url})`
+				);
+				// Preserve original stack trace if possible
+				if ('stack' in lastError) {
+					enhancedError.stack = lastError.stack;
+				}
+				throw enhancedError;
 			}
 
 			const delay = 2 ** (retries - 1) * 1000;
@@ -57,7 +65,7 @@ async function fetchWithRetry(
 		}
 	}
 
-	throw new Error('Max retries reached');
+	throw lastError || new Error('Max retries reached with unknown error');
 }
 
 interface UseBatchLastGamesProps {
@@ -83,104 +91,153 @@ export function useBatchLastGames({
 		setIsLoading(true);
 		setError(null);
 		try {
-			// Call both APIs with retry mechanism
-			const minPointsResponse = await fetchWithRetry(
-				'/api/analytics/last-games/min-crash-points',
-				{
-					method: 'POST',
-					headers: getApiHeaders(),
-					body: JSON.stringify({ values }),
-				}
-			);
+			console.time('API Request Total Time');
+			console.time('API Network Time');
 
-			const exactFloorsResponse = await fetchWithRetry(
-				'/api/analytics/last-games/exact-floors',
-				{
-					method: 'POST',
-					headers: getApiHeaders(),
-					body: JSON.stringify({ values }),
-				}
-			);
+			// Try to fetch from both APIs - if one fails, we'll still try to show data from the other
+			let minPointsResponse = null;
+			let exactFloorsResponse = null;
 
-			// Check for non-OK responses
-			if (!minPointsResponse.ok) {
-				const errorText = await minPointsResponse.text();
-				if (errorText.includes('datetime is not JSON serializable')) {
-					throw new Error(
-						'Server error: Date formatting issue. Please try again later.'
+			try {
+				minPointsResponse = await fetchWithRetry(
+					'/api/analytics/last-games/min-crash-points',
+					{
+						method: 'POST',
+						headers: getApiHeaders(),
+						body: JSON.stringify({ values }),
+					}
+				);
+			} catch (error) {
+				console.error('Min crash points API error:', error);
+			}
+
+			try {
+				exactFloorsResponse = await fetchWithRetry(
+					'/api/analytics/last-games/exact-floors',
+					{
+						method: 'POST',
+						headers: getApiHeaders(),
+						body: JSON.stringify({ values }),
+					}
+				);
+			} catch (error) {
+				console.error('Exact floors API error:', error);
+			}
+
+			console.timeEnd('API Network Time');
+
+			// If both APIs failed, throw an error
+			if (!minPointsResponse && !exactFloorsResponse) {
+				throw new Error(
+					'Both API requests failed. Please check your network connection and try again.'
+				);
+			}
+
+			// Process available responses
+			let minPointsData = null;
+			let exactFloorsData = null;
+
+			// Check and process min points response
+			if (minPointsResponse?.ok) {
+				try {
+					minPointsData = await minPointsResponse.json();
+					if (minPointsData?.status === 'error') {
+						console.error(
+							'Min points API returned error status:',
+							minPointsData.message
+						);
+					}
+				} catch {
+					console.error('Error parsing min points JSON');
+				}
+			} else if (minPointsResponse) {
+				try {
+					const errorText = await minPointsResponse.text();
+					console.error(
+						`Min points API responded with status: ${minPointsResponse.status}`,
+						errorText
+					);
+				} catch {
+					console.error(
+						`Min points API responded with status: ${minPointsResponse.status}`
 					);
 				}
-				throw new Error(
-					`Min points API responded with status: ${minPointsResponse.status}`
-				);
 			}
 
-			if (!exactFloorsResponse.ok) {
-				const errorText = await exactFloorsResponse.text();
-				if (errorText.includes('datetime is not JSON serializable')) {
-					throw new Error(
-						'Server error: Date formatting issue. Please try again later.'
+			// Check and process exact floors response
+			if (exactFloorsResponse?.ok) {
+				try {
+					exactFloorsData = await exactFloorsResponse.json();
+					if (exactFloorsData?.status === 'error') {
+						console.error(
+							'Exact floors API returned error status:',
+							exactFloorsData.message
+						);
+					}
+				} catch {
+					console.error('Error parsing exact floors JSON');
+				}
+			} else if (exactFloorsResponse) {
+				try {
+					const errorText = await exactFloorsResponse.text();
+					console.error(
+						`Exact floors API responded with status: ${exactFloorsResponse.status}`,
+						errorText
+					);
+				} catch {
+					console.error(
+						`Exact floors API responded with status: ${exactFloorsResponse.status}`
 					);
 				}
-				throw new Error(
-					`Exact floors API responded with status: ${exactFloorsResponse.status}`
-				);
 			}
 
-			const minPointsData = await minPointsResponse.json();
-			const exactFloorsData = await exactFloorsResponse.json();
-
-			// Check for error status in the responses
-			if (minPointsData.status === 'error') {
-				throw new Error(
-					minPointsData.message || 'Error in min points data'
-				);
+			// If we don't have any valid data at this point, throw an error
+			if (
+				(!minPointsData || minPointsData?.status === 'error') &&
+				(!exactFloorsData || exactFloorsData?.status === 'error')
+			) {
+				throw new Error('Failed to fetch valid data from either API.');
 			}
 
-			if (exactFloorsData.status === 'error') {
-				throw new Error(
-					exactFloorsData.message || 'Error in exact floors data'
-				);
-			}
+			console.time('API Data Processing');
 
-			// Process the API responses into the expected format
+			// Process the API responses into the expected format - optimized for performance
 			const processedData: BatchLastGamesData = {};
 
+			// Pre-process the data maps for faster lookups
+			const minPointsMap = new Map();
+			const exactFloorsMap = new Map();
+
+			// Create efficient lookup maps once instead of repeated lookups
+			if (minPointsData?.data) {
+				for (const [key, value] of Object.entries(minPointsData.data)) {
+					const cleanKey = Number.parseFloat(key);
+					minPointsMap.set(cleanKey, value);
+					minPointsMap.set(key, value);
+				}
+			}
+
+			if (exactFloorsData?.data) {
+				for (const [key, value] of Object.entries(
+					exactFloorsData.data
+				)) {
+					const cleanKey = Number.parseFloat(key);
+					exactFloorsMap.set(cleanKey, value);
+					exactFloorsMap.set(key, value);
+				}
+			}
+
+			// Now process values with the efficient maps
 			for (const value of values) {
-				// API might use different format for keys (with .0 suffix for integers)
-				const valueStr = value.toString();
-				const valueWithDecimal = value.toString().includes('.')
-					? valueStr
-					: `${value}.0`;
-				const valueWithoutDecimal = valueStr.replace('.0', '');
+				// Try exact match first, then numeric match
+				const minPointEntry =
+					minPointsMap.get(value) ||
+					minPointsMap.get(value.toString());
+				const exactFloorEntry =
+					exactFloorsMap.get(value) ||
+					exactFloorsMap.get(value.toString());
 
-				// Try all possible key formats
-				const keysToTry = [
-					valueStr,
-					valueWithDecimal,
-					valueWithoutDecimal,
-				];
-
-				let minPointEntry: ApiGameResponse | undefined;
-				let exactFloorEntry: ApiGameResponse | undefined;
-
-				// Find the correct key in min points data
-				for (const key of keysToTry) {
-					if (minPointsData.data[key]) {
-						minPointEntry = minPointsData.data[key];
-						break;
-					}
-				}
-
-				// Find the correct key in exact floors data
-				for (const key of keysToTry) {
-					if (exactFloorsData.data[key]) {
-						exactFloorEntry = exactFloorsData.data[key];
-						break;
-					}
-				}
-
-				// Store both game data sets separately
+				// Store both game data sets separately, with fallbacks for missing data
 				processedData[value] = {
 					current: minPointEntry?.games_since ?? 0,
 					unique: exactFloorEntry?.games_since ?? 0,
@@ -190,8 +247,10 @@ export function useBatchLastGames({
 					uniqueProbability: exactFloorEntry?.probability || null,
 				};
 			}
+			console.timeEnd('API Data Processing');
 
 			setData(processedData);
+			console.timeEnd('API Request Total Time');
 		} catch (err) {
 			console.error('API request failed:', err);
 			setError(
