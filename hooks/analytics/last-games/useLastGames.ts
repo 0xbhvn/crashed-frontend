@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { getApiHeaders } from '@/lib/api-config';
 import type { BatchLastGamesData } from '@/utils/analytics-types';
 
+const CLIENT_FETCH_TIMEOUT_REASON =
+	'Client-side fetch timed out after 15 seconds';
+
 // Helper function for retry mechanism with exponential backoff
 async function fetchWithRetry(
 	url: string,
@@ -17,7 +20,10 @@ async function fetchWithRetry(
 		try {
 			// Always add a timeout to prevent hanging requests
 			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+			const timeoutId = setTimeout(
+				() => controller.abort(CLIENT_FETCH_TIMEOUT_REASON),
+				15000
+			);
 
 			const fetchOptions = {
 				...options,
@@ -33,26 +39,37 @@ async function fetchWithRetry(
 				throw error; // Re-throw to be caught by the outer try/catch
 			}
 		} catch (error) {
-			// Store the last error for reporting
 			lastError =
 				error instanceof Error
 					? error
 					: new Error('Unknown network error');
+
+			let causeMessage = '';
+			if (lastError.cause) {
+				causeMessage = ` Cause: ${
+					lastError.cause instanceof Error
+						? lastError.cause.message
+						: String(lastError.cause)
+				}`;
+			}
+
 			console.error(
-				`Network error (attempt ${retries + 1}/${maxRetries}):`,
-				lastError.message
+				`Network error (attempt ${retries + 1}/${maxRetries}): Name: ${
+					lastError.name
+				}, Message: ${lastError.message}.${causeMessage} URL: ${url}`,
+				lastError // Log the full error object
 			);
 
-			// Network errors get retried
 			retries++;
 			if (retries >= maxRetries) {
-				// Create a more descriptive error
 				const enhancedError = new Error(
 					`Failed to fetch after ${maxRetries} attempts: ${lastError.message} (${url})`
-				);
-				// Preserve original stack trace if possible
-				if ('stack' in lastError) {
+				) as Error & { cause?: unknown };
+				if (lastError.stack) {
 					enhancedError.stack = lastError.stack;
+				}
+				if (lastError.cause) {
+					enhancedError.cause = lastError.cause;
 				}
 				throw enhancedError;
 			}
