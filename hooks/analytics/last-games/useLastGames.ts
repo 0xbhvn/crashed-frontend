@@ -5,7 +5,7 @@ import { getApiHeaders } from '@/lib/api-config';
 import type { BatchLastGamesData } from '@/utils/analytics-types';
 
 const CLIENT_FETCH_TIMEOUT_REASON =
-	'Client-side fetch timed out after 15 seconds';
+	'Client-side fetch timed out after 10 seconds';
 
 // Helper function for retry mechanism with exponential backoff
 async function fetchWithRetry(
@@ -22,7 +22,7 @@ async function fetchWithRetry(
 			const controller = new AbortController();
 			const timeoutId = setTimeout(
 				() => controller.abort(CLIENT_FETCH_TIMEOUT_REASON),
-				15000
+				10000
 			);
 
 			const fetchOptions = {
@@ -111,37 +111,46 @@ export function useBatchLastGames({
 			console.time('API Request Total Time');
 			console.time('API Network Time');
 
-			// Try to fetch from both APIs - if one fails, we'll still try to show data from the other
-			let minPointsResponse = null;
-			let exactFloorsResponse = null;
-
-			try {
-				minPointsResponse = await fetchWithRetry(
-					'/api/analytics/last-games/min-crash-points',
-					{
+			// Try to fetch from both APIs concurrently
+			const [minPointsResult, exactFloorsResult] =
+				await Promise.allSettled([
+					fetchWithRetry(
+						'/api/analytics/last-games/min-crash-points',
+						{
+							method: 'POST',
+							headers: getApiHeaders(),
+							body: JSON.stringify({ values }),
+						}
+					),
+					fetchWithRetry('/api/analytics/last-games/exact-floors', {
 						method: 'POST',
 						headers: getApiHeaders(),
 						body: JSON.stringify({ values }),
-					}
-				);
-			} catch (error) {
-				console.error('Min crash points API error:', error);
-			}
-
-			try {
-				exactFloorsResponse = await fetchWithRetry(
-					'/api/analytics/last-games/exact-floors',
-					{
-						method: 'POST',
-						headers: getApiHeaders(),
-						body: JSON.stringify({ values }),
-					}
-				);
-			} catch (error) {
-				console.error('Exact floors API error:', error);
-			}
+					}),
+				]);
 
 			console.timeEnd('API Network Time');
+
+			// Process responses
+			let minPointsResponse = null;
+			if (minPointsResult.status === 'fulfilled') {
+				minPointsResponse = minPointsResult.value;
+			} else {
+				console.error(
+					'Min crash points API fetch failed:',
+					minPointsResult.reason
+				);
+			}
+
+			let exactFloorsResponse = null;
+			if (exactFloorsResult.status === 'fulfilled') {
+				exactFloorsResponse = exactFloorsResult.value;
+			} else {
+				console.error(
+					'Exact floors API fetch failed:',
+					exactFloorsResult.reason
+				);
+			}
 
 			// If both APIs failed, throw an error
 			if (!minPointsResponse && !exactFloorsResponse) {
@@ -213,6 +222,32 @@ export function useBatchLastGames({
 				(!minPointsData || minPointsData?.status === 'error') &&
 				(!exactFloorsData || exactFloorsData?.status === 'error')
 			) {
+				// Check if the errors were due to client-side timeouts specifically
+				let timeoutError = false;
+				if (
+					minPointsResult.status === 'rejected' &&
+					minPointsResult.reason instanceof Error &&
+					minPointsResult.reason.message.includes(
+						CLIENT_FETCH_TIMEOUT_REASON
+					)
+				) {
+					timeoutError = true;
+				}
+				if (
+					exactFloorsResult.status === 'rejected' &&
+					exactFloorsResult.reason instanceof Error &&
+					exactFloorsResult.reason.message.includes(
+						CLIENT_FETCH_TIMEOUT_REASON
+					)
+				) {
+					timeoutError = true;
+				}
+
+				if (timeoutError) {
+					throw new Error(
+						'API request timed out. Please check your network or simplify your request.'
+					);
+				}
 				throw new Error('Failed to fetch valid data from either API.');
 			}
 

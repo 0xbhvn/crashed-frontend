@@ -125,9 +125,7 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 				})
 				.finally(() => {
 					// Reset the refreshing flag after operation completes
-					setTimeout(() => {
-						isRefreshingRef.current = false;
-					}, 1000);
+					isRefreshingRef.current = false;
 				});
 		}
 	}, [fetchData, latestGame]);
@@ -169,9 +167,7 @@ export function useRealTimeBatchGames({ values }: UseRealTimeBatchGamesProps) {
 				})
 				.finally(() => {
 					// Reset the refreshing flag after operation completes
-					setTimeout(() => {
-						isRefreshingRef.current = false;
-					}, 1000);
+					isRefreshingRef.current = false;
 				});
 		}
 	}, [fetchData, values]);

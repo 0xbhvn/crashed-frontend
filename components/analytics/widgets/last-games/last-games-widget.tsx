@@ -77,10 +77,11 @@ export function LastGamesTable({
 		if (!batchData) return;
 
 		// Store point references in a variable to avoid recreating on every render
-		const currentPointsToProcess = [...pointsToShow];
+		const currentPointsToProcess = pointsToShow; // pointsToShow is already memoized
 
 		function updateTimeAgo() {
 			const newTimeAgoMap: TimeAgoMap = {};
+			let hasChanged = false;
 
 			for (const point of currentPointsToProcess) {
 				if (!batchData || !batchData[point]) continue;
@@ -104,13 +105,39 @@ export function LastGamesTable({
 						delimiter: ', ',
 					});
 
-					newTimeAgoMap[point] = formatted
+					const newTimeString = formatted
 						? `${formatted} ago`
 						: 'just now';
+
+					if (timeAgoMap[point] !== newTimeString) {
+						hasChanged = true;
+					}
+					newTimeAgoMap[point] = newTimeString;
+				} else if (timeAgoMap[point] !== undefined) {
+					// If gameData or beginTime is no longer available, but we had a value, it's a change.
+					hasChanged = true;
 				}
 			}
 
-			setTimeAgoMap(newTimeAgoMap);
+			// Also check if any keys were removed (e.g. point removed from pointsToShow)
+			if (!hasChanged) {
+				const oldKeys = Object.keys(timeAgoMap);
+				const newKeys = Object.keys(newTimeAgoMap);
+				if (oldKeys.length !== newKeys.length) {
+					hasChanged = true;
+				} else {
+					for (const key of oldKeys) {
+						if (!newKeys.includes(key)) {
+							hasChanged = true;
+							break;
+						}
+					}
+				}
+			}
+
+			if (hasChanged) {
+				setTimeAgoMap(newTimeAgoMap);
+			}
 		}
 
 		// Initial update
@@ -121,7 +148,7 @@ export function LastGamesTable({
 
 		// Clean up on unmount
 		return () => clearInterval(intervalId);
-	}, [batchData, pointsToShow, selectedType]);
+	}, [batchData, pointsToShow, selectedType, timeAgoMap]); // Added timeAgoMap to dependencies
 
 	// Handle crash point changes from the cards
 	const handleCrashPointAdded = (newPoint: number) => {

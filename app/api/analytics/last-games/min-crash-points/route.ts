@@ -5,59 +5,6 @@ import { getApiUrl, getApiHeaders } from '@/lib/api-config';
 // Export maxDuration for Vercel Serverless Functions
 export const maxDuration = 30; // In seconds
 
-// Helper function for fetch with retry and timeout
-async function fetchWithRetryAndTimeout(
-	url: string,
-	options: RequestInit,
-	maxRetries = 3,
-	timeoutMs = 8000
-) {
-	let retries = 0;
-
-	while (retries < maxRetries) {
-		try {
-			// Create an AbortController to handle timeout
-			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-			// Add the signal to the options
-			const fetchOptions = {
-				...options,
-				signal: controller.signal,
-			};
-
-			try {
-				const response = await fetch(url, fetchOptions);
-				clearTimeout(timeoutId);
-				return response;
-			} catch (error) {
-				clearTimeout(timeoutId);
-
-				// Check if it was a timeout
-				if (error instanceof Error && error.name === 'AbortError') {
-					console.log(`Request timed out after ${timeoutMs}ms`);
-					// Treat timeout as a retriable error
-					throw new Error('Request timed out');
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			retries++;
-			if (retries >= maxRetries) {
-				throw error;
-			}
-
-			// Exponential backoff: 1s, 2s, 4s...
-			const delay = 2 ** (retries - 1) * 1000;
-			console.log(`Retrying in ${delay}ms... (${retries}/${maxRetries})`);
-			await new Promise((resolve) => setTimeout(resolve, delay));
-		}
-	}
-
-	throw new Error('Max retries reached');
-}
-
 export async function POST(request: NextRequest) {
 	try {
 		// Get the request body
@@ -66,18 +13,21 @@ export async function POST(request: NextRequest) {
 		// Construct the API URL
 		const backendUrl = getApiUrl('analytics/last-games/min-crash-points');
 
-		// Call with retry and timeout
-		const backendResponse = await fetchWithRetryAndTimeout(
-			backendUrl,
-			{
-				method: 'POST',
-				headers: getApiHeaders(),
-				body: JSON.stringify(requestBody),
-				cache: 'no-store',
-			},
-			3, // Max retries
-			8000 // Timeout in ms
-		);
+		// Simple fetch with AbortController for timeout safety
+		const controller = new AbortController();
+		// Set a longer timeout (20s) but still have some safety
+		const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+		const backendResponse = await fetch(backendUrl, {
+			method: 'POST',
+			headers: getApiHeaders(),
+			body: JSON.stringify(requestBody),
+			cache: 'no-store',
+			signal: controller.signal,
+		});
+
+		// Always clear the timeout
+		clearTimeout(timeoutId);
 
 		// Check if the response was successful
 		if (!backendResponse.ok) {
