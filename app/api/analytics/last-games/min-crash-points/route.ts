@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { getApiUrl, getApiHeaders } from '@/lib/api-config';
 
+// Export maxDuration for Vercel Serverless Functions
+export const maxDuration = 30; // In seconds
+
 // Helper function for fetch with retry and timeout
 async function fetchWithRetryAndTimeout(
 	url: string,
