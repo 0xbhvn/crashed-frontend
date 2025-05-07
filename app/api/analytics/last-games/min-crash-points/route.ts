@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
 
 		// Construct the API URL
 		const backendUrl = getApiUrl('analytics/last-games/min-crash-points');
+		console.log('Attempting to call backend API at:', backendUrl);
 
 		const backendResponse = await fetch(backendUrl, {
 			method: 'POST',
@@ -17,8 +18,12 @@ export async function POST(request: NextRequest) {
 			cache: 'no-store',
 		});
 
+		console.log(`Backend response status: ${backendResponse.status}`);
+
 		// Check if the response was successful
 		if (!backendResponse.ok) {
+			const errorText = await backendResponse.text();
+			console.error('Backend API error response text:', errorText);
 			throw new Error(
 				`Backend API responded with status: ${backendResponse.status}`
 			);
@@ -26,6 +31,7 @@ export async function POST(request: NextRequest) {
 
 		// Get the response data
 		const data = await backendResponse.json();
+		console.log('Data received from backend:', data);
 
 		// Return the data to the client
 		return NextResponse.json(data);
