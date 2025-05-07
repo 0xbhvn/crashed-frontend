@@ -467,9 +467,7 @@ export function IntervalsWidget({ className }: BaseWidgetProps) {
 				<IntervalsControls
 					value={value}
 					inputValue={inputValue}
-					hours={hours}
 					hoursInputValue={hoursInputValue}
-					games={games}
 					gamesInputValue={gamesInputValue}
 					timeInterval={timeInterval}
 					gameInterval={gameInterval}
