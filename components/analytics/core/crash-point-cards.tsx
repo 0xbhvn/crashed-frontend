@@ -14,7 +14,7 @@ import {
 import type { BatchLastGamesData } from '@/utils/analytics-types';
 
 // Initial points to display in the cards
-const INITIAL_DISPLAY_POINTS = [2, 10];
+const INITIAL_DISPLAY_POINTS = [2, 4, 7, 10];
 
 interface CrashPointCardsProps {
 	selectedType: 'current' | 'unique';
