@@ -7,6 +7,59 @@ import type {
 	ApiGameResponse,
 } from '@/utils/analytics-types';
 
+// Helper function for retry mechanism with exponential backoff
+async function fetchWithRetry(
+	url: string,
+	options: RequestInit,
+	maxRetries = 3
+) {
+	let retries = 0;
+
+	while (retries < maxRetries) {
+		try {
+			const response = await fetch(url, options);
+
+			// If successful, return the response
+			if (response.ok) {
+				return response;
+			}
+
+			// If we get a 504 Gateway Timeout, retry
+			if (response.status === 504) {
+				retries++;
+				if (retries >= maxRetries) {
+					return response; // Return the failing response if max retries reached
+				}
+
+				// Exponential backoff: 1s, 2s, 4s...
+				const delay = 2 ** (retries - 1) * 1000;
+				console.log(
+					`Gateway timeout (504). Retrying in ${delay}ms... (${retries}/${maxRetries})`
+				);
+				await new Promise((resolve) => setTimeout(resolve, delay));
+				continue;
+			}
+
+			// For other error statuses, don't retry
+			return response;
+		} catch (error) {
+			// Network errors get retried
+			retries++;
+			if (retries >= maxRetries) {
+				throw error;
+			}
+
+			const delay = 2 ** (retries - 1) * 1000;
+			console.log(
+				`Network error. Retrying in ${delay}ms... (${retries}/${maxRetries})`
+			);
+			await new Promise((resolve) => setTimeout(resolve, delay));
+		}
+	}
+
+	throw new Error('Max retries reached');
+}
+
 interface UseBatchLastGamesProps {
 	values: number[];
 	type?: 'current' | 'unique';
@@ -30,8 +83,8 @@ export function useBatchLastGames({
 		setIsLoading(true);
 		setError(null);
 		try {
-			// Call both APIs and process the responses
-			const minPointsResponse = await fetch(
+			// Call both APIs with retry mechanism
+			const minPointsResponse = await fetchWithRetry(
 				'/api/analytics/last-games/min-crash-points',
 				{
 					method: 'POST',
@@ -40,7 +93,7 @@ export function useBatchLastGames({
 				}
 			);
 
-			const exactFloorsResponse = await fetch(
+			const exactFloorsResponse = await fetchWithRetry(
 				'/api/analytics/last-games/exact-floors',
 				{
 					method: 'POST',
