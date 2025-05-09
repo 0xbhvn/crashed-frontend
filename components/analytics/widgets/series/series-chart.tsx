@@ -45,9 +45,6 @@ export interface SeriesChartProps {
 		p25: number;
 		p50: number;
 		p75: number;
-		p90: number;
-		p95: number;
-		p99: number;
 	};
 }
 
@@ -58,10 +55,8 @@ export function SeriesChart({
 	pulseClass,
 	percentiles,
 }: SeriesChartProps) {
-	// State to track which percentile is being hovered
-	const [hoveredPercentile, setHoveredPercentile] = React.useState<
-		number | null
-	>(null);
+	// State to track which percentile class is being hovered
+	const [hoveredClass, setHoveredClass] = React.useState<string | null>(null);
 
 	// Get faded versions of colors for reference lines and text
 	const getFadedColor = (ratio: number): string => {
@@ -81,9 +76,12 @@ export function SeriesChart({
 	const p25FadedColor = getFadedColor(percentiles.p25 / value);
 	const p50FadedColor = getFadedColor(percentiles.p50 / value);
 	const p75FadedColor = getFadedColor(percentiles.p75 / value);
-	const p90FadedColor = getFadedColor(percentiles.p90 / value);
-	const p95FadedColor = getFadedColor(percentiles.p95 / value);
-	const p99FadedColor = getFadedColor(percentiles.p99 / value);
+
+	// Class colors
+	const c0Color = 'hsl(210, 90%, 50%)'; // Blue - matching blue-400/blue-800
+	const c1Color = 'hsl(142, 90%, 40%)'; // Green - matching green-400/green-800
+	const c2Color = 'hsl(48, 95%, 50%)'; // Yellow - matching yellow-400/yellow-800
+	const c3Color = 'hsl(0, 90%, 45%)'; // Red - matching red-400/red-800
 
 	return (
 		<div
@@ -157,27 +155,6 @@ export function SeriesChart({
 					<ReferenceLine
 						y={percentiles.p75}
 						stroke={p75FadedColor}
-						strokeDasharray="3 3"
-					/>
-
-					{/* P90 Reference Line */}
-					<ReferenceLine
-						y={percentiles.p90}
-						stroke={p90FadedColor}
-						strokeDasharray="3 3"
-					/>
-
-					{/* P95 Reference Line */}
-					<ReferenceLine
-						y={percentiles.p95}
-						stroke={p95FadedColor}
-						strokeDasharray="3 3"
-					/>
-
-					{/* P99 Reference Line */}
-					<ReferenceLine
-						y={percentiles.p99}
-						stroke={p99FadedColor}
 						strokeDasharray="3 3"
 					/>
 
@@ -327,24 +304,29 @@ export function SeriesChart({
 					/>
 					<Bar dataKey="length">
 						{chartData.map((entry, index) => {
-							// Get color based on percentile thresholds
+							// Determine which class this entry belongs to
 							let colorClass = '';
+							let entryClass = '';
 
-							// Below P25 - Blue
+							// c0: < p25 - Blue
 							if (entry.length < percentiles.p25) {
-								colorClass = 'hsl(210, 90%, 50%)'; // Blue - matching blue-400/blue-800
+								colorClass = c0Color;
+								entryClass = 'c0';
 							}
-							// P25 to P50 - Green
+							// c1: p25 to p50 - Green
 							else if (entry.length < percentiles.p50) {
-								colorClass = 'hsl(142, 90%, 40%)'; // Green - matching green-400/green-800
+								colorClass = c1Color;
+								entryClass = 'c1';
 							}
-							// P50 to P75 - Yellow
+							// c2: p50 to p75 - Yellow
 							else if (entry.length < percentiles.p75) {
-								colorClass = 'hsl(48, 95%, 50%)'; // Yellow - matching yellow-400/yellow-800
+								colorClass = c2Color;
+								entryClass = 'c2';
 							}
-							// Above P75 - Red
+							// c3: > p75 - Red
 							else {
-								colorClass = 'hsl(0, 90%, 45%)'; // Red - matching red-400/red-800
+								colorClass = c3Color;
+								entryClass = 'c3';
 							}
 
 							// Check if this is the latest bar when sorted by time (last item)
@@ -352,11 +334,11 @@ export function SeriesChart({
 								sortBy === 'time' &&
 								index === chartData.length - 1;
 
-							// Check if this bar should be highlighted based on percentile hovering
-							// Highlight bars that are greater than or equal to the hovered percentile
+							// Check if this bar should be highlighted based on class hovering
+							// Only highlight bars in the exact class that is being hovered
 							const isHighlighted =
-								hoveredPercentile !== null &&
-								entry.length >= hoveredPercentile;
+								hoveredClass !== null &&
+								entryClass === hoveredClass;
 
 							// Apply classes based on conditions
 							let className = '';
@@ -364,9 +346,9 @@ export function SeriesChart({
 							if (isHighlighted)
 								className += ' opacity-100 brightness-110';
 
-							// Apply opacity to non-highlighted bars when a percentile is hovered
+							// Apply opacity to non-highlighted bars when a class is hovered
 							const opacity =
-								hoveredPercentile !== null
+								hoveredClass !== null
 									? isHighlighted
 										? 1
 										: 0.3
@@ -389,80 +371,56 @@ export function SeriesChart({
 			<div className="flex flex-wrap justify-center gap-4 mt-4 px-2 text-sm">
 				<div
 					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredPercentile(percentiles.p25)}
-					onMouseLeave={() => setHoveredPercentile(null)}
+					onMouseEnter={() => setHoveredClass('c0')}
+					onMouseLeave={() => setHoveredClass(null)}
 				>
 					<span
-						className="inline-block w-4 h-0.5"
-						style={{ backgroundColor: p25FadedColor }}
+						className="inline-block w-4 h-4 rounded-sm"
+						style={{ backgroundColor: c0Color }}
 					/>
 					<span className="ml-1.5">
-						P25: {Math.round(percentiles.p25)}
+						c0: &lt; {Math.round(percentiles.p25)}
 					</span>
 				</div>
 				<div
 					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredPercentile(percentiles.p50)}
-					onMouseLeave={() => setHoveredPercentile(null)}
+					onMouseEnter={() => setHoveredClass('c1')}
+					onMouseLeave={() => setHoveredClass(null)}
 				>
 					<span
-						className="inline-block w-4 h-0.5"
-						style={{ backgroundColor: p50FadedColor }}
+						className="inline-block w-4 h-4 rounded-sm"
+						style={{ backgroundColor: c1Color }}
 					/>
 					<span className="ml-1.5">
-						P50: {Math.round(percentiles.p50)}
+						c1: {Math.round(percentiles.p25)} -{' '}
+						{Math.round(percentiles.p50)}
 					</span>
 				</div>
 				<div
 					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredPercentile(percentiles.p75)}
-					onMouseLeave={() => setHoveredPercentile(null)}
+					onMouseEnter={() => setHoveredClass('c2')}
+					onMouseLeave={() => setHoveredClass(null)}
 				>
 					<span
-						className="inline-block w-4 h-0.5"
-						style={{ backgroundColor: p75FadedColor }}
+						className="inline-block w-4 h-4 rounded-sm"
+						style={{ backgroundColor: c2Color }}
 					/>
 					<span className="ml-1.5">
-						P75: {Math.round(percentiles.p75)}
+						c2: {Math.round(percentiles.p50)} -{' '}
+						{Math.round(percentiles.p75)}
 					</span>
 				</div>
 				<div
 					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredPercentile(percentiles.p90)}
-					onMouseLeave={() => setHoveredPercentile(null)}
+					onMouseEnter={() => setHoveredClass('c3')}
+					onMouseLeave={() => setHoveredClass(null)}
 				>
 					<span
-						className="inline-block w-4 h-0.5"
-						style={{ backgroundColor: p90FadedColor }}
+						className="inline-block w-4 h-4 rounded-sm"
+						style={{ backgroundColor: c3Color }}
 					/>
 					<span className="ml-1.5">
-						P90: {Math.round(percentiles.p90)}
-					</span>
-				</div>
-				<div
-					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredPercentile(percentiles.p95)}
-					onMouseLeave={() => setHoveredPercentile(null)}
-				>
-					<span
-						className="inline-block w-4 h-0.5"
-						style={{ backgroundColor: p95FadedColor }}
-					/>
-					<span className="ml-1.5">
-						P95: {Math.round(percentiles.p95)}
-					</span>
-				</div>
-				<div
-					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredPercentile(percentiles.p99)}
-					onMouseLeave={() => setHoveredPercentile(null)}
-				>
-					<span
-						className="inline-block w-4 h-0.5"
-						style={{ backgroundColor: p99FadedColor }}
-					/>
-					<span className="ml-1.5">
-						P99: {Math.round(percentiles.p99)}
+						c3: &gt; {Math.round(percentiles.p75)}
 					</span>
 				</div>
 			</div>

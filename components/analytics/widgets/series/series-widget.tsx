@@ -241,7 +241,7 @@ export function SeriesWidget({
 	// Calculate percentile values for the reference lines
 	const percentiles = React.useMemo(() => {
 		if (!chartData || chartData.length === 0)
-			return { p25: 0, p50: 0, p75: 0, p90: 0, p95: 0, p99: 0 };
+			return { p25: 0, p50: 0, p75: 0 };
 
 		// Sort lengths for percentile calculations
 		const sortedLengths = [...chartData]
@@ -253,14 +253,11 @@ export function SeriesWidget({
 			return sortedLengths[index];
 		};
 
-		// Calculate P25, P50 (median), P75, P90, P95, and P99
+		// Calculate P25, P50 (median), and P75
 		return {
 			p25: getPercentile(25),
 			p50: getPercentile(50),
 			p75: getPercentile(75),
-			p90: getPercentile(90),
-			p95: getPercentile(95),
-			p99: getPercentile(99),
 		};
 	}, [chartData]);
 
