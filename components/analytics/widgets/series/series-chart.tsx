@@ -42,6 +42,7 @@ export interface SeriesChartProps {
 	sortBy: 'time' | 'length';
 	pulseClass: string;
 	percentiles: {
+		p25: number;
 		p50: number;
 		p75: number;
 		p90: number;
@@ -77,6 +78,7 @@ export function SeriesChart({
 	};
 
 	// Faded colors for reference lines and text
+	const p25FadedColor = getFadedColor(percentiles.p25 / value);
 	const p50FadedColor = getFadedColor(percentiles.p50 / value);
 	const p75FadedColor = getFadedColor(percentiles.p75 / value);
 	const p90FadedColor = getFadedColor(percentiles.p90 / value);
@@ -135,6 +137,13 @@ export function SeriesChart({
 							angle: -90,
 							position: 'insideLeft',
 						}}
+					/>
+
+					{/* P25 Reference Line */}
+					<ReferenceLine
+						y={percentiles.p25}
+						stroke={p25FadedColor}
+						strokeDasharray="3 3"
 					/>
 
 					{/* P50 (Median) Reference Line */}
@@ -318,22 +327,24 @@ export function SeriesChart({
 					/>
 					<Bar dataKey="length">
 						{chartData.map((entry, index) => {
-							// Calculate ratio relative to the value
-							const ratio = entry.length / value;
+							// Get color based on percentile thresholds
+							let colorClass = '';
 
-							// Map to different color spectrums based on ratio
-							let hue: number;
-
-							if (ratio < 1) {
-								// Below crash value: Blue to Green (240-120)
-								// At ratio=0: Blue (240)
-								// At ratio=1: Green (120)
-								hue = 240 - ratio * 120;
-							} else {
-								// At or above crash value: Yellow to Red (60-0)
-								// At ratio=1: Yellow (60)
-								// At ratio=3 or higher: Red (0)
-								hue = Math.max(60 - (ratio - 1) * 30, 0);
+							// Below P25 - Blue
+							if (entry.length < percentiles.p25) {
+								colorClass = 'hsl(210, 90%, 50%)'; // Blue - matching blue-400/blue-800
+							}
+							// P25 to P50 - Green
+							else if (entry.length < percentiles.p50) {
+								colorClass = 'hsl(142, 90%, 40%)'; // Green - matching green-400/green-800
+							}
+							// P50 to P75 - Yellow
+							else if (entry.length < percentiles.p75) {
+								colorClass = 'hsl(48, 95%, 50%)'; // Yellow - matching yellow-400/yellow-800
+							}
+							// Above P75 - Red
+							else {
+								colorClass = 'hsl(0, 90%, 45%)'; // Red - matching red-400/red-800
 							}
 
 							// Check if this is the latest bar when sorted by time (last item)
@@ -364,7 +375,7 @@ export function SeriesChart({
 							return (
 								<Cell
 									key={`cell-${entry.seriesId}`}
-									fill={`hsl(${hue}, 90%, 50%)`}
+									fill={colorClass}
 									className={className}
 									style={{ opacity }}
 								/>
@@ -376,6 +387,19 @@ export function SeriesChart({
 
 			{/* Percentile legend */}
 			<div className="flex flex-wrap justify-center gap-4 mt-4 px-2 text-sm">
+				<div
+					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
+					onMouseEnter={() => setHoveredPercentile(percentiles.p25)}
+					onMouseLeave={() => setHoveredPercentile(null)}
+				>
+					<span
+						className="inline-block w-4 h-0.5"
+						style={{ backgroundColor: p25FadedColor }}
+					/>
+					<span className="ml-1.5">
+						P25: {Math.round(percentiles.p25)}
+					</span>
+				</div>
 				<div
 					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
 					onMouseEnter={() => setHoveredPercentile(percentiles.p50)}
