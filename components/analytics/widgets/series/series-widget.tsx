@@ -13,6 +13,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useRealTimeSeriesAnalysis } from '@/hooks/analytics';
+import { useBatchLastGames } from '@/hooks/analytics/last-games';
 
 import { pulseKeyframes } from './chart-components';
 import { SeriesControls } from './control-components';
@@ -62,6 +63,13 @@ export function SeriesWidget({
 		hours,
 		sortBy,
 	});
+
+	// Get games_since data for probability calculation
+	const { data: lastGamesData, isLoading: isLastGamesLoading } =
+		useBatchLastGames({
+			values: [value],
+			skipInitialFetch: false,
+		});
 
 	// Determine which data to use based on activeDataMode
 	const { data, isLoading, error, totalOccurrences } = React.useMemo(() => {
@@ -238,28 +246,14 @@ export function SeriesWidget({
 		return Array.isArray(data) ? data.slice(0, 5) : [];
 	}, [data]);
 
-	// Calculate percentile values for the reference lines
-	const percentiles = React.useMemo(() => {
-		if (!chartData || chartData.length === 0)
-			return { p25: 0, p50: 0, p75: 0 };
-
-		// Sort lengths for percentile calculations
-		const sortedLengths = [...chartData]
-			.map((item) => item.length)
-			.sort((a, b) => a - b);
-
-		const getPercentile = (p: number) => {
-			const index = Math.ceil((sortedLengths.length - 1) * (p / 100));
-			return sortedLengths[index];
-		};
-
-		// Calculate P25, P50 (median), and P75
-		return {
-			p25: getPercentile(25),
-			p50: getPercentile(50),
-			p75: getPercentile(75),
-		};
-	}, [chartData]);
+	// Get games_since for probability calculation
+	const gamesSince = React.useMemo(() => {
+		if (!lastGamesData || !lastGamesData[value]) {
+			return 0;
+		}
+		// Use 'current' games_since for min crash points
+		return lastGamesData[value].current || 0;
+	}, [lastGamesData, value]);
 
 	// Calculate max length (true longest series)
 	const maxLength = React.useMemo(() => {
@@ -530,7 +524,8 @@ export function SeriesWidget({
 									value={value}
 									sortBy={sortBy}
 									pulseClass={pulseClass}
-									percentiles={percentiles}
+									gamesSince={gamesSince}
+									isProbabilityLoading={isLastGamesLoading}
 								/>
 								<SeriesTable
 									topSeries={topSeries}

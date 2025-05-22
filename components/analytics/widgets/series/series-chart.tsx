@@ -17,6 +17,11 @@ import {
 	ChartTooltip,
 	type ChartConfig,
 } from '@/components/ui/chart';
+import {
+	getDynamicCrashCategories,
+	calculateCategoryProbabilities,
+	calculatePercentileThresholds,
+} from '@/utils/crash-probability';
 
 // This is our chart configuration
 export const chartConfig = {
@@ -41,11 +46,9 @@ export interface SeriesChartProps {
 	value: number;
 	sortBy: 'time' | 'length';
 	pulseClass: string;
-	percentiles: {
-		p25: number;
-		p50: number;
-		p75: number;
-	};
+	gamesSince?: number;
+	categoryProbabilities?: Record<string, number>;
+	isProbabilityLoading?: boolean;
 }
 
 export function SeriesChart({
@@ -53,12 +56,32 @@ export function SeriesChart({
 	value,
 	sortBy,
 	pulseClass,
-	percentiles,
+	gamesSince = 0,
+	categoryProbabilities = {},
+	isProbabilityLoading = false,
 }: SeriesChartProps) {
-	// State to track which percentile class is being hovered
+	// State to track which category class is being hovered
 	const [hoveredClass, setHoveredClass] = React.useState<string | null>(null);
 
-	// Get faded versions of colors for reference lines and text
+	// Calculate probabilities if gamesSince is available
+	const probabilities = React.useMemo(() => {
+		if (gamesSince > 0) {
+			return calculateCategoryProbabilities(value, gamesSince);
+		}
+		return categoryProbabilities;
+	}, [value, gamesSince, categoryProbabilities]);
+
+	// Dynamic category ranges based on crash point
+	const dynamicCategories = React.useMemo(() => {
+		return getDynamicCrashCategories(value);
+	}, [value]);
+
+	// Dynamic category thresholds for streak lengths
+	const categoryThresholds = React.useMemo(() => {
+		return calculatePercentileThresholds(value);
+	}, [value]);
+
+	// Get faded versions of colors for reference lines
 	const getFadedColor = (ratio: number): string => {
 		let hue: number;
 		if (ratio < 1) {
@@ -72,10 +95,10 @@ export function SeriesChart({
 		return `hsla(${hue}, 70%, 60%, 0.7)`;
 	};
 
-	// Faded colors for reference lines and text
-	const p25FadedColor = getFadedColor(percentiles.p25 / value);
-	const p50FadedColor = getFadedColor(percentiles.p50 / value);
-	const p75FadedColor = getFadedColor(percentiles.p75 / value);
+	// Faded colors for reference lines
+	const p25FadedColor = getFadedColor(categoryThresholds.p25 / value);
+	const p50FadedColor = getFadedColor(categoryThresholds.p50 / value);
+	const p75FadedColor = getFadedColor(categoryThresholds.p75 / value);
 
 	// Class colors
 	const c0Color = 'hsl(210, 90%, 50%)'; // Blue - matching blue-400/blue-800
@@ -137,23 +160,19 @@ export function SeriesChart({
 						}}
 					/>
 
-					{/* P25 Reference Line */}
+					{/* Dynamic Reference Lines for streak length boundaries */}
 					<ReferenceLine
-						y={percentiles.p25}
+						y={categoryThresholds.p25 + 0.5}
 						stroke={p25FadedColor}
 						strokeDasharray="3 3"
 					/>
-
-					{/* P50 (Median) Reference Line */}
 					<ReferenceLine
-						y={percentiles.p50}
+						y={categoryThresholds.p50 + 0.5}
 						stroke={p50FadedColor}
 						strokeDasharray="3 3"
 					/>
-
-					{/* P75 Reference Line */}
 					<ReferenceLine
-						y={percentiles.p75}
+						y={categoryThresholds.p75 + 0.5}
 						stroke={p75FadedColor}
 						strokeDasharray="3 3"
 					/>
@@ -304,29 +323,38 @@ export function SeriesChart({
 					/>
 					<Bar dataKey="length">
 						{chartData.map((entry, index) => {
-							// Determine which class this entry belongs to
+							// Determine which streak length category this entry belongs to
 							let colorClass = '';
 							let entryClass = '';
 
-							// c0: < p25 - Blue
-							if (entry.length < percentiles.p25) {
+							// p25: streaks 1 to p25 threshold - Blue
+							if (
+								entry.length >= 1 &&
+								entry.length <= categoryThresholds.p25
+							) {
 								colorClass = c0Color;
-								entryClass = 'c0';
+								entryClass = 'p25';
 							}
-							// c1: p25 to p50 - Green
-							else if (entry.length < percentiles.p50) {
+							// p25-p50: streaks p25+1 to p50 threshold - Green
+							else if (
+								entry.length >= categoryThresholds.p25 + 1 &&
+								entry.length <= categoryThresholds.p50
+							) {
 								colorClass = c1Color;
-								entryClass = 'c1';
+								entryClass = 'p25-p50';
 							}
-							// c2: p50 to p75 - Yellow
-							else if (entry.length < percentiles.p75) {
+							// p50-p75: streaks p50+1 to p75 threshold - Yellow
+							else if (
+								entry.length >= categoryThresholds.p50 + 1 &&
+								entry.length <= categoryThresholds.p75
+							) {
 								colorClass = c2Color;
-								entryClass = 'c2';
+								entryClass = 'p50-p75';
 							}
-							// c3: > p75 - Red
+							// >p75: streaks > p75 threshold - Red
 							else {
 								colorClass = c3Color;
-								entryClass = 'c3';
+								entryClass = '>p75';
 							}
 
 							// Check if this is the latest bar when sorted by time (last item)
@@ -367,11 +395,11 @@ export function SeriesChart({
 				</BarChart>
 			</ChartContainer>
 
-			{/* Percentile legend */}
+			{/* Static category legend with probabilities */}
 			<div className="flex flex-wrap justify-center gap-4 mt-4 px-2 text-sm">
 				<div
 					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredClass('c0')}
+					onMouseEnter={() => setHoveredClass('p25')}
 					onMouseLeave={() => setHoveredClass(null)}
 				>
 					<span
@@ -379,12 +407,21 @@ export function SeriesChart({
 						style={{ backgroundColor: c0Color }}
 					/>
 					<span className="ml-1.5">
-						c0: &lt; {Math.round(percentiles.p25)}
+						p25: {dynamicCategories.p25.display}
+						{isProbabilityLoading ? (
+							<span className="ml-1 text-xs font-medium text-muted-foreground">
+								(loading...)
+							</span>
+						) : probabilities.p25 ? (
+							<span className="ml-1 text-xs font-medium text-muted-foreground">
+								({probabilities.p25.toFixed(2)}%)
+							</span>
+						) : null}
 					</span>
 				</div>
 				<div
 					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredClass('c1')}
+					onMouseEnter={() => setHoveredClass('p25-p50')}
 					onMouseLeave={() => setHoveredClass(null)}
 				>
 					<span
@@ -392,13 +429,21 @@ export function SeriesChart({
 						style={{ backgroundColor: c1Color }}
 					/>
 					<span className="ml-1.5">
-						c1: {Math.round(percentiles.p25)} -{' '}
-						{Math.round(percentiles.p50)}
+						p25-p50: {dynamicCategories['p25-p50'].display}
+						{isProbabilityLoading ? (
+							<span className="ml-1 text-xs font-medium text-muted-foreground">
+								(loading...)
+							</span>
+						) : probabilities['p25-p50'] ? (
+							<span className="ml-1 text-xs font-medium text-muted-foreground">
+								({probabilities['p25-p50'].toFixed(2)}%)
+							</span>
+						) : null}
 					</span>
 				</div>
 				<div
 					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredClass('c2')}
+					onMouseEnter={() => setHoveredClass('p50-p75')}
 					onMouseLeave={() => setHoveredClass(null)}
 				>
 					<span
@@ -406,13 +451,21 @@ export function SeriesChart({
 						style={{ backgroundColor: c2Color }}
 					/>
 					<span className="ml-1.5">
-						c2: {Math.round(percentiles.p50)} -{' '}
-						{Math.round(percentiles.p75)}
+						p50-p75: {dynamicCategories['p50-p75'].display}
+						{isProbabilityLoading ? (
+							<span className="ml-1 text-xs font-medium text-muted-foreground">
+								(loading...)
+							</span>
+						) : probabilities['p50-p75'] ? (
+							<span className="ml-1 text-xs font-medium text-muted-foreground">
+								({probabilities['p50-p75'].toFixed(2)}%)
+							</span>
+						) : null}
 					</span>
 				</div>
 				<div
 					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredClass('c3')}
+					onMouseEnter={() => setHoveredClass('>p75')}
 					onMouseLeave={() => setHoveredClass(null)}
 				>
 					<span
@@ -420,7 +473,16 @@ export function SeriesChart({
 						style={{ backgroundColor: c3Color }}
 					/>
 					<span className="ml-1.5">
-						c3: &gt; {Math.round(percentiles.p75)}
+						&gt;p75: {dynamicCategories['>p75'].display}
+						{isProbabilityLoading ? (
+							<span className="ml-1 text-xs font-medium text-muted-foreground">
+								(loading...)
+							</span>
+						) : probabilities['>p75'] ? (
+							<span className="ml-1 text-xs font-medium text-muted-foreground">
+								({probabilities['>p75'].toFixed(2)}%)
+							</span>
+						) : null}
 					</span>
 				</div>
 			</div>
