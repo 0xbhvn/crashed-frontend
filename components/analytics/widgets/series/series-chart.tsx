@@ -412,7 +412,7 @@ export function SeriesChart({
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								(loading...)
 							</span>
-						) : probabilities.p25 ? (
+						) : probabilities.p25 !== undefined ? (
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								({probabilities.p25.toFixed(2)}%)
 							</span>
@@ -434,7 +434,7 @@ export function SeriesChart({
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								(loading...)
 							</span>
-						) : probabilities['p25-p50'] ? (
+						) : probabilities['p25-p50'] !== undefined ? (
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								({probabilities['p25-p50'].toFixed(2)}%)
 							</span>
@@ -456,7 +456,7 @@ export function SeriesChart({
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								(loading...)
 							</span>
-						) : probabilities['p50-p75'] ? (
+						) : probabilities['p50-p75'] !== undefined ? (
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								({probabilities['p50-p75'].toFixed(2)}%)
 							</span>
@@ -478,7 +478,7 @@ export function SeriesChart({
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								(loading...)
 							</span>
-						) : probabilities['>p75'] ? (
+						) : probabilities['>p75'] !== undefined ? (
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								({probabilities['>p75'].toFixed(2)}%)
 							</span>

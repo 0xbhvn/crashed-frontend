@@ -96,17 +96,23 @@ export function getDynamicCrashCategories(crash_point: number) {
 		p25: {
 			min: 1,
 			max: thresholds.p25,
-			display: `1-${thresholds.p25}`,
+			display: thresholds.p25 === 1 ? '1' : `1-${thresholds.p25}`,
 		},
 		'p25-p50': {
 			min: thresholds.p25 + 1,
 			max: thresholds.p50,
-			display: `${thresholds.p25 + 1}-${thresholds.p50}`,
+			display:
+				thresholds.p25 + 1 === thresholds.p50
+					? `${thresholds.p50}`
+					: `${thresholds.p25 + 1}-${thresholds.p50}`,
 		},
 		'p50-p75': {
 			min: thresholds.p50 + 1,
 			max: thresholds.p75,
-			display: `${thresholds.p50 + 1}-${thresholds.p75}`,
+			display:
+				thresholds.p50 + 1 === thresholds.p75
+					? `${thresholds.p75}`
+					: `${thresholds.p50 + 1}-${thresholds.p75}`,
 		},
 		'>p75': {
 			min: thresholds.p75 + 1,
