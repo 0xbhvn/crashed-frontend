@@ -84,6 +84,10 @@ export function useSeriesAnalysis({
 			const fullUrl = `${endpoint}?${queryParams.toString()}`;
 			console.log('[useSeriesAnalysis] Fetching from:', fullUrl);
 			console.log('[useSeriesAnalysis] Headers:', headers);
+			console.log(
+				'[useSeriesAnalysis] Current window location:',
+				window.location.href
+			);
 
 			// Add timeout to prevent hanging requests
 			const controller = new AbortController();
@@ -106,6 +110,11 @@ export function useSeriesAnalysis({
 					response.status
 				);
 				console.log('[useSeriesAnalysis] Response ok:', response.ok);
+				console.log('[useSeriesAnalysis] Response URL:', response.url);
+				console.log(
+					'[useSeriesAnalysis] Response headers:',
+					Object.fromEntries(response.headers.entries())
+				);
 
 				// Check for non-OK responses
 				if (!response.ok) {
@@ -113,6 +122,10 @@ export function useSeriesAnalysis({
 					console.error(
 						'[useSeriesAnalysis] API Error Response:',
 						errorText
+					);
+					console.error(
+						'[useSeriesAnalysis] Full response object:',
+						response
 					);
 					throw new Error(
 						`API responded with status: ${response.status} - ${errorText}`
