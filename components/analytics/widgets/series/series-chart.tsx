@@ -46,7 +46,6 @@ export interface SeriesChartProps {
 	value: number;
 	sortBy: 'time' | 'length';
 	pulseClass: string;
-	gamesSince?: number;
 	categoryProbabilities?: Record<string, number>;
 	isProbabilityLoading?: boolean;
 }
@@ -56,20 +55,62 @@ export function SeriesChart({
 	value,
 	sortBy,
 	pulseClass,
-	gamesSince = 0,
 	categoryProbabilities = {},
 	isProbabilityLoading = false,
 }: SeriesChartProps) {
 	// State to track which category class is being hovered
 	const [hoveredClass, setHoveredClass] = React.useState<string | null>(null);
 
-	// Calculate probabilities if gamesSince is available
+	// Debug logging
+	console.log(
+		'[SeriesChart] Props - isProbabilityLoading:',
+		isProbabilityLoading,
+		'categoryProbabilities:',
+		categoryProbabilities
+	);
+
+	// Calculate probabilities - always calculate for theoretical probabilities
 	const probabilities = React.useMemo(() => {
-		if (gamesSince > 0) {
-			return calculateCategoryProbabilities(value, gamesSince);
+		// Always calculate category probabilities for the given crash point
+		// The gamesSince parameter doesn't affect theoretical probabilities anyway
+		const theoreticalProbabilities = calculateCategoryProbabilities(
+			value,
+			0
+		);
+
+		console.log(
+			'[SeriesChart] Theoretical probabilities for crash point',
+			value,
+			':',
+			theoreticalProbabilities
+		);
+
+		// If we have category probabilities passed as props, prefer those
+		if (
+			categoryProbabilities &&
+			Object.keys(categoryProbabilities).length > 0
+		) {
+			console.log(
+				'[SeriesChart] Using passed category probabilities:',
+				categoryProbabilities
+			);
+			return categoryProbabilities;
 		}
-		return categoryProbabilities;
-	}, [value, gamesSince, categoryProbabilities]);
+
+		// Otherwise use theoretical probabilities
+		console.log('[SeriesChart] Using theoretical probabilities');
+		return theoreticalProbabilities;
+	}, [value, categoryProbabilities]);
+
+	// Debug final state
+	console.log(
+		'[SeriesChart] Final state - probabilities:',
+		probabilities,
+		'isProbabilityLoading:',
+		isProbabilityLoading,
+		'categoryProbabilities keys:',
+		Object.keys(categoryProbabilities).length
+	);
 
 	// Dynamic category ranges based on crash point
 	const dynamicCategories = React.useMemo(() => {
@@ -408,7 +449,8 @@ export function SeriesChart({
 					/>
 					<span className="ml-1.5">
 						p25: {dynamicCategories.p25.display}
-						{isProbabilityLoading ? (
+						{isProbabilityLoading &&
+						Object.keys(categoryProbabilities).length === 0 ? (
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								(loading...)
 							</span>
@@ -430,7 +472,8 @@ export function SeriesChart({
 					/>
 					<span className="ml-1.5">
 						p25-p50: {dynamicCategories['p25-p50'].display}
-						{isProbabilityLoading ? (
+						{isProbabilityLoading &&
+						Object.keys(categoryProbabilities).length === 0 ? (
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								(loading...)
 							</span>
@@ -452,7 +495,8 @@ export function SeriesChart({
 					/>
 					<span className="ml-1.5">
 						p50-p75: {dynamicCategories['p50-p75'].display}
-						{isProbabilityLoading ? (
+						{isProbabilityLoading &&
+						Object.keys(categoryProbabilities).length === 0 ? (
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								(loading...)
 							</span>
@@ -474,7 +518,8 @@ export function SeriesChart({
 					/>
 					<span className="ml-1.5">
 						&gt;p75: {dynamicCategories['>p75'].display}
-						{isProbabilityLoading ? (
+						{isProbabilityLoading &&
+						Object.keys(categoryProbabilities).length === 0 ? (
 							<span className="ml-1 text-xs font-medium text-muted-foreground">
 								(loading...)
 							</span>

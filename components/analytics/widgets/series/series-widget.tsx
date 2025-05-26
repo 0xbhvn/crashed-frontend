@@ -13,7 +13,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useRealTimeSeriesAnalysis } from '@/hooks/analytics';
-import { useBatchLastGames } from '@/hooks/analytics/last-games';
 
 import { pulseKeyframes } from './chart-components';
 import { SeriesControls } from './control-components';
@@ -63,13 +62,6 @@ export function SeriesWidget({
 		hours,
 		sortBy,
 	});
-
-	// Get games_since data for probability calculation
-	const { data: lastGamesData, isLoading: isLastGamesLoading } =
-		useBatchLastGames({
-			values: [value],
-			skipInitialFetch: false,
-		});
 
 	// Determine which data to use based on activeDataMode
 	const { data, isLoading, error, totalOccurrences } = React.useMemo(() => {
@@ -245,15 +237,6 @@ export function SeriesWidget({
 	const topSeries = React.useMemo(() => {
 		return Array.isArray(data) ? data.slice(0, 5) : [];
 	}, [data]);
-
-	// Get games_since for probability calculation
-	const gamesSince = React.useMemo(() => {
-		if (!lastGamesData || !lastGamesData[value]) {
-			return 0;
-		}
-		// Use 'current' games_since for min crash points
-		return lastGamesData[value].current || 0;
-	}, [lastGamesData, value]);
 
 	// Calculate max length (true longest series)
 	const maxLength = React.useMemo(() => {
@@ -524,8 +507,7 @@ export function SeriesWidget({
 									value={value}
 									sortBy={sortBy}
 									pulseClass={pulseClass}
-									gamesSince={gamesSince}
-									isProbabilityLoading={isLastGamesLoading}
+									isProbabilityLoading={false}
 								/>
 								<SeriesTable
 									topSeries={topSeries}
