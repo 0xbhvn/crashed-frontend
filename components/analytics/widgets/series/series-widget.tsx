@@ -18,6 +18,7 @@ import { pulseKeyframes } from './chart-components';
 import { SeriesControls } from './control-components';
 import { SeriesChart } from './series-chart';
 import { SeriesTable } from './series-table';
+import { SeriesQuartileTable } from './series-quartile-table';
 import type { SeriesWidgetProps } from './types';
 import type { ExportConfig } from '@/utils/export-utils';
 import type { ExcelExportConfig } from '@/utils/export-utils/excel';
@@ -42,6 +43,9 @@ export function SeriesWidget({
 	const [hoursInput, setHoursInput] = React.useState(hours.toString());
 	const [analyzeBy, setAnalyzeBy] = React.useState<'games' | 'time'>('games');
 	const [pulseClass, setPulseClass] = React.useState<string>('');
+	const [hoveredQuartile, setHoveredQuartile] = React.useState<string | null>(
+		null
+	);
 
 	// Track which data set to display (separate from the tab state)
 	const [activeDataMode, setActiveDataMode] = React.useState<
@@ -508,6 +512,15 @@ export function SeriesWidget({
 									sortBy={sortBy}
 									pulseClass={pulseClass}
 									isProbabilityLoading={false}
+									highlightedQuartileRange={hoveredQuartile}
+								/>
+								<SeriesQuartileTable
+									seriesData={chartData}
+									onHoverRange={setHoveredQuartile}
+									onLeaveRange={() =>
+										setHoveredQuartile(null)
+									}
+									value={value}
 								/>
 								<SeriesTable
 									topSeries={topSeries}

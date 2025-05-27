@@ -18,7 +18,6 @@ import {
 	type ChartConfig,
 } from '@/components/ui/chart';
 import {
-	getDynamicCrashCategories,
 	calculateCategoryProbabilities,
 	calculatePercentileThresholds,
 } from '@/utils/crash-probability';
@@ -48,6 +47,7 @@ export interface SeriesChartProps {
 	pulseClass: string;
 	categoryProbabilities?: Record<string, number>;
 	isProbabilityLoading?: boolean;
+	highlightedQuartileRange?: string | null;
 }
 
 export function SeriesChart({
@@ -57,9 +57,15 @@ export function SeriesChart({
 	pulseClass,
 	categoryProbabilities = {},
 	isProbabilityLoading = false,
+	highlightedQuartileRange = null,
 }: SeriesChartProps) {
 	// State to track which category class is being hovered
 	const [hoveredClass, setHoveredClass] = React.useState<string | null>(null);
+
+	// Effect to sync highlightedQuartileRange prop with internal hoveredClass state
+	React.useEffect(() => {
+		setHoveredClass(highlightedQuartileRange);
+	}, [highlightedQuartileRange]);
 
 	// Debug logging
 	console.log(
@@ -111,11 +117,6 @@ export function SeriesChart({
 		'categoryProbabilities keys:',
 		Object.keys(categoryProbabilities).length
 	);
-
-	// Dynamic category ranges based on crash point
-	const dynamicCategories = React.useMemo(() => {
-		return getDynamicCrashCategories(value);
-	}, [value]);
 
 	// Dynamic category thresholds for streak lengths
 	const categoryThresholds = React.useMemo(() => {
@@ -364,17 +365,16 @@ export function SeriesChart({
 					/>
 					<Bar dataKey="length">
 						{chartData.map((entry, index) => {
-							// Determine which streak length category this entry belongs to
 							let colorClass = '';
 							let entryClass = '';
 
-							// p25: streaks 1 to p25 threshold - Blue
+							// <p25: streaks 1 to p25 threshold - Blue
 							if (
 								entry.length >= 1 &&
 								entry.length <= categoryThresholds.p25
 							) {
 								colorClass = c0Color;
-								entryClass = 'p25';
+								entryClass = '<p25';
 							}
 							// p25-p50: streaks p25+1 to p50 threshold - Green
 							else if (
@@ -435,102 +435,6 @@ export function SeriesChart({
 					</Bar>
 				</BarChart>
 			</ChartContainer>
-
-			{/* Static category legend with probabilities */}
-			<div className="flex flex-wrap justify-center gap-4 mt-4 px-2 text-sm">
-				<div
-					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredClass('p25')}
-					onMouseLeave={() => setHoveredClass(null)}
-				>
-					<span
-						className="inline-block w-4 h-4 rounded-sm"
-						style={{ backgroundColor: c0Color }}
-					/>
-					<span className="ml-1.5">
-						p25: {dynamicCategories.p25.display}
-						{isProbabilityLoading &&
-						Object.keys(categoryProbabilities).length === 0 ? (
-							<span className="ml-1 text-xs font-medium text-muted-foreground">
-								(loading...)
-							</span>
-						) : probabilities.p25 !== undefined ? (
-							<span className="ml-1 text-xs font-medium text-muted-foreground">
-								({probabilities.p25.toFixed(2)}%)
-							</span>
-						) : null}
-					</span>
-				</div>
-				<div
-					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredClass('p25-p50')}
-					onMouseLeave={() => setHoveredClass(null)}
-				>
-					<span
-						className="inline-block w-4 h-4 rounded-sm"
-						style={{ backgroundColor: c1Color }}
-					/>
-					<span className="ml-1.5">
-						p25-p50: {dynamicCategories['p25-p50'].display}
-						{isProbabilityLoading &&
-						Object.keys(categoryProbabilities).length === 0 ? (
-							<span className="ml-1 text-xs font-medium text-muted-foreground">
-								(loading...)
-							</span>
-						) : probabilities['p25-p50'] !== undefined ? (
-							<span className="ml-1 text-xs font-medium text-muted-foreground">
-								({probabilities['p25-p50'].toFixed(2)}%)
-							</span>
-						) : null}
-					</span>
-				</div>
-				<div
-					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredClass('p50-p75')}
-					onMouseLeave={() => setHoveredClass(null)}
-				>
-					<span
-						className="inline-block w-4 h-4 rounded-sm"
-						style={{ backgroundColor: c2Color }}
-					/>
-					<span className="ml-1.5">
-						p50-p75: {dynamicCategories['p50-p75'].display}
-						{isProbabilityLoading &&
-						Object.keys(categoryProbabilities).length === 0 ? (
-							<span className="ml-1 text-xs font-medium text-muted-foreground">
-								(loading...)
-							</span>
-						) : probabilities['p50-p75'] !== undefined ? (
-							<span className="ml-1 text-xs font-medium text-muted-foreground">
-								({probabilities['p50-p75'].toFixed(2)}%)
-							</span>
-						) : null}
-					</span>
-				</div>
-				<div
-					className="flex items-center cursor-pointer hover:bg-muted/30 px-2 py-1 rounded-md transition-colors"
-					onMouseEnter={() => setHoveredClass('>p75')}
-					onMouseLeave={() => setHoveredClass(null)}
-				>
-					<span
-						className="inline-block w-4 h-4 rounded-sm"
-						style={{ backgroundColor: c3Color }}
-					/>
-					<span className="ml-1.5">
-						&gt;p75: {dynamicCategories['>p75'].display}
-						{isProbabilityLoading &&
-						Object.keys(categoryProbabilities).length === 0 ? (
-							<span className="ml-1 text-xs font-medium text-muted-foreground">
-								(loading...)
-							</span>
-						) : probabilities['>p75'] !== undefined ? (
-							<span className="ml-1 text-xs font-medium text-muted-foreground">
-								({probabilities['>p75'].toFixed(2)}%)
-							</span>
-						) : null}
-					</span>
-				</div>
-			</div>
 		</div>
 	);
 }
