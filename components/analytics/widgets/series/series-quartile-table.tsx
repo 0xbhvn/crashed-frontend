@@ -48,7 +48,7 @@ export function SeriesQuartileTable({
 }: SeriesQuartileTableProps) {
 	const dynamicQuartileDefinitions = React.useMemo(() => {
 		const thresholds = calculatePercentileThresholds(value);
-		const categoryProbs = calculateCategoryProbabilities(value, 0);
+		const categoryProbs = calculateCategoryProbabilities(value);
 
 		return [
 			{
@@ -92,6 +92,15 @@ export function SeriesQuartileTable({
 				expectedPercentage: categoryProbs['>p75'] || 0,
 				colorClasses:
 					'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+			},
+			{
+				label: '>p90',
+				rangeFormat: `>${thresholds.p90}`,
+				min: thresholds.p90 + 1,
+				max: Number.POSITIVE_INFINITY,
+				expectedPercentage: categoryProbs['>p90'] || 0,
+				colorClasses:
+					'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
 			},
 		];
 	}, [value]);
@@ -176,11 +185,11 @@ export function SeriesQuartileTable({
 					<TableHeader>
 						<TableRow>
 							<TableHead className="w-[20px] p-0" />
-							<TableHead>Label</TableHead>
-							<TableHead>Range</TableHead>
-							<TableHead>Expected Distribution</TableHead>
-							<TableHead>Actual Distribution</TableHead>
-							<TableHead>Difference</TableHead>
+							<TableHead className="px-2">Label</TableHead>
+							<TableHead className="px-2">Range</TableHead>
+							<TableHead className="px-4">Expected</TableHead>
+							<TableHead className="px-4">Actual</TableHead>
+							<TableHead className="px-4">Difference</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -224,11 +233,13 @@ export function SeriesQuartileTable({
 											/>
 										)}
 									</TableCell>
-									<TableCell className="font-medium">
+									<TableCell className="font-medium px-2">
 										{row.label}
 									</TableCell>
-									<TableCell>{row.rangeFormat}</TableCell>
-									<TableCell>
+									<TableCell className="px-2">
+										{row.rangeFormat}
+									</TableCell>
+									<TableCell className="px-4">
 										<span className="mr-2">
 											{row.roundedExpectedCount}
 										</span>
@@ -238,7 +249,7 @@ export function SeriesQuartileTable({
 											{row.expectedPercentage.toFixed(2)}%
 										</Badge>
 									</TableCell>
-									<TableCell>
+									<TableCell className="px-4">
 										<span className="mr-2">
 											{row.actualCount}
 										</span>
@@ -248,7 +259,7 @@ export function SeriesQuartileTable({
 											{row.actualPercentage.toFixed(2)}%
 										</Badge>
 									</TableCell>
-									<TableCell>
+									<TableCell className="px-4">
 										<span className="mr-2">
 											{getChangeSymbol(
 												row.differenceFromExpectedCount

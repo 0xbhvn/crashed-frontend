@@ -77,12 +77,7 @@ export function SeriesChart({
 
 	// Calculate probabilities - always calculate for theoretical probabilities
 	const probabilities = React.useMemo(() => {
-		// Always calculate category probabilities for the given crash point
-		// The gamesSince parameter doesn't affect theoretical probabilities anyway
-		const theoreticalProbabilities = calculateCategoryProbabilities(
-			value,
-			0
-		);
+		const theoreticalProbabilities = calculateCategoryProbabilities(value);
 
 		console.log(
 			'[SeriesChart] Theoretical probabilities for crash point',
@@ -123,30 +118,12 @@ export function SeriesChart({
 		return calculatePercentileThresholds(value);
 	}, [value]);
 
-	// Get faded versions of colors for reference lines
-	const getFadedColor = (ratio: number): string => {
-		let hue: number;
-		if (ratio < 1) {
-			// Below crash value: Blue to Green (240-120)
-			hue = 240 - ratio * 120;
-		} else {
-			// At or above crash value: Yellow to Red (60-0)
-			hue = Math.max(60 - (ratio - 1) * 30, 0);
-		}
-		// Lower saturation and higher lightness for a faded look
-		return `hsla(${hue}, 70%, 60%, 0.7)`;
-	};
-
-	// Faded colors for reference lines
-	const p25FadedColor = getFadedColor(categoryThresholds.p25 / value);
-	const p50FadedColor = getFadedColor(categoryThresholds.p50 / value);
-	const p75FadedColor = getFadedColor(categoryThresholds.p75 / value);
-
 	// Class colors
-	const c0Color = 'hsl(210, 90%, 50%)'; // Blue - matching blue-400/blue-800
-	const c1Color = 'hsl(142, 90%, 40%)'; // Green - matching green-400/green-800
-	const c2Color = 'hsl(48, 95%, 50%)'; // Yellow - matching yellow-400/yellow-800
-	const c3Color = 'hsl(0, 90%, 45%)'; // Red - matching red-400/red-800
+	const c0Color = 'hsl(210, 90%, 50%)'; // Blue for <p25
+	const c1Color = 'hsl(142, 90%, 40%)'; // Green for p25-p50
+	const c2Color = 'hsl(48, 95%, 50%)'; // Yellow for p50-p75
+	const c3Color = 'hsl(0, 90%, 45%)'; // Red for p75-p90
+	const c4Color = 'hsl(270, 90%, 50%)'; // Purple for >p90
 
 	return (
 		<div
@@ -201,24 +178,28 @@ export function SeriesChart({
 							position: 'insideLeft',
 						}}
 					/>
-
-					{/* Dynamic Reference Lines for streak length boundaries */}
+					{/* New Reference Lines for upper bounds */}
 					<ReferenceLine
-						y={categoryThresholds.p25 + 0.5}
-						stroke={p25FadedColor}
+						y={categoryThresholds.p25}
+						stroke={c0Color}
 						strokeDasharray="3 3"
 					/>
 					<ReferenceLine
-						y={categoryThresholds.p50 + 0.5}
-						stroke={p50FadedColor}
+						y={categoryThresholds.p50}
+						stroke={c1Color}
 						strokeDasharray="3 3"
 					/>
 					<ReferenceLine
-						y={categoryThresholds.p75 + 0.5}
-						stroke={p75FadedColor}
+						y={categoryThresholds.p75}
+						stroke={c2Color}
 						strokeDasharray="3 3"
 					/>
-
+					<ReferenceLine
+						y={categoryThresholds.p90}
+						stroke={c3Color}
+						strokeDasharray="3 3"
+					/>{' '}
+					{/* Upper bound for p75-p90 segment */}
 					<ChartTooltip
 						content={(props) => {
 							if (!props.active || !props.payload?.length)
@@ -366,56 +347,52 @@ export function SeriesChart({
 					<Bar dataKey="length">
 						{chartData.map((entry, index) => {
 							let colorClass = '';
-							let entryClass = '';
+							let entryQuartileGroup = '';
 
-							// <p25: streaks 1 to p25 threshold - Blue
-							if (
-								entry.length >= 1 &&
-								entry.length <= categoryThresholds.p25
-							) {
+							if (entry.length <= categoryThresholds.p25) {
+								// Handles entry.length >= 1 implicitly if min is 1
 								colorClass = c0Color;
-								entryClass = '<p25';
-							}
-							// p25-p50: streaks p25+1 to p50 threshold - Green
-							else if (
-								entry.length >= categoryThresholds.p25 + 1 &&
-								entry.length <= categoryThresholds.p50
-							) {
+								entryQuartileGroup = '<p25';
+							} else if (entry.length <= categoryThresholds.p50) {
 								colorClass = c1Color;
-								entryClass = 'p25-p50';
-							}
-							// p50-p75: streaks p50+1 to p75 threshold - Yellow
-							else if (
-								entry.length >= categoryThresholds.p50 + 1 &&
-								entry.length <= categoryThresholds.p75
-							) {
+								entryQuartileGroup = 'p25-p50';
+							} else if (entry.length <= categoryThresholds.p75) {
 								colorClass = c2Color;
-								entryClass = 'p50-p75';
-							}
-							// >p75: streaks > p75 threshold - Red
-							else {
+								entryQuartileGroup = 'p50-p75';
+							} else if (entry.length <= categoryThresholds.p90) {
 								colorClass = c3Color;
-								entryClass = '>p75';
+								entryQuartileGroup = 'p75-p90'; // Group for bars between p75 and p90
+							} else {
+								// > p90
+								colorClass = c4Color;
+								entryQuartileGroup = '>p90';
 							}
 
-							// Check if this is the latest bar when sorted by time (last item)
 							const isLatestBar =
 								sortBy === 'time' &&
 								index === chartData.length - 1;
+							let isHighlighted = false;
 
-							// Check if this bar should be highlighted based on class hovering
-							// Only highlight bars in the exact class that is being hovered
-							const isHighlighted =
-								hoveredClass !== null &&
-								entryClass === hoveredClass;
+							if (hoveredClass) {
+								if (hoveredClass === '>p75') {
+									// When table row '>p75' is hovered, highlight chart segments 'p75-p90' and '>p90'
+									isHighlighted =
+										entryQuartileGroup === 'p75-p90' ||
+										entryQuartileGroup === '>p90';
+								} else if (hoveredClass === '>p90') {
+									isHighlighted =
+										entryQuartileGroup === '>p90';
+								} else {
+									isHighlighted =
+										entryQuartileGroup === hoveredClass;
+								}
+							}
 
-							// Apply classes based on conditions
 							let className = '';
 							if (isLatestBar) className += pulseClass;
 							if (isHighlighted)
 								className += ' opacity-100 brightness-110';
 
-							// Apply opacity to non-highlighted bars when a class is hovered
 							const opacity =
 								hoveredClass !== null
 									? isHighlighted

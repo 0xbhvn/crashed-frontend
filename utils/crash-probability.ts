@@ -67,6 +67,7 @@ export function calculatePercentileThresholds(crash_point: number): {
 	p25: number;
 	p50: number;
 	p75: number;
+	p90: number;
 } {
 	// Base probability that the target crash point occurs on any given game
 	const base_prob = Math.min(99.0, 99.0 / crash_point) / 100;
@@ -79,8 +80,9 @@ export function calculatePercentileThresholds(crash_point: number): {
 	const p25 = Math.ceil(Math.log(1 - 0.25) / Math.log(prob_not_occur));
 	const p50 = Math.ceil(Math.log(1 - 0.5) / Math.log(prob_not_occur));
 	const p75 = Math.ceil(Math.log(1 - 0.75) / Math.log(prob_not_occur));
+	const p90 = Math.ceil(Math.log(1 - 0.9) / Math.log(prob_not_occur));
 
-	return { p25, p50, p75 };
+	return { p25, p50, p75, p90 };
 }
 
 /**
@@ -114,10 +116,18 @@ export function getDynamicCrashCategories(crash_point: number) {
 					? `${thresholds.p75}`
 					: `${thresholds.p50 + 1}-${thresholds.p75}`,
 		},
-		'>p75': {
+		'p75-p90': {
 			min: thresholds.p75 + 1,
+			max: thresholds.p90,
+			display:
+				thresholds.p75 + 1 === thresholds.p90
+					? `${thresholds.p90}`
+					: `${thresholds.p75 + 1}-${thresholds.p90}`,
+		},
+		'>p90': {
+			min: thresholds.p90 + 1,
 			max: Number.POSITIVE_INFINITY,
-			display: `> ${thresholds.p75}`,
+			display: `>${thresholds.p90}`,
 		},
 	};
 }
@@ -127,52 +137,31 @@ export function getDynamicCrashCategories(crash_point: number) {
  * These represent the probability that a streak will fall into each length range
  *
  * @param selected_crash_point - The currently selected crash point in series analysis
- * @param games_since - Number of games since the selected crash point was last seen (unused for theoretical probabilities)
  * @returns Object with probabilities for each streak length category
  */
 export function calculateCategoryProbabilities(
-	selected_crash_point: number,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	games_since: number
+	selected_crash_point: number
 ): Record<string, number> {
-	// Base probability that the target crash point occurs on any given game
 	const base_prob = Math.min(99.0, 99.0 / selected_crash_point) / 100;
 	const prob_not_occur = 1 - base_prob;
 
-	// Get dynamic thresholds for this crash point
 	const thresholds = calculatePercentileThresholds(selected_crash_point);
 
-	// For geometric distribution, calculate probability of streak lengths using dynamic thresholds:
-	// P(streak length 1 to p25) = 1 - (1-p)^p25
-	// P(streak length p25+1 to p50) = (1-p)^p25 - (1-p)^p50
-	// P(streak length p50+1 to p75) = (1-p)^p50 - (1-p)^p75
-	// P(streak length > p75) = (1-p)^p75
-
 	return {
-		// p25: Probability of streaks 1 to p25 threshold
-		p25:
-			Math.round((1 - prob_not_occur ** thresholds.p25) * 100 * 100) /
-			100,
-
-		// p25-p50: Probability of streaks p25+1 to p50 threshold
+		p25: Math.round((1 - prob_not_occur ** thresholds.p25) * 10000) / 100,
 		'p25-p50':
 			Math.round(
 				(prob_not_occur ** thresholds.p25 -
 					prob_not_occur ** thresholds.p50) *
-					100 *
-					100
+					10000
 			) / 100,
-
-		// p50-p75: Probability of streaks p50+1 to p75 threshold
 		'p50-p75':
 			Math.round(
 				(prob_not_occur ** thresholds.p50 -
 					prob_not_occur ** thresholds.p75) *
-					100 *
-					100
+					10000
 			) / 100,
-
-		// >p75: Probability of streaks longer than p75 threshold
-		'>p75': Math.round(prob_not_occur ** thresholds.p75 * 100 * 100) / 100,
+		'>p75': Math.round(prob_not_occur ** thresholds.p75 * 10000) / 100,
+		'>p90': Math.round(prob_not_occur ** thresholds.p90 * 10000) / 100,
 	};
 }
