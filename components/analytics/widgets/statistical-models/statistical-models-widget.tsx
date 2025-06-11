@@ -35,9 +35,9 @@ export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
 						Enhanced Statistical Models
 						<Badge
 							variant="secondary"
-							className="text-xs"
+							className="text-xs uppercase"
 						>
-							BETA
+							Beta
 						</Badge>
 					</CardTitle>
 					<CardDescription>
