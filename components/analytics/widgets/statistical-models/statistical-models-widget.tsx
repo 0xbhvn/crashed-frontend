@@ -8,6 +8,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -32,6 +33,12 @@ export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
 					<CardTitle className="flex items-center gap-2">
 						<BarChart3 className="h-5 w-5" />
 						Enhanced Statistical Models
+						<Badge
+							variant="secondary"
+							className="text-xs"
+						>
+							BETA
+						</Badge>
 					</CardTitle>
 					<CardDescription>
 						Advanced statistical analysis specifically designed for
@@ -43,10 +50,8 @@ export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
 					<Alert className="mb-6">
 						<AlertCircle className="h-4 w-4" />
 						<AlertDescription>
-							These models are designed specifically for
-							BC.game&apos;s crash distribution. All
-							recommendations are based on historical data and do
-							not guarantee future results. Always gamble
+							All recommendations are based on historical data and
+							do not guarantee future results. Always gamble
 							responsibly.
 						</AlertDescription>
 					</Alert>
