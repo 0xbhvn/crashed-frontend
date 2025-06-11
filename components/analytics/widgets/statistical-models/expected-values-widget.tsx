@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, RefreshCw, TrendingUp, TrendingDown, Calculator, Target, Trophy, Percent } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
+import { AlertCircle, RefreshCw, Calculator, Target, Trophy, Percent } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useExpectedValues } from '@/hooks/analytics/statistical-models';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
@@ -80,7 +80,7 @@ export function ExpectedValuesWidget({ className }: BaseWidgetProps) {
 
 	const formatSurvivalData = () => {
 		if (!data?.survival_probabilities) return [];
-		return Object.entries(data.survival_probabilities).map(([key, prob]) => ({
+		return Object.entries(data.survival_probabilities).map(([, prob]) => ({
 			range: `${prob.from}x→${prob.to}x`,
 			probability: prob.conditional_probability,
 			from: prob.from,

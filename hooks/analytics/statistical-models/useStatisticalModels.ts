@@ -1,12 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import type {
-	MovingAveragesResponse,
-	VolatilityIndicatorsResponse,
-	ProbabilityDistributionResponse,
-	StreakAnalysisResponse,
-} from './';
 
 export interface CombinedStatisticalAnalysisResponse {
 	analysis_timestamp: string;
@@ -16,10 +10,10 @@ export interface CombinedStatisticalAnalysisResponse {
 		volatility_windows: number[];
 		streak_thresholds: [number, number];
 	};
-	moving_averages: MovingAveragesResponse;
-	volatility_indicators: VolatilityIndicatorsResponse;
-	probability_distribution: ProbabilityDistributionResponse;
-	streak_analysis: StreakAnalysisResponse;
+	moving_averages: any;
+	volatility_indicators: any;
+	probability_distribution: any;
+	streak_analysis: any;
 }
 
 export interface UseStatisticalModelsParams {

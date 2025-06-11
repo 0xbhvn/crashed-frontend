@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
 		// Validate target multipliers format
 		try {
-			const targetMultipliers = targets.split(',').map(t => {
+			targets.split(',').map(t => {
 				const num = Number.parseFloat(t.trim());
 				if (Number.isNaN(num) || num <= 0 || num > 1000) {
 					throw new Error('Invalid target multiplier');

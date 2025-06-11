@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
 		// Validate window sizes format
 		try {
-			const windowSizes = windows.split(',').map(w => {
+			windows.split(',').map(w => {
 				const num = Number.parseInt(w.trim(), 10);
 				if (Number.isNaN(num) || num <= 0 || num > 1000) {
 					throw new Error('Invalid window size');

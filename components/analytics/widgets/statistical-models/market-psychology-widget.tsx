@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle, RefreshCw, Activity, TrendingUp, TrendingDown, Brain, Gauge, AlertTriangle, DollarSign } from 'lucide-react';
-import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import { useMarketPsychology } from '@/hooks/analytics/statistical-models';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
