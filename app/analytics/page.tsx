@@ -9,6 +9,7 @@ import {
 	LastGamesTable,
 	SeriesWidget,
 	IntervalsWidget,
+	StatisticalModelsWidget,
 	TabWrapper,
 } from '@/components/analytics/widgets';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -34,32 +35,38 @@ export default function AnalyticsPage() {
 						defaultValue="streaks"
 						value={activeTab}
 						onValueChange={setActiveTab}
-						className="order-3 sm:order-2 flex-1 flex justify-center max-w-md"
+						className="order-3 sm:order-2 flex-1 flex justify-center max-w-lg"
 					>
-						<TabsList className="bg-muted/50 p-0.5 grid grid-cols-4 w-full">
+						<TabsList className="bg-muted/50 p-0.5 grid grid-cols-5 w-full">
 							<TabsTrigger
 								value="streaks"
-								className="data-[state=active]:bg-black data-[state=active]:text-white text-sm"
+								className="data-[state=active]:bg-black data-[state=active]:text-white text-xs sm:text-sm"
 							>
 								Last Games
 							</TabsTrigger>
 							<TabsTrigger
 								value="occurrences"
-								className="data-[state=active]:bg-black data-[state=active]:text-white text-sm"
+								className="data-[state=active]:bg-black data-[state=active]:text-white text-xs sm:text-sm"
 							>
 								Occurrences
 							</TabsTrigger>
 							<TabsTrigger
 								value="series"
-								className="data-[state=active]:bg-black data-[state=active]:text-white text-sm"
+								className="data-[state=active]:bg-black data-[state=active]:text-white text-xs sm:text-sm"
 							>
 								Series
 							</TabsTrigger>
 							<TabsTrigger
 								value="interval"
-								className="data-[state=active]:bg-black data-[state=active]:text-white text-sm"
+								className="data-[state=active]:bg-black data-[state=active]:text-white text-xs sm:text-sm"
 							>
 								Intervals
+							</TabsTrigger>
+							<TabsTrigger
+								value="statistical"
+								className="data-[state=active]:bg-black data-[state=active]:text-white text-xs sm:text-sm"
+							>
+								Statistical
 							</TabsTrigger>
 						</TabsList>
 					</Tabs>
@@ -95,6 +102,11 @@ export default function AnalyticsPage() {
 					{activeTab === 'interval' && (
 						<TabWrapper key={`interval-${componentKey}`}>
 							<IntervalsWidget className="w-full" />
+						</TabWrapper>
+					)}
+					{activeTab === 'statistical' && (
+						<TabWrapper key={`statistical-${componentKey}`}>
+							<StatisticalModelsWidget className="w-full" />
 						</TabWrapper>
 					)}
 				</div>

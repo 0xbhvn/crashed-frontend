@@ -4,7 +4,7 @@
 
 export const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_BASE_URL ||
-	'https://crashed-backend-production.up.railway.app/api';
+	'http://localhost:5001/api';
 export const TIMEZONE = process.env.NEXT_PUBLIC_TIMEZONE || 'Asia/Kolkata';
 
 /**
