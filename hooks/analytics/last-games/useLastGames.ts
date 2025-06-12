@@ -131,9 +131,6 @@ export function useBatchLastGames({
 		setIsLoading(true);
 		setError(null);
 		try {
-			console.time('API Request Total Time');
-			console.time('API Network Time');
-
 			// Try to fetch from both APIs concurrently
 			const [minPointsResult, exactFloorsResult] =
 				await Promise.allSettled([
@@ -151,8 +148,6 @@ export function useBatchLastGames({
 						body: JSON.stringify({ values }),
 					}),
 				]);
-
-			console.timeEnd('API Network Time');
 
 			// Process responses
 			let minPointsResponse = null;
@@ -274,8 +269,6 @@ export function useBatchLastGames({
 				throw new Error('Failed to fetch valid data from either API.');
 			}
 
-			console.time('API Data Processing');
-
 			// Process the API responses into the expected format - optimized for performance
 			const processedData: BatchLastGamesData = {};
 
@@ -322,10 +315,8 @@ export function useBatchLastGames({
 					uniqueProbability: exactFloorEntry?.probability || null,
 				};
 			}
-			console.timeEnd('API Data Processing');
 
 			setData(processedData);
-			console.timeEnd('API Request Total Time');
 		} catch (err) {
 			console.error('API request failed:', err);
 			setError(
