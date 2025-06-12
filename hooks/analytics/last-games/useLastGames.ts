@@ -36,8 +36,6 @@ async function fetchWithRetry(
 				return response;
 			} catch (fetchError) {
 				clearTimeout(timeoutId);
-				// Log the raw error to see what's happening
-				console.log('Raw fetch error:', fetchError);
 				// Add more context to the error
 				if (fetchError instanceof Error) {
 					if (fetchError.name === 'AbortError') {
@@ -47,10 +45,6 @@ async function fetchWithRetry(
 				throw fetchError; // Re-throw to be caught by the outer try/catch
 			}
 		} catch (error) {
-			console.log('Catch block - error type:', typeof error);
-			console.log('Catch block - error instanceof Error:', error instanceof Error);
-			console.log('Catch block - error:', error);
-			
 			// Create a more descriptive error
 			if (error instanceof Error) {
 				// Check for specific error types
