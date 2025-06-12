@@ -31,7 +31,7 @@ import {
 	PolarAngleAxis,
 	ResponsiveContainer,
 } from 'recharts';
-import { useMarketPsychology } from '@/hooks/analytics/statistical-models';
+import { useRealTimeMarketPsychology } from '@/hooks/analytics/statistical-models';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
 const getFearGreedColor = (index: number) => {
@@ -83,7 +83,7 @@ export function MarketPsychologyWidget({ className }: BaseWidgetProps) {
 	const [longWindow, setLongWindow] = React.useState<number>(200);
 	const [longWindowInput, setLongWindowInput] = React.useState<string>('200');
 
-	const { data, isLoading, error, refreshData } = useMarketPsychology({
+	const { data, isLoading, error, refreshData } = useRealTimeMarketPsychology({
 		limit,
 		shortWindow,
 		longWindow,

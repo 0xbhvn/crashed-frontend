@@ -42,7 +42,7 @@ import {
 	PieChart,
 	Pie,
 } from 'recharts';
-import { usePatternAnalysis } from '@/hooks/analytics/statistical-models';
+import { useRealTimePatternAnalysis } from '@/hooks/analytics/statistical-models';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -53,7 +53,7 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 	const [anomalyThreshold, setAnomalyThreshold] = React.useState<number>(3.0);
 	const [thresholdInput, setThresholdInput] = React.useState<string>('3.0');
 
-	const { data, isLoading, error, refreshData } = usePatternAnalysis({
+	const { data, isLoading, error, refreshData } = useRealTimePatternAnalysis({
 		limit,
 		anomalyThreshold,
 		enabled: true,

@@ -44,7 +44,7 @@ import {
 	Area,
 	AreaChart,
 } from 'recharts';
-import { useExpectedValues } from '@/hooks/analytics/statistical-models';
+import { useRealTimeExpectedValues } from '@/hooks/analytics/statistical-models';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
 export function ExpectedValuesWidget({ className }: BaseWidgetProps) {
@@ -64,7 +64,7 @@ export function ExpectedValuesWidget({ className }: BaseWidgetProps) {
 		return value.toFixed(decimals);
 	};
 
-	const { data, isLoading, error, refreshData } = useExpectedValues({
+	const { data, isLoading, error, refreshData } = useRealTimeExpectedValues({
 		targets,
 		limit,
 		enabled: true,
