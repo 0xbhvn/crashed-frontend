@@ -1,5 +1,13 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsNav } from '@/components/analytics/analytics-nav';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 
 export function AnalyticsPageSkeleton({ showNav = true }: { showNav?: boolean }) {
     return (
@@ -99,28 +107,73 @@ export function QuartileTableSkeleton() {
 }
 
 export function IntervalsTableSkeleton() {
+    // For games mode with 25 intervals: 00-24, 25-49, 50-74, 75-99
+    const columnHeaders = ['00-24', '25-49', '50-74', '75-99'];
+    const rowCount = 20; // Show 20 rows for 2000 games
+
     return (
-        <div className="border rounded-lg overflow-hidden">
-            <div className="p-4">
-                <div className="grid grid-cols-7 gap-2">
-                    <Skeleton className="h-8 w-full" />
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <Skeleton key={i} className="h-8 w-full" />
-                    ))}
-                </div>
-                {Array.from({ length: 8 }).map((_, rowIndex) => (
-                    <div key={rowIndex} className="grid grid-cols-7 gap-2 mt-2">
-                        <Skeleton className="h-16 w-full" />
-                        {Array.from({ length: 6 }).map((_, colIndex) => (
-                            <div key={colIndex} className="space-y-1">
-                                <Skeleton className="h-6 w-full" />
-                                <Skeleton className="h-4 w-12 mx-auto" />
-                                <Skeleton className="h-3 w-16 mx-auto" />
-                            </div>
+        <div className="rounded-md border overflow-x-auto">
+            <Table className="border-collapse [&_td]:border [&_th]:border [&_td]:border-border [&_th]:border-border">
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-20 text-center border-r">
+                            <Skeleton className="h-4 w-14 mx-auto" />
+                        </TableHead>
+                        {columnHeaders.map((header, i) => (
+                            <TableHead
+                                key={i}
+                                className="text-center whitespace-nowrap"
+                            >
+                                <Skeleton className="h-4 w-14 mx-auto" />
+                            </TableHead>
                         ))}
-                    </div>
-                ))}
-            </div>
+                        <TableHead className="text-center whitespace-nowrap bg-muted/30 font-bold border-l-2 border-l-muted-foreground/20 pl-4">
+                            <Skeleton className="h-4 w-24 mx-auto" />
+                        </TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {Array.from({ length: rowCount }).map((_, rowIndex) => (
+                        <TableRow key={rowIndex}>
+                            <TableCell className="font-medium text-center border-r">
+                                <Skeleton className="h-4 w-16 mx-auto" />
+                            </TableCell>
+                            {columnHeaders.map((_, colIndex) => (
+                                <TableCell key={colIndex} className="text-center">
+                                    <div className="flex items-stretch w-full divide-x divide-border">
+                                        <div className="flex-1 flex items-center justify-center text-2xl">
+                                            <Skeleton className="h-7 w-8" />
+                                        </div>
+                                        <div className="flex-1 flex flex-col items-center divide-y divide-border">
+                                            <div className="py-1 w-full flex justify-center">
+                                                <Skeleton className="h-5 w-14 rounded" />
+                                            </div>
+                                            <div className="py-1 w-full flex justify-center">
+                                                <Skeleton className="h-3 w-10" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </TableCell>
+                            ))}
+                            <TableCell className="text-center bg-muted/30 border-l-2 border-l-muted-foreground/20 pl-4">
+                                <div className="flex items-stretch w-full divide-x divide-border">
+                                    <div className="flex-1 flex items-center justify-center text-2xl font-medium">
+                                        <Skeleton className="h-7 w-12" />
+                                    </div>
+                                    <div className="flex-1 flex flex-col items-center divide-y divide-border">
+                                        <div className="py-1 w-full flex justify-center">
+                                            <Skeleton className="h-5 w-14 rounded" />
+                                        </div>
+                                        <div className="py-1 w-full flex justify-center">
+                                            <Skeleton className="h-3 w-12" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
         </div>
     );
 }
