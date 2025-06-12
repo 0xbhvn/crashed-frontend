@@ -13,12 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
 	BarChart3,
-	Target,
-	Brain,
-	Calculator,
-	Activity,
 	AlertCircle,
-	TrendingUp,
 } from 'lucide-react';
 import { RiskAdjustedMetricsWidget } from './risk-adjusted-metrics-widget';
 import { PatternAnalysisWidget } from './pattern-analysis-widget';
@@ -63,51 +58,31 @@ export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
 						className="w-full"
 					>
 						<TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
-							<TabsTrigger
-								value="risk-metrics"
-								className="flex items-center gap-2"
-							>
-								<Target className="h-4 w-4" />
+							<TabsTrigger value="risk-metrics">
 								<span className="hidden sm:inline">
 									Risk Metrics
 								</span>
 								<span className="sm:hidden">Risk</span>
 							</TabsTrigger>
-							<TabsTrigger
-								value="risk-reward"
-								className="flex items-center gap-2"
-							>
-								<TrendingUp className="h-4 w-4" />
+							<TabsTrigger value="risk-reward">
 								<span className="hidden sm:inline">
 									Risk/Reward
 								</span>
 								<span className="sm:hidden">R/R</span>
 							</TabsTrigger>
-							<TabsTrigger
-								value="patterns"
-								className="flex items-center gap-2"
-							>
-								<Brain className="h-4 w-4" />
+							<TabsTrigger value="patterns">
 								<span className="hidden sm:inline">
 									Patterns
 								</span>
 								<span className="sm:hidden">Pattern</span>
 							</TabsTrigger>
-							<TabsTrigger
-								value="expected-values"
-								className="flex items-center gap-2"
-							>
-								<Calculator className="h-4 w-4" />
+							<TabsTrigger value="expected-values">
 								<span className="hidden sm:inline">
 									Expected Values
 								</span>
 								<span className="sm:hidden">EV</span>
 							</TabsTrigger>
-							<TabsTrigger
-								value="psychology"
-								className="flex items-center gap-2"
-							>
-								<Activity className="h-4 w-4" />
+							<TabsTrigger value="psychology">
 								<span className="hidden sm:inline">
 									Psychology
 								</span>
