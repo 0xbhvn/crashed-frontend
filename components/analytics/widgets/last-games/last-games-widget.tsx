@@ -148,6 +148,7 @@ export function LastGamesTable({
 
 		// Clean up on unmount
 		return () => clearInterval(intervalId);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [batchData, pointsToShow, selectedType]); // Removed timeAgoMap from dependencies to prevent infinite loop
 
 	// Handle crash point changes from the cards
