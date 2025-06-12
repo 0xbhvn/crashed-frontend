@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { StatisticalModelsSkeleton } from '@/components/analytics/loading-skeleton';
 import {
 	AlertCircle,
 	RefreshCw,
@@ -731,12 +732,7 @@ export function MarketPsychologyWidget({ className }: BaseWidgetProps) {
 						</div>
 					)}
 
-					{isLoading && !data && (
-						<div className="flex items-center justify-center py-8">
-							<RefreshCw className="h-6 w-6 animate-spin mr-2" />
-							<span>Analyzing market psychology...</span>
-						</div>
-					)}
+					{isLoading && !data && <StatisticalModelsSkeleton />}
 				</CardContent>
 			</Card>
 		</div>

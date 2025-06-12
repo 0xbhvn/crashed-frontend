@@ -22,6 +22,7 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StatisticalModelsSkeleton } from '@/components/analytics/loading-skeleton';
 import {
 	AlertCircle,
 	RefreshCw,
@@ -649,12 +650,7 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 						</div>
 					)}
 
-					{isLoading && !data && (
-						<div className="flex items-center justify-center py-8">
-							<RefreshCw className="h-6 w-6 animate-spin mr-2" />
-							<span>Loading risk-adjusted metrics...</span>
-						</div>
-					)}
+					{isLoading && !data && <StatisticalModelsSkeleton />}
 				</CardContent>
 			</Card>
 		</div>

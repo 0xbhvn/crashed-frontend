@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { StatisticalModelsSkeleton } from '@/components/analytics/loading-skeleton';
 import {
 	AlertCircle,
 	RefreshCw,
@@ -787,12 +788,7 @@ export function ExpectedValuesWidget({ className }: BaseWidgetProps) {
 						</div>
 					)}
 
-					{isLoading && !data && (
-						<div className="flex items-center justify-center py-8">
-							<RefreshCw className="h-6 w-6 animate-spin mr-2" />
-							<span>Calculating expected values...</span>
-						</div>
-					)}
+					{isLoading && !data && <StatisticalModelsSkeleton />}
 				</CardContent>
 			</Card>
 		</div>

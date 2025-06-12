@@ -11,6 +11,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { StatisticalModelsSkeleton } from '@/components/analytics/loading-skeleton';
 import { AlertCircle, RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
 import { useRealTimeRiskRewardProfiles } from '@/hooks/analytics/statistical-models';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
@@ -558,12 +559,7 @@ export function RiskRewardProfilesWidget({ className }: BaseWidgetProps) {
 						</div>
 					)}
 
-					{isLoading && !data && (
-						<div className="flex items-center justify-center py-8">
-							<RefreshCw className="h-6 w-6 animate-spin mr-2" />
-							<span>Loading risk/reward profiles...</span>
-						</div>
-					)}
+					{isLoading && !data && <StatisticalModelsSkeleton />}
 				</CardContent>
 			</Card>
 		</div>

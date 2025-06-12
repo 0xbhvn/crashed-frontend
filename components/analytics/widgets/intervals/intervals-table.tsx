@@ -10,6 +10,7 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { IntervalsTableSkeleton } from '@/components/analytics/loading-skeleton';
 import type { IntervalData, IntervalGridData } from '@/utils/analytics-types';
 import type {
 	TimeIntervalDuration,
@@ -174,6 +175,10 @@ export function IntervalsTable({
 		);
 	};
 
+	if (isLoading) {
+		return <IntervalsTableSkeleton />;
+	}
+
 	return (
 		<div className="rounded-md border overflow-x-auto">
 			<Table className="border-collapse [&_td]:border [&_th]:border [&_td]:border-border [&_th]:border-border">
@@ -211,25 +216,7 @@ export function IntervalsTable({
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{isLoading ? (
-						<TableRow>
-							<TableCell
-								colSpan={
-									isGameSetsMode
-										? gameColumnCount + 2
-										: intervalColumns.length + 2
-								}
-								className="h-24 text-center"
-							>
-								<div className="flex flex-col items-center justify-center gap-2">
-									<div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-									<span className="text-sm text-muted-foreground">
-										Loading data...
-									</span>
-								</div>
-							</TableCell>
-						</TableRow>
-					) : hourLabels.length === 0 ? (
+					{hourLabels.length === 0 ? (
 						<TableRow>
 							<TableCell
 								colSpan={
