@@ -148,7 +148,7 @@ export function LastGamesTable({
 
 		// Clean up on unmount
 		return () => clearInterval(intervalId);
-	}, [batchData, pointsToShow, selectedType, timeAgoMap]); // Added timeAgoMap to dependencies
+	}, [batchData, pointsToShow, selectedType]); // Removed timeAgoMap from dependencies to prevent infinite loop
 
 	// Handle crash point changes from the cards
 	const handleCrashPointAdded = (newPoint: number) => {

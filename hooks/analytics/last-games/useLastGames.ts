@@ -34,15 +34,36 @@ async function fetchWithRetry(
 				const response = await fetch(url, fetchOptions);
 				clearTimeout(timeoutId);
 				return response;
-			} catch (error) {
+			} catch (fetchError) {
 				clearTimeout(timeoutId);
-				throw error; // Re-throw to be caught by the outer try/catch
+				// Log the raw error to see what's happening
+				console.log('Raw fetch error:', fetchError);
+				// Add more context to the error
+				if (fetchError instanceof Error) {
+					if (fetchError.name === 'AbortError') {
+						fetchError.message = `Request timed out after 10 seconds: ${url}`;
+					}
+				}
+				throw fetchError; // Re-throw to be caught by the outer try/catch
 			}
 		} catch (error) {
-			lastError =
-				error instanceof Error
-					? error
-					: new Error('Unknown network error');
+			console.log('Catch block - error type:', typeof error);
+			console.log('Catch block - error instanceof Error:', error instanceof Error);
+			console.log('Catch block - error:', error);
+			
+			// Create a more descriptive error
+			if (error instanceof Error) {
+				// Check for specific error types
+				if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+					lastError = new Error(`Network request failed: ${url} - Check if the server is running`);
+				} else if (error.name === 'AbortError') {
+					lastError = new Error(`Request timed out after 10 seconds: ${url}`);
+				} else {
+					lastError = error;
+				}
+			} else {
+				lastError = new Error(`Unknown error occurred while fetching: ${url} - Error type: ${typeof error}`);
+			}
 
 			let causeMessage = '';
 			if (lastError.cause) {
@@ -57,7 +78,11 @@ async function fetchWithRetry(
 				`Network error (attempt ${retries + 1}/${maxRetries}): Name: ${
 					lastError.name
 				}, Message: ${lastError.message}.${causeMessage} URL: ${url}`,
-				lastError // Log the full error object
+				{
+					error: lastError,
+					stack: lastError.stack,
+					cause: lastError.cause
+				}
 			);
 
 			retries++;
@@ -98,12 +123,16 @@ export function useBatchLastGames({
 	const [data, setData] = useState<BatchLastGamesData | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
+	
+	// Use a ref to track loading state for preventing concurrent fetches
+	const isLoadingRef = useRef(false);
 
 	const fetchData = useCallback(async () => {
 		// Prevent multiple concurrent fetches
-		if (isLoading) {
+		if (isLoadingRef.current) {
 			return;
 		}
+		isLoadingRef.current = true;
 
 		setIsLoading(true);
 		setError(null);
@@ -312,8 +341,9 @@ export function useBatchLastGames({
 			);
 		} finally {
 			setIsLoading(false);
+			isLoadingRef.current = false;
 		}
-	}, [values, isLoading]);
+	}, [values]);
 
 	// Compare previous values to prevent unnecessary fetches
 	const prevValuesRef = useRef<number[]>([]);
