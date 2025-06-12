@@ -5,7 +5,7 @@ import { getApiHeaders } from '@/lib/api-config';
 import type { BatchLastGamesData } from '@/utils/analytics-types';
 
 const CLIENT_FETCH_TIMEOUT_REASON =
-	'Client-side fetch timed out after 10 seconds';
+	'Client-side fetch timed out after 30 seconds';
 
 // Helper function for retry mechanism with exponential backoff
 async function fetchWithRetry(
@@ -21,8 +21,8 @@ async function fetchWithRetry(
 			// Always add a timeout to prevent hanging requests
 			const controller = new AbortController();
 			const timeoutId = setTimeout(
-				() => controller.abort(CLIENT_FETCH_TIMEOUT_REASON),
-				10000
+				() => controller.abort(new Error(CLIENT_FETCH_TIMEOUT_REASON)),
+				30000 // Increased to 30 seconds
 			);
 
 			const fetchOptions = {
@@ -33,18 +33,31 @@ async function fetchWithRetry(
 			try {
 				const response = await fetch(url, fetchOptions);
 				clearTimeout(timeoutId);
+				
+				// Response received successfully
+				
+				// Check if response is not ok
+				if (!response.ok) {
+					const responseText = await response.text();
+					// Response body logged internally
+					throw new Error(`HTTP ${response.status}: ${responseText || response.statusText}`);
+				}
+				
 				return response;
 			} catch (fetchError) {
 				clearTimeout(timeoutId);
+				// Handle fetch errors
 				// Add more context to the error
 				if (fetchError instanceof Error) {
 					if (fetchError.name === 'AbortError') {
-						fetchError.message = `Request timed out after 10 seconds: ${url}`;
+						throw new Error(`Request timed out after 30 seconds: ${url}`);
 					}
 				}
 				throw fetchError; // Re-throw to be caught by the outer try/catch
 			}
 		} catch (error) {
+			// Handle errors
+			
 			// Create a more descriptive error
 			if (error instanceof Error) {
 				// Check for specific error types
@@ -55,8 +68,10 @@ async function fetchWithRetry(
 				} else {
 					lastError = error;
 				}
+			} else if (typeof error === 'string') {
+				lastError = new Error(`API Error: ${error}`);
 			} else {
-				lastError = new Error(`Unknown error occurred while fetching: ${url} - Error type: ${typeof error}`);
+				lastError = new Error(`Unknown error occurred while fetching: ${url} - Error type: ${typeof error} - Value: ${JSON.stringify(error)}`);
 			}
 
 			let causeMessage = '';
@@ -131,6 +146,8 @@ export function useBatchLastGames({
 		setIsLoading(true);
 		setError(null);
 		try {
+			// Fetch from both APIs concurrently
+
 			// Try to fetch from both APIs concurrently
 			const [minPointsResult, exactFloorsResult] =
 				await Promise.allSettled([

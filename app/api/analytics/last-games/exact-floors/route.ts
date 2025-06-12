@@ -13,6 +13,8 @@ export async function POST(request: NextRequest) {
 		// Construct the API URL
 		const backendUrl = getApiUrl('analytics/last-games/exact-floors');
 
+		// Process request to backend
+
 		// Simple fetch without custom timeout handling
 		const backendResponse = await fetch(backendUrl, {
 			method: 'POST',
@@ -21,15 +23,20 @@ export async function POST(request: NextRequest) {
 			cache: 'no-store',
 		});
 
+		// Check response status
+
 		// Check if the response was successful
 		if (!backendResponse.ok) {
+			const errorText = await backendResponse.text();
+			// Backend error occurred
 			throw new Error(
-				`Backend API responded with status: ${backendResponse.status}`
+				`Backend API responded with status: ${backendResponse.status} - ${errorText}`
 			);
 		}
 
 		// Get the response data
 		const data = await backendResponse.json();
+		// Process successful response
 
 		// Return the data to the client
 		return NextResponse.json(data);
