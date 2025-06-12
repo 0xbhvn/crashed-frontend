@@ -1,16 +1,47 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, RefreshCw, Activity, TrendingUp, TrendingDown, Brain } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import {
+	AlertCircle,
+	RefreshCw,
+	Activity,
+	TrendingUp,
+	TrendingDown,
+	Brain,
+} from 'lucide-react';
+import {
+	BarChart,
+	Bar,
+	XAxis,
+	YAxis,
+	CartesianGrid,
+	Tooltip,
+	ResponsiveContainer,
+	Cell,
+	PieChart,
+	Pie,
+} from 'recharts';
 import { usePatternAnalysis } from '@/hooks/analytics/statistical-models';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
@@ -22,12 +53,7 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 	const [anomalyThreshold, setAnomalyThreshold] = React.useState<number>(3.0);
 	const [thresholdInput, setThresholdInput] = React.useState<string>('3.0');
 
-	const {
-		data,
-		isLoading,
-		error,
-		refreshData,
-	} = usePatternAnalysis({
+	const { data, isLoading, error, refreshData } = usePatternAnalysis({
 		limit,
 		anomalyThreshold,
 		enabled: true,
@@ -73,11 +99,15 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 
 	const formatAutocorrelationData = () => {
 		if (!data?.autocorrelation?.correlations) return [];
-		return Object.entries(data.autocorrelation.correlations).map(([lag, corr]) => ({
-			lag: parseInt(lag),
-			correlation: corr,
-			significant: data.autocorrelation.significant_lags.includes(parseInt(lag)),
-		}));
+		return Object.entries(data.autocorrelation.correlations).map(
+			([lag, corr]) => ({
+				lag: parseInt(lag),
+				correlation: corr,
+				significant: data.autocorrelation.significant_lags.includes(
+					parseInt(lag)
+				),
+			})
+		);
 	};
 
 	return (
@@ -89,7 +119,8 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 						Pattern Recognition & Anomaly Detection
 					</CardTitle>
 					<CardDescription>
-						Advanced pattern analysis using entropy, autocorrelation, anomaly detection, and clustering
+						Advanced pattern analysis using entropy,
+						autocorrelation, anomaly detection, and clustering
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
@@ -101,7 +132,9 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 								<Input
 									id="limit"
 									value={limitInput}
-									onChange={(e) => setLimitInput(e.target.value)}
+									onChange={(e) =>
+										setLimitInput(e.target.value)
+									}
 									placeholder="1000"
 									className="flex-1"
 								/>
@@ -115,12 +148,16 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 							</div>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="threshold">Anomaly Threshold (Z-score)</Label>
+							<Label htmlFor="threshold">
+								Anomaly Threshold (Z-score)
+							</Label>
 							<div className="flex gap-2">
 								<Input
 									id="threshold"
 									value={thresholdInput}
-									onChange={(e) => setThresholdInput(e.target.value)}
+									onChange={(e) =>
+										setThresholdInput(e.target.value)
+									}
 									placeholder="3.0"
 									className="flex-1"
 								/>
@@ -162,112 +199,219 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 							<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 								<Card>
 									<CardHeader className="pb-3">
-										<CardTitle className="text-sm font-medium">Randomness Score</CardTitle>
+										<CardTitle className="text-sm font-medium">
+											Randomness Score
+										</CardTitle>
 									</CardHeader>
 									<CardContent>
 										<div className="text-2xl font-bold">
-											<span className={getRandomnessColor(data.summary.randomness_score)}>
-												{data.summary.randomness_score.toFixed(1)}%
+											<span
+												className={getRandomnessColor(
+													data.summary
+														.randomness_score
+												)}
+											>
+												{data.summary.randomness_score.toFixed(
+													2
+												)}
+												%
 											</span>
 										</div>
 										<p className="text-xs text-muted-foreground mt-1">
-											{data.randomness_metrics.interpretation}
-										</p>
-									</CardContent>
-								</Card>
-								
-								<Card>
-									<CardHeader className="pb-3">
-										<CardTitle className="text-sm font-medium">Anomalies Detected</CardTitle>
-									</CardHeader>
-									<CardContent>
-										<div className="text-2xl font-bold">{data.summary.total_anomalies}</div>
-										<p className="text-xs text-muted-foreground mt-1">
-											{data.summary.anomaly_rate.toFixed(2)}% of games
+											{
+												data.randomness_metrics
+													.interpretation
+											}
 										</p>
 									</CardContent>
 								</Card>
 
 								<Card>
 									<CardHeader className="pb-3">
-										<CardTitle className="text-sm font-medium">Dominant Pattern</CardTitle>
+										<CardTitle className="text-sm font-medium">
+											Anomalies Detected
+										</CardTitle>
 									</CardHeader>
 									<CardContent>
-										<Badge variant="outline" className="text-xs">
+										<div className="text-2xl font-bold">
+											{data.summary.total_anomalies}
+										</div>
+										<p className="text-xs text-muted-foreground mt-1">
+											{data.summary.anomaly_rate.toFixed(
+												2
+											)}
+											% of games
+										</p>
+									</CardContent>
+								</Card>
+
+								<Card>
+									<CardHeader className="pb-3">
+										<CardTitle className="text-sm font-medium">
+											Dominant Pattern
+										</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<Badge
+											variant="outline"
+											className="text-xs"
+										>
 											{data.summary.dominant_pattern}
 										</Badge>
 										<p className="text-xs text-muted-foreground mt-1">
-											{data.patterns.trend.direction} trend
+											{data.patterns.trend.direction}{' '}
+											trend
 										</p>
 									</CardContent>
 								</Card>
 
 								<Card>
 									<CardHeader className="pb-3">
-										<CardTitle className="text-sm font-medium">Entropy</CardTitle>
+										<CardTitle className="text-sm font-medium">
+											Entropy
+										</CardTitle>
 									</CardHeader>
 									<CardContent>
-										<div className="text-2xl font-bold">{data.randomness_metrics.entropy.toFixed(3)}</div>
+										<div className="text-2xl font-bold">
+											{data.randomness_metrics.entropy.toFixed(
+												2
+											)}
+										</div>
 										<p className="text-xs text-muted-foreground mt-1">
-											Ratio: {(data.randomness_metrics.entropy_ratio * 100).toFixed(1)}%
+											Ratio:{' '}
+											{(
+												data.randomness_metrics
+													.entropy_ratio * 100
+											).toFixed(2)}
+											%
 										</p>
 									</CardContent>
 								</Card>
 							</div>
 
 							{/* Detailed Analysis Tabs */}
-							<Tabs defaultValue="clustering" className="w-full">
+							<Tabs
+								defaultValue="clustering"
+								className="w-full"
+							>
 								<TabsList className="grid w-full grid-cols-4">
-									<TabsTrigger value="clustering">Clustering</TabsTrigger>
-									<TabsTrigger value="anomalies">Anomalies</TabsTrigger>
-									<TabsTrigger value="autocorrelation">Autocorrelation</TabsTrigger>
-									<TabsTrigger value="patterns">Patterns</TabsTrigger>
+									<TabsTrigger value="clustering">
+										Clustering
+									</TabsTrigger>
+									<TabsTrigger value="anomalies">
+										Anomalies
+									</TabsTrigger>
+									<TabsTrigger value="autocorrelation">
+										Autocorrelation
+									</TabsTrigger>
+									<TabsTrigger value="patterns">
+										Patterns
+									</TabsTrigger>
 								</TabsList>
 
-								<TabsContent value="clustering" className="mt-6">
+								<TabsContent
+									value="clustering"
+									className="mt-6"
+								>
 									<Card>
 										<CardHeader>
-											<CardTitle className="text-lg">Crash Point Distribution</CardTitle>
+											<CardTitle className="text-lg">
+												Crash Point Distribution
+											</CardTitle>
 											<CardDescription>
-												Distribution of crash points across different categories
+												Distribution of crash points
+												across different categories
 											</CardDescription>
 										</CardHeader>
 										<CardContent>
 											<div className="h-64 w-full">
-												<ResponsiveContainer width="100%" height="100%">
+												<ResponsiveContainer
+													width="100%"
+													height="100%"
+												>
 													<PieChart>
 														<Pie
 															data={formatClusterData()}
 															cx="50%"
 															cy="50%"
 															labelLine={false}
-															label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
+															label={({
+																name,
+																value,
+															}) =>
+																`${name}: ${value.toFixed(
+																	1
+																)}%`
+															}
 															outerRadius={80}
 															fill="#8884d8"
 															dataKey="value"
 														>
-															{formatClusterData().map((entry, index) => (
-																<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-															))}
+															{formatClusterData().map(
+																(
+																	entry,
+																	index
+																) => (
+																	<Cell
+																		key={`cell-${index}`}
+																		fill={
+																			COLORS[
+																				index %
+																					COLORS.length
+																			]
+																		}
+																	/>
+																)
+															)}
 														</Pie>
 														<Tooltip />
 													</PieChart>
 												</ResponsiveContainer>
 											</div>
 											<div className="mt-4 space-y-2">
-												{Object.entries(data.clustering).map(([name, info]) => (
-													<div key={name} className="flex items-center justify-between p-2 bg-muted rounded">
+												{Object.entries(
+													data.clustering
+												).map(([name, info]) => (
+													<div
+														key={name}
+														className="flex items-center justify-between p-2 bg-muted rounded"
+													>
 														<div className="flex items-center gap-2">
-															<div 
-																className="w-3 h-3 rounded" 
-																style={{ backgroundColor: COLORS[Object.keys(data.clustering).indexOf(name) % COLORS.length] }}
+															<div
+																className="w-3 h-3 rounded"
+																style={{
+																	backgroundColor:
+																		COLORS[
+																			Object.keys(
+																				data.clustering
+																			).indexOf(
+																				name
+																			) %
+																				COLORS.length
+																		],
+																}}
 															/>
-															<span className="font-medium capitalize">{name}</span>
-															<Badge variant="outline" className="text-xs">{info.range}</Badge>
+															<span className="font-medium capitalize">
+																{name}
+															</span>
+															<Badge
+																variant="outline"
+																className="text-xs"
+															>
+																{info.range}
+															</Badge>
 														</div>
 														<div className="text-right">
-															<p className="font-semibold">{info.count} games</p>
-															<p className="text-xs text-muted-foreground">{info.percentage.toFixed(2)}%</p>
+															<p className="font-semibold">
+																{info.count}{' '}
+																games
+															</p>
+															<p className="text-xs text-muted-foreground">
+																{info.percentage.toFixed(
+																	2
+																)}
+																%
+															</p>
 														</div>
 													</div>
 												))}
@@ -276,65 +420,135 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 									</Card>
 								</TabsContent>
 
-								<TabsContent value="anomalies" className="mt-6">
+								<TabsContent
+									value="anomalies"
+									className="mt-6"
+								>
 									<Card>
 										<CardHeader>
-											<CardTitle className="text-lg">Anomalous Games</CardTitle>
+											<CardTitle className="text-lg">
+												Anomalous Games
+											</CardTitle>
 											<CardDescription>
-												Games with crash points that deviate significantly from the norm (Z-score &gt; {anomalyThreshold})
+												Games with crash points that
+												deviate significantly from the
+												norm (Z-score &gt;{' '}
+												{anomalyThreshold})
 											</CardDescription>
 										</CardHeader>
 										<CardContent>
 											<div className="space-y-4">
 												<div className="grid grid-cols-2 gap-4">
 													<div>
-														<Label className="text-xs text-muted-foreground">IQR Bounds</Label>
+														<Label className="text-xs text-muted-foreground">
+															IQR Bounds
+														</Label>
 														<p className="font-semibold">
-															{data.anomalies.iqr_bounds.lower.toFixed(2)}x - {data.anomalies.iqr_bounds.upper.toFixed(2)}x
+															{data.anomalies.iqr_bounds.lower.toFixed(
+																2
+															)}
+															x -{' '}
+															{data.anomalies.iqr_bounds.upper.toFixed(
+																2
+															)}
+															x
 														</p>
 													</div>
 													<div>
-														<Label className="text-xs text-muted-foreground">IQR Anomalies</Label>
-														<p className="font-semibold">{data.anomalies.iqr_anomaly_count} games</p>
+														<Label className="text-xs text-muted-foreground">
+															IQR Anomalies
+														</Label>
+														<p className="font-semibold">
+															{
+																data.anomalies
+																	.iqr_anomaly_count
+															}{' '}
+															games
+														</p>
 													</div>
 												</div>
-												
-												{data.anomalies.anomalous_games.length > 0 ? (
+
+												{data.anomalies.anomalous_games
+													.length > 0 ? (
 													<div className="border rounded-md max-h-96 overflow-y-auto">
 														<Table>
 															<TableHeader>
 																<TableRow>
-																	<TableHead>Game ID</TableHead>
-																	<TableHead>Crash Point</TableHead>
-																	<TableHead>Z-Score</TableHead>
-																	<TableHead>Time</TableHead>
+																	<TableHead>
+																		Game ID
+																	</TableHead>
+																	<TableHead>
+																		Crash
+																		Point
+																	</TableHead>
+																	<TableHead>
+																		Z-Score
+																	</TableHead>
+																	<TableHead>
+																		Time
+																	</TableHead>
 																</TableRow>
 															</TableHeader>
 															<TableBody>
-																{data.anomalies.anomalous_games.map((game) => (
-																	<TableRow key={game.game_id}>
-																		<TableCell className="font-mono text-sm">{game.game_id}</TableCell>
-																		<TableCell>
-																			<Badge variant={game.crash_point > 10 ? 'default' : 'destructive'}>
-																				{game.crash_point.toFixed(2)}x
-																			</Badge>
-																		</TableCell>
-																		<TableCell>
-																			<span className={getAnomalyColor(game.z_score)}>
-																				{game.z_score > 0 ? '+' : ''}{game.z_score.toFixed(2)}
-																			</span>
-																		</TableCell>
-																		<TableCell className="text-xs">
-																			{new Date(game.time).toLocaleString()}
-																		</TableCell>
-																	</TableRow>
-																))}
+																{data.anomalies.anomalous_games.map(
+																	(game) => (
+																		<TableRow
+																			key={
+																				game.game_id
+																			}
+																		>
+																			<TableCell className="font-mono text-sm">
+																				{
+																					game.game_id
+																				}
+																			</TableCell>
+																			<TableCell>
+																				<Badge
+																					variant={
+																						game.crash_point >
+																						10
+																							? 'default'
+																							: 'destructive'
+																					}
+																				>
+																					{game.crash_point.toFixed(
+																						2
+																					)}
+
+																					x
+																				</Badge>
+																			</TableCell>
+																			<TableCell>
+																				<span
+																					className={getAnomalyColor(
+																						game.z_score
+																					)}
+																				>
+																					{game.z_score >
+																					0
+																						? '+'
+																						: ''}
+																					{game.z_score.toFixed(
+																						2
+																					)}
+																				</span>
+																			</TableCell>
+																			<TableCell className="text-xs">
+																				{new Date(
+																					game.time
+																				).toLocaleString()}
+																			</TableCell>
+																		</TableRow>
+																	)
+																)}
 															</TableBody>
 														</Table>
 													</div>
 												) : (
 													<div className="text-center py-8 text-muted-foreground">
-														No anomalous games detected with current threshold
+														No anomalous games
+														detected with current
+														threshold
 													</div>
 												)}
 											</div>
@@ -342,41 +556,84 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 									</Card>
 								</TabsContent>
 
-								<TabsContent value="autocorrelation" className="mt-6">
+								<TabsContent
+									value="autocorrelation"
+									className="mt-6"
+								>
 									<Card>
 										<CardHeader>
-											<CardTitle className="text-lg">Autocorrelation Analysis</CardTitle>
+											<CardTitle className="text-lg">
+												Autocorrelation Analysis
+											</CardTitle>
 											<CardDescription>
-												Correlation of crash points with previous games at different lags
+												Correlation of crash points with
+												previous games at different lags
 											</CardDescription>
 										</CardHeader>
 										<CardContent>
 											<div className="space-y-4">
 												<div className="p-4 bg-muted rounded-md">
 													<p className="text-sm font-medium">
-														{data.autocorrelation.interpretation}
+														{
+															data.autocorrelation
+																.interpretation
+														}
 													</p>
-													{data.autocorrelation.significant_lags.length > 0 && (
+													{data.autocorrelation
+														.significant_lags
+														.length > 0 && (
 														<p className="text-xs text-muted-foreground mt-1">
-															Significant at lags: {data.autocorrelation.significant_lags.join(', ')}
+															Significant at lags:{' '}
+															{data.autocorrelation.significant_lags.join(
+																', '
+															)}
 														</p>
 													)}
 												</div>
-												
+
 												<div className="h-64 w-full">
-													<ResponsiveContainer width="100%" height="100%">
-														<BarChart data={formatAutocorrelationData()}>
+													<ResponsiveContainer
+														width="100%"
+														height="100%"
+													>
+														<BarChart
+															data={formatAutocorrelationData()}
+														>
 															<CartesianGrid strokeDasharray="3 3" />
-															<XAxis dataKey="lag" label={{ value: 'Lag', position: 'insideBottom', offset: -5 }} />
-															<YAxis label={{ value: 'Correlation', angle: -90, position: 'insideLeft' }} />
+															<XAxis
+																dataKey="lag"
+																label={{
+																	value: 'Lag',
+																	position:
+																		'insideBottom',
+																	offset: -5,
+																}}
+															/>
+															<YAxis
+																label={{
+																	value: 'Correlation',
+																	angle: -90,
+																	position:
+																		'insideLeft',
+																}}
+															/>
 															<Tooltip />
 															<Bar dataKey="correlation">
-																{formatAutocorrelationData().map((entry, index) => (
-																	<Cell 
-																		key={`cell-${index}`} 
-																		fill={entry.significant ? '#ef4444' : '#3b82f6'} 
-																	/>
-																))}
+																{formatAutocorrelationData().map(
+																	(
+																		entry,
+																		index
+																	) => (
+																		<Cell
+																			key={`cell-${index}`}
+																			fill={
+																				entry.significant
+																					? '#ef4444'
+																					: '#3b82f6'
+																			}
+																		/>
+																	)
+																)}
 															</Bar>
 														</BarChart>
 													</ResponsiveContainer>
@@ -386,12 +643,18 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 									</Card>
 								</TabsContent>
 
-								<TabsContent value="patterns" className="mt-6">
+								<TabsContent
+									value="patterns"
+									className="mt-6"
+								>
 									<Card>
 										<CardHeader>
-											<CardTitle className="text-lg">Pattern Detection</CardTitle>
+											<CardTitle className="text-lg">
+												Pattern Detection
+											</CardTitle>
 											<CardDescription>
-												Identified patterns in crash point sequences
+												Identified patterns in crash
+												point sequences
 											</CardDescription>
 										</CardHeader>
 										<CardContent>
@@ -400,9 +663,16 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 													<Card>
 														<CardHeader className="pb-3">
 															<CardTitle className="text-sm font-medium flex items-center gap-2">
-																{data.patterns.trend.direction === 'increasing' ? (
+																{data.patterns
+																	.trend
+																	.direction ===
+																'increasing' ? (
 																	<TrendingUp className="h-4 w-4 text-green-500" />
-																) : data.patterns.trend.direction === 'decreasing' ? (
+																) : data
+																		.patterns
+																		.trend
+																		.direction ===
+																  'decreasing' ? (
 																	<TrendingDown className="h-4 w-4 text-red-500" />
 																) : (
 																	<Activity className="h-4 w-4 text-yellow-500" />
@@ -411,54 +681,118 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
 															</CardTitle>
 														</CardHeader>
 														<CardContent>
-															<p className="font-semibold">{data.patterns.trend.direction}</p>
+															<p className="font-semibold">
+																{
+																	data
+																		.patterns
+																		.trend
+																		.direction
+																}
+															</p>
 															<p className="text-xs text-muted-foreground">
-																Slope: {data.patterns.trend.slope.toFixed(6)}
+																Slope:{' '}
+																{data.patterns.trend.slope.toFixed(
+																	2
+																)}
 															</p>
 														</CardContent>
 													</Card>
 
 													<Card>
 														<CardHeader className="pb-3">
-															<CardTitle className="text-sm font-medium">Peak Detection</CardTitle>
-														</CardHeader>
-														<CardContent>
-															<p className="font-semibold">{data.patterns.peaks.count} peaks</p>
-															<p className="text-xs text-muted-foreground">
-																Avg height: {data.patterns.peaks.average_height.toFixed(2)}x
-															</p>
-														</CardContent>
-													</Card>
-
-													<Card>
-														<CardHeader className="pb-3">
-															<CardTitle className="text-sm font-medium">Periodicity</CardTitle>
+															<CardTitle className="text-sm font-medium">
+																Peak Detection
+															</CardTitle>
 														</CardHeader>
 														<CardContent>
 															<p className="font-semibold">
-																{data.patterns.periodicity.has_cycle ? 'Cyclical' : 'No cycle'}
+																{
+																	data
+																		.patterns
+																		.peaks
+																		.count
+																}{' '}
+																peaks
 															</p>
-															{data.patterns.periodicity.has_cycle && (
+															<p className="text-xs text-muted-foreground">
+																Avg height:{' '}
+																{data.patterns.peaks.average_height.toFixed(
+																	2
+																)}
+																x
+															</p>
+														</CardContent>
+													</Card>
+
+													<Card>
+														<CardHeader className="pb-3">
+															<CardTitle className="text-sm font-medium">
+																Periodicity
+															</CardTitle>
+														</CardHeader>
+														<CardContent>
+															<p className="font-semibold">
+																{data.patterns
+																	.periodicity
+																	.has_cycle
+																	? 'Cyclical'
+																	: 'No cycle'}
+															</p>
+															{data.patterns
+																.periodicity
+																.has_cycle && (
 																<p className="text-xs text-muted-foreground">
-																	Period: ~{Math.round(data.patterns.periodicity.dominant_period)} games
+																	Period: ~
+																	{Math.round(
+																		data
+																			.patterns
+																			.periodicity
+																			.dominant_period
+																	)}{' '}
+																	games
 																</p>
 															)}
 														</CardContent>
 													</Card>
 												</div>
 
-												{data.patterns.peaks.positions.length > 0 && (
+												{data.patterns.peaks.positions
+													.length > 0 && (
 													<div className="mt-4">
-														<Label className="text-sm font-medium">Peak Positions</Label>
+														<Label className="text-sm font-medium">
+															Peak Positions
+														</Label>
 														<div className="flex flex-wrap gap-2 mt-2">
-															{data.patterns.peaks.positions.slice(0, 20).map((pos) => (
-																<Badge key={pos} variant="outline" className="text-xs">
-																	Game #{pos}
-																</Badge>
-															))}
-															{data.patterns.peaks.positions.length > 20 && (
-																<Badge variant="outline" className="text-xs">
-																	+{data.patterns.peaks.positions.length - 20} more
+															{data.patterns.peaks.positions
+																.slice(0, 20)
+																.map((pos) => (
+																	<Badge
+																		key={
+																			pos
+																		}
+																		variant="outline"
+																		className="text-xs"
+																	>
+																		Game #
+																		{pos}
+																	</Badge>
+																))}
+															{data.patterns.peaks
+																.positions
+																.length >
+																20 && (
+																<Badge
+																	variant="outline"
+																	className="text-xs"
+																>
+																	+
+																	{data
+																		.patterns
+																		.peaks
+																		.positions
+																		.length -
+																		20}{' '}
+																	more
 																</Badge>
 															)}
 														</div>

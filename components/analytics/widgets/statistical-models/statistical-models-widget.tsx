@@ -18,11 +18,13 @@ import {
 	Calculator,
 	Activity,
 	AlertCircle,
+	TrendingUp,
 } from 'lucide-react';
 import { RiskAdjustedMetricsWidget } from './risk-adjusted-metrics-widget';
 import { PatternAnalysisWidget } from './pattern-analysis-widget';
 import { ExpectedValuesWidget } from './expected-values-widget';
 import { MarketPsychologyWidget } from './market-psychology-widget';
+import { RiskRewardProfilesWidget } from './risk-reward-profiles-widget';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
 export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
@@ -60,7 +62,7 @@ export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
 						defaultValue="risk-metrics"
 						className="w-full"
 					>
-						<TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+						<TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
 							<TabsTrigger
 								value="risk-metrics"
 								className="flex items-center gap-2"
@@ -70,6 +72,16 @@ export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
 									Risk Metrics
 								</span>
 								<span className="sm:hidden">Risk</span>
+							</TabsTrigger>
+							<TabsTrigger
+								value="risk-reward"
+								className="flex items-center gap-2"
+							>
+								<TrendingUp className="h-4 w-4" />
+								<span className="hidden sm:inline">
+									Risk/Reward
+								</span>
+								<span className="sm:hidden">R/R</span>
 							</TabsTrigger>
 							<TabsTrigger
 								value="patterns"
@@ -108,6 +120,13 @@ export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
 							className="mt-6"
 						>
 							<RiskAdjustedMetricsWidget />
+						</TabsContent>
+
+						<TabsContent
+							value="risk-reward"
+							className="mt-6"
+						>
+							<RiskRewardProfilesWidget />
 						</TabsContent>
 
 						<TabsContent

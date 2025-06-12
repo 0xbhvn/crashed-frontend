@@ -1,16 +1,35 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, RefreshCw, TrendingUp, Target, DollarSign } from 'lucide-react';
-import { useRiskAdjustedMetrics } from '@/hooks/analytics/statistical-models';
+import {
+	AlertCircle,
+	RefreshCw,
+	TrendingUp,
+	Target,
+	DollarSign,
+} from 'lucide-react';
+import { useRealTimeRiskAdjustedMetrics } from '@/hooks/analytics/statistical-models';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
 export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
@@ -19,20 +38,16 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 	const [limit, setLimit] = React.useState<number>(1000);
 	const [limitInput, setLimitInput] = React.useState<string>('1000');
 
-	const {
-		data,
-		isLoading,
-		error,
-		refreshData,
-	} = useRiskAdjustedMetrics({
-		targets,
-		limit,
-		enabled: true,
-	});
+	const { data, isLoading, error, refreshData } =
+		useRealTimeRiskAdjustedMetrics({
+			targets,
+			limit,
+			enabled: true,
+		});
 
 	const handleTargetChange = () => {
 		try {
-			const newTargets = targetInput.split(',').map(t => {
+			const newTargets = targetInput.split(',').map((t) => {
 				const num = parseFloat(t.trim());
 				if (isNaN(num) || num <= 0) throw new Error();
 				return num;
@@ -69,6 +84,20 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 		}
 	};
 
+	const formatNumber = (value: number, decimals: number = 2): string => {
+		// Handle infinite or extremely large numbers
+		if (!isFinite(value)) return '∞';
+		if (Math.abs(value) > 1e10) return value > 0 ? '>10B' : '<-10B';
+		return value.toFixed(decimals);
+	};
+
+	const formatCurrency = (value: number): string => {
+		// Handle infinite or extremely large numbers
+		if (!isFinite(value)) return '$∞';
+		if (Math.abs(value) > 1e10) return value > 0 ? '$>10B' : '$<-10B';
+		return `$${value.toFixed(2)}`;
+	};
+
 	return (
 		<div className={className}>
 			<Card>
@@ -78,7 +107,9 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 						Risk-Adjusted Performance Metrics
 					</CardTitle>
 					<CardDescription>
-						Analyze different betting strategies with advanced risk metrics including Sharpe ratio, drawdown analysis, and Value at Risk
+						Analyze different betting strategies with advanced risk
+						metrics including Sharpe ratio, drawdown analysis, and
+						Value at Risk
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
@@ -90,7 +121,9 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 								<Input
 									id="targets"
 									value={targetInput}
-									onChange={(e) => setTargetInput(e.target.value)}
+									onChange={(e) =>
+										setTargetInput(e.target.value)
+									}
 									placeholder="2,3,5,10"
 									className="flex-1"
 								/>
@@ -109,7 +142,9 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 								<Input
 									id="limit"
 									value={limitInput}
-									onChange={(e) => setLimitInput(e.target.value)}
+									onChange={(e) =>
+										setLimitInput(e.target.value)
+									}
 									placeholder="1000"
 									className="flex-1"
 								/>
@@ -150,9 +185,19 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 							{/* Analysis Summary */}
 							<Card>
 								<CardHeader>
-									<CardTitle className="text-lg">Analysis Summary</CardTitle>
+									<CardTitle className="text-lg">
+										Analysis Summary
+									</CardTitle>
 									<CardDescription>
-										Period: {new Date(data.analysis_period.start).toLocaleDateString()} - {new Date(data.analysis_period.end).toLocaleDateString()} ({data.total_games} games)
+										Period:{' '}
+										{new Date(
+											data.analysis_period.start
+										).toLocaleDateString()}{' '}
+										-{' '}
+										{new Date(
+											data.analysis_period.end
+										).toLocaleDateString()}{' '}
+										({data.total_games} games)
 									</CardDescription>
 								</CardHeader>
 								<CardContent>
@@ -160,31 +205,54 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 										<div className="space-y-4">
 											<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 												<div>
-													<Label className="text-xs text-muted-foreground">Best Risk-Adjusted</Label>
+													<Label className="text-xs text-muted-foreground">
+														Best Risk-Adjusted
+													</Label>
 													<p className="font-semibold text-lg flex items-center gap-2">
 														<Target className="h-4 w-4" />
-														{data.optimal_strategy.best_sharpe_ratio}
+														{
+															data
+																.optimal_strategy
+																.best_sharpe_ratio
+														}
 													</p>
 												</div>
 												<div>
-													<Label className="text-xs text-muted-foreground">Best ROI</Label>
+													<Label className="text-xs text-muted-foreground">
+														Best ROI
+													</Label>
 													<p className="font-semibold text-lg flex items-center gap-2">
 														<DollarSign className="h-4 w-4" />
-														{data.optimal_strategy.best_roi}
+														{
+															data
+																.optimal_strategy
+																.best_roi
+														}
 													</p>
 												</div>
 												<div>
-													<Label className="text-xs text-muted-foreground">Best Win Rate</Label>
+													<Label className="text-xs text-muted-foreground">
+														Best Win Rate
+													</Label>
 													<p className="font-semibold text-lg flex items-center gap-2">
 														<TrendingUp className="h-4 w-4" />
-														{data.optimal_strategy.best_win_rate}
+														{
+															data
+																.optimal_strategy
+																.best_win_rate
+														}
 													</p>
 												</div>
 											</div>
 											<div className="p-4 bg-muted rounded-md">
-												<p className="text-sm font-medium">Recommendation</p>
+												<p className="text-sm font-medium">
+													Recommendation
+												</p>
 												<p className="text-sm text-muted-foreground mt-1">
-													{data.optimal_strategy.recommendation}
+													{
+														data.optimal_strategy
+															.recommendation
+													}
 												</p>
 											</div>
 										</div>
@@ -193,53 +261,132 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 							</Card>
 
 							{/* Strategy Comparison */}
-							<Tabs defaultValue="overview" className="w-full">
+							<Tabs
+								defaultValue="overview"
+								className="w-full"
+							>
 								<TabsList className="grid w-full grid-cols-4">
-									<TabsTrigger value="overview">Overview</TabsTrigger>
-									<TabsTrigger value="risk-metrics">Risk Metrics</TabsTrigger>
-									<TabsTrigger value="drawdown">Drawdown</TabsTrigger>
-									<TabsTrigger value="details">Details</TabsTrigger>
+									<TabsTrigger value="overview">
+										Overview
+									</TabsTrigger>
+									<TabsTrigger value="risk-metrics">
+										Risk Metrics
+									</TabsTrigger>
+									<TabsTrigger value="drawdown">
+										Drawdown
+									</TabsTrigger>
+									<TabsTrigger value="details">
+										Details
+									</TabsTrigger>
 								</TabsList>
 
-								<TabsContent value="overview" className="mt-6">
+								<TabsContent
+									value="overview"
+									className="mt-6"
+								>
 									<div className="border rounded-md">
 										<Table>
 											<TableHeader>
 												<TableRow>
-													<TableHead>Target</TableHead>
-													<TableHead>Win Rate</TableHead>
+													<TableHead>
+														Target
+													</TableHead>
+													<TableHead>
+														Win Rate
+													</TableHead>
 													<TableHead>ROI</TableHead>
-													<TableHead>Sharpe Ratio</TableHead>
-													<TableHead>Max Drawdown</TableHead>
-													<TableHead>Final Balance</TableHead>
+													<TableHead>
+														Sharpe Ratio
+													</TableHead>
+													<TableHead>
+														Max Drawdown
+													</TableHead>
+													<TableHead>
+														Final Balance
+													</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
-												{Object.entries(data.strategies).map(([key, strategy]) => (
+												{Object.entries(
+													data.strategies
+												).map(([key, strategy]) => (
 													<TableRow key={key}>
-														<TableCell className="font-medium">{key}</TableCell>
+														<TableCell className="font-medium">
+															{key}
+														</TableCell>
 														<TableCell>
-															<span className={getRiskLevelColor(strategy.performance.win_rate, 'win_rate')}>
-																{strategy.performance.win_rate.toFixed(1)}%
+															<span
+																className={getRiskLevelColor(
+																	strategy
+																		.performance
+																		.win_rate,
+																	'win_rate'
+																)}
+															>
+																{strategy.performance.win_rate.toFixed(
+																	2
+																)}
+																%
 															</span>
 														</TableCell>
 														<TableCell>
-															<span className={strategy.performance.roi > 0 ? 'text-green-500' : 'text-red-500'}>
-																{strategy.performance.roi > 0 ? '+' : ''}{strategy.performance.roi.toFixed(1)}%
+															<span
+																className={
+																	strategy
+																		.performance
+																		.roi > 0
+																		? 'text-green-500'
+																		: 'text-red-500'
+																}
+															>
+																{strategy
+																	.performance
+																	.roi > 0
+																	? '+'
+																	: ''}
+																{formatNumber(
+																	strategy
+																		.performance
+																		.roi
+																)}
+																%
 															</span>
 														</TableCell>
 														<TableCell>
-															<span className={getRiskLevelColor(strategy.risk_metrics.sharpe_ratio, 'sharpe')}>
-																{strategy.risk_metrics.sharpe_ratio.toFixed(3)}
+															<span
+																className={getRiskLevelColor(
+																	strategy
+																		.risk_metrics
+																		.sharpe_ratio,
+																	'sharpe'
+																)}
+															>
+																{strategy.risk_metrics.sharpe_ratio.toFixed(
+																	2
+																)}
 															</span>
 														</TableCell>
 														<TableCell>
-															<span className={getRiskLevelColor(strategy.drawdown_analysis.max_drawdown_percent, 'drawdown')}>
-																{strategy.drawdown_analysis.max_drawdown_percent.toFixed(1)}%
+															<span
+																className={getRiskLevelColor(
+																	strategy
+																		.drawdown_analysis
+																		.max_drawdown_percent,
+																	'drawdown'
+																)}
+															>
+																{strategy.drawdown_analysis.max_drawdown_percent.toFixed(
+																	2
+																)}
+																%
 															</span>
 														</TableCell>
 														<TableCell>
-															${strategy.performance.final_balance.toFixed(2)}
+															{formatCurrency(
+																strategy
+																	.performance
+																	.final_balance
+															)}
 														</TableCell>
 													</TableRow>
 												))}
@@ -248,35 +395,71 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 									</div>
 								</TabsContent>
 
-								<TabsContent value="risk-metrics" className="mt-6">
+								<TabsContent
+									value="risk-metrics"
+									className="mt-6"
+								>
 									<div className="border rounded-md">
 										<Table>
 											<TableHeader>
 												<TableRow>
-													<TableHead>Target</TableHead>
-													<TableHead>Sortino Ratio</TableHead>
-													<TableHead>Std Dev</TableHead>
-													<TableHead>VaR (95%)</TableHead>
-													<TableHead>CVaR (95%)</TableHead>
-													<TableHead>Profit Factor</TableHead>
+													<TableHead>
+														Target
+													</TableHead>
+													<TableHead>
+														Sortino Ratio
+													</TableHead>
+													<TableHead>
+														Std Dev
+													</TableHead>
+													<TableHead>
+														VaR (95%)
+													</TableHead>
+													<TableHead>
+														CVaR (95%)
+													</TableHead>
+													<TableHead>
+														Profit Factor
+													</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
-												{Object.entries(data.strategies).map(([key, strategy]) => (
+												{Object.entries(
+													data.strategies
+												).map(([key, strategy]) => (
 													<TableRow key={key}>
-														<TableCell className="font-medium">{key}</TableCell>
-														<TableCell>{strategy.risk_metrics.sortino_ratio.toFixed(3)}</TableCell>
-														<TableCell>{strategy.risk_metrics.standard_deviation.toFixed(3)}</TableCell>
-														<TableCell className="text-red-500">
-															{strategy.risk_metrics.value_at_risk_95.toFixed(3)}
-														</TableCell>
-														<TableCell className="text-red-500">
-															{strategy.risk_metrics.conditional_var_95.toFixed(3)}
+														<TableCell className="font-medium">
+															{key}
 														</TableCell>
 														<TableCell>
-															{strategy.risk_metrics.profit_factor === Infinity 
-																? '∞' 
-																: strategy.risk_metrics.profit_factor.toFixed(2)}
+															{strategy.risk_metrics.sortino_ratio.toFixed(
+																2
+															)}
+														</TableCell>
+														<TableCell>
+															{strategy.risk_metrics.standard_deviation.toFixed(
+																2
+															)}
+														</TableCell>
+														<TableCell className="text-red-500">
+															{strategy.risk_metrics.value_at_risk_95.toFixed(
+																2
+															)}
+														</TableCell>
+														<TableCell className="text-red-500">
+															{strategy.risk_metrics.conditional_var_95.toFixed(
+																2
+															)}
+														</TableCell>
+														<TableCell>
+															{strategy
+																.risk_metrics
+																.profit_factor ===
+															Infinity
+																? '∞'
+																: strategy.risk_metrics.profit_factor.toFixed(
+																		2
+																  )}
 														</TableCell>
 													</TableRow>
 												))}
@@ -285,33 +468,84 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 									</div>
 								</TabsContent>
 
-								<TabsContent value="drawdown" className="mt-6">
+								<TabsContent
+									value="drawdown"
+									className="mt-6"
+								>
 									<div className="border rounded-md">
 										<Table>
 											<TableHeader>
 												<TableRow>
-													<TableHead>Target</TableHead>
-													<TableHead>Max Drawdown</TableHead>
-													<TableHead>Drawdown Periods</TableHead>
-													<TableHead>Avg Duration</TableHead>
-													<TableHead>Longest Duration</TableHead>
-													<TableHead>Max Consecutive Losses</TableHead>
+													<TableHead>
+														Target
+													</TableHead>
+													<TableHead>
+														Max Drawdown
+													</TableHead>
+													<TableHead>
+														Drawdown Periods
+													</TableHead>
+													<TableHead>
+														Avg Duration
+													</TableHead>
+													<TableHead>
+														Longest Duration
+													</TableHead>
+													<TableHead>
+														Max Consecutive Losses
+													</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
-												{Object.entries(data.strategies).map(([key, strategy]) => (
+												{Object.entries(
+													data.strategies
+												).map(([key, strategy]) => (
 													<TableRow key={key}>
-														<TableCell className="font-medium">{key}</TableCell>
+														<TableCell className="font-medium">
+															{key}
+														</TableCell>
 														<TableCell>
-															<span className={getRiskLevelColor(strategy.drawdown_analysis.max_drawdown_percent, 'drawdown')}>
-																{strategy.drawdown_analysis.max_drawdown_percent.toFixed(1)}%
+															<span
+																className={getRiskLevelColor(
+																	strategy
+																		.drawdown_analysis
+																		.max_drawdown_percent,
+																	'drawdown'
+																)}
+															>
+																{strategy.drawdown_analysis.max_drawdown_percent.toFixed(
+																	2
+																)}
+																%
 															</span>
 														</TableCell>
-														<TableCell>{strategy.drawdown_analysis.drawdown_periods}</TableCell>
-														<TableCell>{strategy.drawdown_analysis.avg_drawdown_duration.toFixed(1)} games</TableCell>
-														<TableCell>{strategy.drawdown_analysis.longest_drawdown} games</TableCell>
+														<TableCell>
+															{
+																strategy
+																	.drawdown_analysis
+																	.drawdown_periods
+															}
+														</TableCell>
+														<TableCell>
+															{strategy.drawdown_analysis.avg_drawdown_duration.toFixed(
+																2
+															)}{' '}
+															games
+														</TableCell>
+														<TableCell>
+															{
+																strategy
+																	.drawdown_analysis
+																	.longest_drawdown
+															}{' '}
+															games
+														</TableCell>
 														<TableCell className="text-red-500">
-															{strategy.risk_metrics.max_consecutive_losses}
+															{
+																strategy
+																	.risk_metrics
+																	.max_consecutive_losses
+															}
 														</TableCell>
 													</TableRow>
 												))}
@@ -320,40 +554,95 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 									</div>
 								</TabsContent>
 
-								<TabsContent value="details" className="mt-6">
+								<TabsContent
+									value="details"
+									className="mt-6"
+								>
 									<div className="space-y-4">
-										{Object.entries(data.strategies).map(([key, strategy]) => (
-											<Card key={key}>
-												<CardHeader>
-													<CardTitle className="text-lg flex items-center justify-between">
-														<span>Target: {key}</span>
-														<Badge variant={strategy.performance.roi > 0 ? 'default' : 'destructive'}>
-															ROI: {strategy.performance.roi > 0 ? '+' : ''}{strategy.performance.roi.toFixed(1)}%
-														</Badge>
-													</CardTitle>
-												</CardHeader>
-												<CardContent>
-													<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-														<div>
-															<Label className="text-xs text-muted-foreground">Total Bets</Label>
-															<p className="font-semibold">{strategy.performance.total_bets}</p>
+										{Object.entries(data.strategies).map(
+											([key, strategy]) => (
+												<Card key={key}>
+													<CardHeader>
+														<CardTitle className="text-lg flex items-center justify-between">
+															<span>
+																Target: {key}
+															</span>
+															<Badge
+																variant={
+																	strategy
+																		.performance
+																		.roi > 0
+																		? 'default'
+																		: 'destructive'
+																}
+															>
+																ROI:{' '}
+																{strategy
+																	.performance
+																	.roi > 0
+																	? '+'
+																	: ''}
+																{formatNumber(
+																	strategy
+																		.performance
+																		.roi
+																)}
+																%
+															</Badge>
+														</CardTitle>
+													</CardHeader>
+													<CardContent>
+														<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+															<div>
+																<Label className="text-xs text-muted-foreground">
+																	Total Bets
+																</Label>
+																<p className="font-semibold">
+																	{
+																		strategy
+																			.performance
+																			.total_bets
+																	}
+																</p>
+															</div>
+															<div>
+																<Label className="text-xs text-muted-foreground">
+																	Wins
+																</Label>
+																<p className="font-semibold">
+																	{
+																		strategy
+																			.performance
+																			.wins
+																	}
+																</p>
+															</div>
+															<div>
+																<Label className="text-xs text-muted-foreground">
+																	Average
+																	Return
+																</Label>
+																<p className="font-semibold">
+																	{strategy.performance.average_return.toFixed(
+																		2
+																	)}
+																</p>
+															</div>
+															<div>
+																<Label className="text-xs text-muted-foreground">
+																	Total Return
+																</Label>
+																<p className="font-semibold">
+																	{strategy.performance.total_return.toFixed(
+																		2
+																	)}
+																</p>
+															</div>
 														</div>
-														<div>
-															<Label className="text-xs text-muted-foreground">Wins</Label>
-															<p className="font-semibold">{strategy.performance.wins}</p>
-														</div>
-														<div>
-															<Label className="text-xs text-muted-foreground">Average Return</Label>
-															<p className="font-semibold">{strategy.performance.average_return.toFixed(3)}</p>
-														</div>
-														<div>
-															<Label className="text-xs text-muted-foreground">Total Return</Label>
-															<p className="font-semibold">{strategy.performance.total_return.toFixed(2)}</p>
-														</div>
-													</div>
-												</CardContent>
-											</Card>
-										))}
+													</CardContent>
+												</Card>
+											)
+										)}
 									</div>
 								</TabsContent>
 							</Tabs>

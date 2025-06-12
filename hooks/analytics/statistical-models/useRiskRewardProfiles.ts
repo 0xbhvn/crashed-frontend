@@ -43,7 +43,7 @@ interface OptimalStrategy {
   recommendation: string;
 }
 
-interface RiskAdjustedMetricsData {
+export interface RiskRewardData {
   total_games: number;
   analysis_period: {
     start: string;
@@ -53,32 +53,27 @@ interface RiskAdjustedMetricsData {
   optimal_strategy: OptimalStrategy;
 }
 
-interface UseRiskAdjustedMetricsOptions {
+interface UseRiskRewardProfilesOptions {
   targets?: number[];
   limit?: number;
   enabled?: boolean;
-  refreshInterval?: number;
 }
 
-interface UseRiskAdjustedMetricsReturn {
-  data: RiskAdjustedMetricsData | null;
+interface UseRiskRewardProfilesReturn {
+  data: RiskRewardData | null;
   isLoading: boolean;
   error: string | null;
-  refreshData: () => Promise<void>;
+  fetchData: () => Promise<void>;
 }
 
-export function useRiskAdjustedMetrics({
-  targets = [2, 3, 5, 10],
+export function useRiskRewardProfiles({
+  targets = [1.5, 2, 3, 5, 10, 20],
   limit = 1000,
   enabled = true,
-  refreshInterval,
-}: UseRiskAdjustedMetricsOptions = {}): UseRiskAdjustedMetricsReturn {
-  const [data, setData] = useState<RiskAdjustedMetricsData | null>(null);
+}: UseRiskRewardProfilesOptions = {}): UseRiskRewardProfilesReturn {
+  const [data, setData] = useState<RiskRewardData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Memoize targets to prevent unnecessary re-renders
-  const targetsKey = targets.join(',');
 
   const fetchData = useCallback(async () => {
     if (!enabled) return;
@@ -108,29 +103,22 @@ export function useRiskAdjustedMetrics({
         throw new Error('Invalid response format');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch risk-adjusted metrics';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch risk/reward profiles';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [targetsKey, limit, enabled]); // Use targetsKey instead of targets array
+  }, [targets, limit, enabled]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  useEffect(() => {
-    if (!refreshInterval || !enabled) return;
-
-    const interval = setInterval(fetchData, refreshInterval);
-    return () => clearInterval(interval);
-  }, [fetchData, refreshInterval, enabled]);
-
   return {
     data,
     isLoading,
     error,
-    refreshData: fetchData,
+    fetchData,
   };
 }
