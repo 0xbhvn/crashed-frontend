@@ -22,10 +22,14 @@ const ALL_CRASH_POINTS = [
 	...new Set([...CURRENT_STREAK_POINTS, ...UNIQUE_STREAK_POINTS]),
 ];
 
-export function OccurrencesTable({ className }: BaseWidgetProps) {
+interface OccurrencesTableProps extends BaseWidgetProps {
+	selectedType?: 'current' | 'unique';
+}
+
+export function OccurrencesTable({ className, selectedType: propSelectedType }: OccurrencesTableProps) {
 	// State variables for component
 	const [selectedType, setSelectedType] = useState<'current' | 'unique'>(
-		'current'
+		propSelectedType || 'current'
 	);
 	const [analyzeBy, setAnalyzeBy] = useState<'games' | 'time'>('games');
 	const [limit, setLimit] = useState(2000);

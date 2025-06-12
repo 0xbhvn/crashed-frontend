@@ -1,1 +1,1 @@
-export { OccurrencesTable } from './occurrences-widget';
+export { OccurrencesTable, OccurrencesTable as OccurrencesWidget } from './occurrences-widget';

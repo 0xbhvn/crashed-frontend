@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,15 +33,33 @@ export function Controls({
 	getExcelConfig,
 	getChartConfig,
 }: OccurrencesControlsProps) {
+	const router = useRouter();
+	const pathname = usePathname();
+	
+	// Check if we're in a sub-route
+	const isInSubRoute = pathname.includes('/occurrences/above-value') || pathname.includes('/occurrences/exact-value');
+	
+	const handleTabChange = (value: string) => {
+		if (isInSubRoute) {
+			// Navigate to the appropriate sub-route
+			if (value === 'current') {
+				router.push('/analytics/occurrences/above-value');
+			} else {
+				router.push('/analytics/occurrences/exact-value');
+			}
+		} else {
+			// Use the regular state setter
+			setSelectedType(value as 'current' | 'unique');
+		}
+	};
+	
 	return (
 		<div className="flex justify-between items-center mb-4">
 			<div className="flex items-center gap-3">
 				<Tabs
 					defaultValue="current"
 					value={selectedType}
-					onValueChange={(value) =>
-						setSelectedType(value as 'current' | 'unique')
-					}
+					onValueChange={handleTabChange}
 				>
 					<TabsList className="grid w-[240px] grid-cols-2 bg-muted/50 p-0.5">
 						<TabsTrigger
