@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { format } from 'date-fns';
-import type { GameObject } from './types';
 
 export interface SeriesData {
 	length: number;
