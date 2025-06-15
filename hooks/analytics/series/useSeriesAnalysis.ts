@@ -9,19 +9,16 @@ export interface SeriesData {
 	start_time: string;
 	end_time: string;
 	length: number;
-	follow_streak?: {
-		count: number;
-		games: {
-			game_id: string;
-			crash_point: number;
-			time: string;
-		}[];
-	};
+	crash_point: number | null;
 }
 
 export interface SeriesAnalysisResponse {
 	status: 'success' | 'error';
-	data: SeriesData[];
+	data: SeriesData[] | {
+		count?: number;
+		series?: SeriesData[];
+		[key: string]: any;
+	};
 	message?: string;
 }
 
@@ -41,6 +38,7 @@ export function useSeriesAnalysis({
 	sortBy = 'time',
 }: UseSeriesAnalysisProps) {
 	const [data, setData] = useState<SeriesData[]>([]);
+	const [count, setCount] = useState<number>(0);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
 	const [isMounted, setIsMounted] = useState(false);
@@ -153,35 +151,60 @@ export function useSeriesAnalysis({
 							responseData.data.length
 						);
 						setData(responseData.data);
+						// For old structure, count is the length of the array
+						setCount(responseData.data.length);
 					} else {
 						// New API structure - data.data is now an object with arrays inside
 						if (
 							typeof responseData.data === 'object' &&
 							responseData.data !== null
 						) {
-							// Look for potential array fields within the data object
-							const potentialArrayFields = Object.values(
-								responseData.data
-							).filter((value) => Array.isArray(value));
-
-							if (
-								potentialArrayFields.length > 0 &&
-								Array.isArray(potentialArrayFields[0])
-							) {
-								// Use the first array found as our data
+							// Extract count if available
+							if ('count' in responseData.data && typeof responseData.data.count === 'number') {
 								console.log(
-									'[useSeriesAnalysis] Using nested array, length:',
-									potentialArrayFields[0].length
+									'[useSeriesAnalysis] Found count:',
+									responseData.data.count
 								);
-								setData(
-									potentialArrayFields[0] as SeriesData[]
+								setCount(responseData.data.count);
+							}
+
+							// Check if data has a 'series' property (new API structure)
+							if ('series' in responseData.data && Array.isArray((responseData.data as any).series)) {
+								console.log(
+									'[useSeriesAnalysis] Found series array, length:',
+									(responseData.data as any).series.length
 								);
+								setData((responseData.data as any).series as SeriesData[]);
 							} else {
-								// Set empty array if we can't find suitable data
-								console.warn(
-									'[useSeriesAnalysis] No array found in nested data structure'
-								);
-								setData([]);
+								// Look for potential array fields within the data object
+								const potentialArrayFields = Object.values(
+									responseData.data
+								).filter((value) => Array.isArray(value));
+
+								if (
+									potentialArrayFields.length > 0 &&
+									Array.isArray(potentialArrayFields[0])
+								) {
+									// Use the first array found as our data
+									console.log(
+										'[useSeriesAnalysis] Using nested array, length:',
+										potentialArrayFields[0].length
+									);
+									setData(
+										potentialArrayFields[0] as SeriesData[]
+									);
+									// If no count was found, use array length
+									if (!('count' in responseData.data)) {
+										setCount(potentialArrayFields[0].length);
+									}
+								} else {
+									// Set empty array if we can't find suitable data
+									console.warn(
+										'[useSeriesAnalysis] No array found in nested data structure'
+									);
+									setData([]);
+									setCount(0);
+								}
 							}
 						} else {
 							// Set empty array as fallback
@@ -189,6 +212,7 @@ export function useSeriesAnalysis({
 								'[useSeriesAnalysis] Data is not object'
 							);
 							setData([]);
+							setCount(0);
 						}
 					}
 				} else {
@@ -197,6 +221,7 @@ export function useSeriesAnalysis({
 						'[useSeriesAnalysis] No data property in response'
 					);
 					setData([]);
+					setCount(0);
 				}
 			} catch (fetchError) {
 				clearTimeout(timeoutId);
@@ -256,5 +281,5 @@ export function useSeriesAnalysis({
 		fetchData();
 	}, [fetchData]);
 
-	return { data, isLoading, error, fetchData, refreshData: fetchData };
+	return { data, count, isLoading, error, fetchData, refreshData: fetchData };
 }

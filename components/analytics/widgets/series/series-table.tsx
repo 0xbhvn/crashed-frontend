@@ -10,10 +10,7 @@ export interface SeriesData {
 	end_game_id: string;
 	start_time: string;
 	end_time: string;
-	follow_streak?: {
-		count: number;
-		games?: (GameObject | string)[];
-	};
+	crash_point: number | null;
 }
 
 interface SeriesTableProps {
@@ -87,18 +84,8 @@ export function SeriesTable({ topSeries, value, sortBy }: SeriesTableProps) {
 										)}
 									</td>
 									<td className="py-2 font-medium">
-										{series.follow_streak?.games &&
-										series.follow_streak.games.length > 0
-											? typeof series.follow_streak
-													.games[0] === 'object'
-												? `${(
-														series.follow_streak
-															.games[0] as GameObject
-												  ).crash_point?.toFixed(2)}x`
-												: (
-														series.follow_streak
-															.games[0] as string
-												  ).split('@')[1]
+										{series.crash_point !== null && series.crash_point !== undefined
+											? `${series.crash_point.toFixed(2)}x`
 											: '-'}
 									</td>
 								</tr>

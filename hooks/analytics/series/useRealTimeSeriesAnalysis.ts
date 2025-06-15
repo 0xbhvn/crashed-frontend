@@ -21,7 +21,7 @@ export function useRealTimeSeriesAnalysis({
 }: UseRealTimeSeriesAnalysisProps) {
 	// Keep local copy of data to prevent loading states
 	const [localData, setLocalData] = useState<SeriesData[]>([]);
-	// Keep track of total occurrences
+	// Keep track of total occurrences (now from API count)
 	const [totalOccurrences, setTotalOccurrences] = useState<number>(0);
 
 	// Track the last game we processed
@@ -36,6 +36,7 @@ export function useRealTimeSeriesAnalysis({
 	// Get data from the API
 	const {
 		data: apiData,
+		count: apiCount,
 		isLoading: apiLoading,
 		error: apiError,
 		fetchData,
@@ -58,6 +59,13 @@ export function useRealTimeSeriesAnalysis({
 			setLocalData(apiData);
 		}
 	}, [apiData, localData]);
+
+	// Update total occurrences from API count
+	useEffect(() => {
+		if (apiCount !== undefined && apiCount !== null) {
+			setTotalOccurrences(apiCount);
+		}
+	}, [apiCount]);
 
 	// Update local data with API data, preserving UI state
 	useEffect(() => {
@@ -86,8 +94,7 @@ export function useRealTimeSeriesAnalysis({
 						apiItem.start_game_id !== localItem.start_game_id ||
 						apiItem.end_game_id !== localItem.end_game_id ||
 						apiItem.length !== localItem.length ||
-						apiItem.follow_streak?.count !==
-							localItem.follow_streak?.count
+						apiItem.crash_point !== localItem.crash_point
 					) {
 						return true;
 					}
@@ -99,18 +106,6 @@ export function useRealTimeSeriesAnalysis({
 			// Only update if meaningful data has changed
 			if (hasDataChanged) {
 				setLocalData(apiData);
-
-				// Calculate total occurrences when data changes
-				// Make sure apiData is an array before using reduce
-				if (Array.isArray(apiData)) {
-					const newTotalOccurrences = apiData.reduce(
-						(sum, series) => {
-							return sum + (series.follow_streak?.count || 0);
-						},
-						0
-					);
-					setTotalOccurrences(newTotalOccurrences);
-				}
 			}
 		}
 	}, [apiData, localData]);

@@ -5,14 +5,6 @@ import type {
 } from '@/utils/export-utils/excel';
 import type { ExportConfig } from '@/utils/export-utils';
 
-// Define a type for game object
-interface GameData {
-	game_id?: string;
-	crash_point?: number;
-	time?: string;
-	[key: string]: unknown;
-}
-
 // Define the structure for series data
 interface SeriesData {
 	length: number;
@@ -20,10 +12,7 @@ interface SeriesData {
 	end_game_id: string;
 	start_time: string;
 	end_time: string;
-	follow_streak?: {
-		count: number;
-		games?: (GameData | string)[];
-	};
+	crash_point: number | null;
 }
 
 // Define the parameter interface
@@ -47,15 +36,7 @@ export const getExcelConfig = async ({
 		endGameId: series.end_game_id,
 		startTime: new Date(series.start_time),
 		endTime: new Date(series.end_time),
-		followCount: series.follow_streak?.count || 0,
-		followGames:
-			series.follow_streak?.games?.map((game) =>
-				typeof game === 'object' && game !== null
-					? `#${game.game_id || 'unknown'}@${
-							game.crash_point?.toFixed(2) || '?.??'
-					  }x`
-					: String(game)
-			) || [],
+		crashPoint: series.crash_point,
 	}));
 
 	// Define columns for the main sheet
@@ -86,9 +67,10 @@ export const getExcelConfig = async ({
 			formatter: (value) => format(value as Date, 'MMM d, yyyy h:mm a'),
 		},
 		{
-			header: 'Follow Streak Count',
-			key: 'followCount',
-			width: 18,
+			header: 'Crash Point',
+			key: 'crashPoint',
+			width: 15,
+			formatter: (value) => value !== null && value !== undefined ? `${(value as number).toFixed(2)}x` : '-',
 		},
 	];
 
@@ -144,10 +126,10 @@ export const getExcelConfig = async ({
 							'- Use "Start Game" column for categories',
 					},
 					{ instructions: '' },
-					{ instructions: 'For Follow Streak chart:' },
+					{ instructions: 'For Crash Point chart:' },
 					{
 						instructions:
-							'- Use "Follow Streak Count" column for values',
+							'- Use "Crash Point" column for values',
 					},
 					{
 						instructions:
@@ -160,47 +142,6 @@ export const getExcelConfig = async ({
 		],
 	};
 
-	// Add follow games sheet unconditionally (each streak has 1 follow game)
-	// Flatten follow games data
-	const followGamesData = [];
-	for (const series of exportData) {
-		if (series.followGames && series.followGames.length > 0) {
-			for (const game of series.followGames) {
-				// Split game data (format is typically "#GAMEID@CRASHPOINTx")
-				const parts = String(game).split('@');
-				const gameId = parts[0];
-				const crashPoint = parts.length > 1 ? parts[1] : '';
-
-				followGamesData.push({
-					series: `${series.startGameId}-${series.endGameId}`,
-					gameId: gameId,
-					crashPoint: crashPoint,
-				});
-			}
-		}
-	}
-
-	// Add follow games sheet
-	excelConfig.sheets.push({
-		name: 'Follow Games',
-		columns: [
-			{ header: 'Series', key: 'series', width: 25 },
-			{ header: 'Game ID', key: 'gameId', width: 15 },
-			{ header: 'Crash Point', key: 'crashPoint', width: 15 },
-		],
-		data:
-			followGamesData.length > 0
-				? followGamesData
-				: [
-						{
-							series: 'No follow games data available',
-							gameId: '',
-							crashPoint: '',
-						},
-				  ],
-		autoFilter: true,
-		freezeHeader: true,
-	});
 
 	// Add configuration sheet
 	excelConfig.sheets.push({

@@ -36,8 +36,7 @@ export interface SeriesChartData {
 	length: number;
 	startTime: Date;
 	endTime: Date;
-	followCount: number;
-	followGames?: string[];
+	crashPoint: number | null;
 }
 
 export interface SeriesChartProps {
@@ -275,69 +274,23 @@ export function SeriesChart({
 												</tbody>
 											</table>
 										</div>
-										{item.followCount > 0 && (
-											<>
-												{/* Show the actual games that followed */}
-												{item.followGames &&
-													item.followGames.length >
-														0 && (
-														<div className="text-xs mt-2 border-t border-border/30 pt-1.5">
-															<div className="font-medium mb-1">
-																Immediate{' '}
-																{value}x crash:
-															</div>
-															<div className="rounded overflow-hidden border border-border/30">
-																<table className="w-full">
-																	<tbody>
-																		{item.followGames.map(
-																			(
-																				game: string,
-																				i: number
-																			) => {
-																				// Extract game ID and crash point from the string format "#GAMEID@CRASHPOINTx"
-																				const parts =
-																					game.split(
-																						'@'
-																					);
-																				const gameId =
-																					parts[0];
-																				const crashPoint =
-																					parts.length >
-																					1
-																						? parts[1]
-																						: '';
-
-																				return (
-																					<tr
-																						key={`tooltip-game-${item.seriesId}-${i}`}
-																						className={
-																							i %
-																								2 ===
-																							0
-																								? 'bg-muted/30'
-																								: ''
-																						}
-																					>
-																						<td className="px-2 py-1">
-																							{
-																								gameId
-																							}
-																						</td>
-																						<td className="px-2 py-1 text-right font-medium">
-																							{
-																								crashPoint
-																							}
-																						</td>
-																					</tr>
-																				);
-																			}
-																		)}
-																	</tbody>
-																</table>
-															</div>
-														</div>
-													)}
-											</>
+										{item.crashPoint !== null && item.crashPoint !== undefined && (
+											<div className="text-xs mt-2 border-t border-border/30 pt-1.5">
+												<div className="rounded overflow-hidden border border-border/30">
+													<table className="w-full">
+														<tbody>
+															<tr className="bg-muted/30">
+																<td className="px-2 py-1 font-medium">
+																	Crash Point
+																</td>
+																<td className="px-2 py-1 text-right font-medium">
+																	{item.crashPoint.toFixed(2)}x
+																</td>
+															</tr>
+														</tbody>
+													</table>
+												</div>
+											</div>
 										)}
 									</div>
 								</div>

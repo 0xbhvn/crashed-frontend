@@ -112,21 +112,31 @@ export async function GET(
 			);
 			// Handle new API structure silently - automatically adapt the response
 			if (typeof data.data === 'object' && data.data !== null) {
-				// Look for potential array fields within the data object
-				const potentialArrays = Object.values(data.data).filter((val) =>
-					Array.isArray(val)
-				);
-				console.log(
-					'[API Route] Found potential arrays:',
-					potentialArrays.length
-				);
-				if (potentialArrays.length > 0) {
-					// Replace data.data with the first array we found
-					data.data = potentialArrays[0];
+				// Check if data.data has a 'series' property (new API structure)
+				if ('series' in data.data && Array.isArray(data.data.series)) {
 					console.log(
-						'[API Route] Replaced data.data with array of length:',
-						data.data.length
+						'[API Route] Found series array with length:',
+						data.data.series.length
 					);
+					// Replace data.data with the series array
+					data.data = data.data.series;
+				} else {
+					// Look for potential array fields within the data object
+					const potentialArrays = Object.values(data.data).filter((val) =>
+						Array.isArray(val)
+					);
+					console.log(
+						'[API Route] Found potential arrays:',
+						potentialArrays.length
+					);
+					if (potentialArrays.length > 0) {
+						// Replace data.data with the first array we found
+						data.data = potentialArrays[0];
+						console.log(
+							'[API Route] Replaced data.data with array of length:',
+							data.data.length
+						);
+					}
 				}
 			}
 		} else {

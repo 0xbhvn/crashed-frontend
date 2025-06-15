@@ -206,17 +206,7 @@ export function SeriesWidget({
 			length: series.length,
 			startTime: new Date(series.start_time),
 			endTime: new Date(series.end_time),
-			// Include follow streak count and games if available
-			followCount: series.follow_streak?.count || 0,
-			// Process the game objects to extract ID and crash point
-			followGames:
-				series.follow_streak?.games?.map((game) =>
-					typeof game === 'object' && game !== null
-						? `#${game.game_id || 'unknown'}@${
-								game.crash_point?.toFixed(2) || '?.??'
-						  }x`
-						: String(game)
-				) || [],
+			crashPoint: series.crash_point,
 		}));
 
 		// When sorting by time, the API already returns in chronological order
@@ -316,7 +306,7 @@ export function SeriesWidget({
 				endGameId: series.end_game_id,
 				startTime: new Date(series.start_time),
 				endTime: new Date(series.end_time),
-				followCount: series.follow_streak?.count || 0,
+				crashPoint: series.crash_point,
 			}));
 
 			// Extract data for charts
@@ -324,7 +314,7 @@ export function SeriesWidget({
 			const seriesIds = exportData.map(
 				(item) => `${item.startGameId}-${item.endGameId}`
 			);
-			const followCounts = exportData.map((item) => item.followCount);
+			const crashPoints = exportData.map((item) => item.crashPoint ?? 0);
 
 			// Define series length chart
 			const lengthChart: ChartDefinition = {
@@ -345,23 +335,23 @@ export function SeriesWidget({
 				yAxisTitle: 'Length (games)',
 			};
 
-			// Define follow streak chart
-			const followChart: ChartDefinition = {
-				id: 'followChart',
-				title: 'Follow Streak Count Chart',
+			// Define crash point chart
+			const crashPointChart: ChartDefinition = {
+				id: 'crashPointChart',
+				title: 'Series Ending Crash Points',
 				type: 'bar',
 				labels: seriesIds,
 				datasets: [
 					{
-						label: 'Follow Streak Count',
-						data: followCounts,
+						label: 'Crash Point (x)',
+						data: crashPoints,
 						backgroundColor: 'rgba(255, 159, 64, 0.7)',
 						borderColor: 'rgba(255, 159, 64, 1)',
 						borderWidth: 1,
 					},
 				],
 				xAxisTitle: 'Series ID',
-				yAxisTitle: 'Count',
+				yAxisTitle: 'Crash Point (x)',
 			};
 
 			// Build HTML chart config
@@ -399,7 +389,7 @@ export function SeriesWidget({
 						},
 					],
 				},
-				charts: [lengthChart, followChart],
+				charts: [lengthChart, crashPointChart],
 				dataTable: {
 					columns: [
 						{ header: 'Series', key: 'seriesId' },
@@ -416,7 +406,7 @@ export function SeriesWidget({
 							formatter: (value) =>
 								format(value as Date, 'MMM d, yyyy h:mm a'),
 						},
-						{ header: 'Follow Count', key: 'followCount' },
+						{ header: 'Crash Point', key: 'crashPoint' },
 					],
 					data: exportData,
 				},
@@ -444,7 +434,7 @@ export function SeriesWidget({
 						<div className="flex items-center gap-2">
 							<div className="flex items-center bg-muted px-3 py-1 rounded-md">
 								<span className="text-sm font-medium mr-1">
-									Total {value}x occurrences:
+									Total series found:
 								</span>
 								<span className="text-sm font-bold">
 									{totalOccurrences}
