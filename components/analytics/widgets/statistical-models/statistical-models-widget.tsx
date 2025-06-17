@@ -9,17 +9,13 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-	BarChart3,
-	AlertCircle,
-} from 'lucide-react';
-import { RiskAdjustedMetricsWidget } from './risk-adjusted-metrics-widget';
-import { PatternAnalysisWidget } from './pattern-analysis-widget';
+import { BarChart3 } from 'lucide-react';
+import { RiskAdjustedMetricsWidget } from './risk-adjusted-metrics';
+import { RiskRewardProfilesWidget } from './risk-reward-profiles';
+import { PatternAnalysisWidget } from './pattern-analysis';
 import { ExpectedValuesWidget } from './expected-values-widget';
 import { MarketPsychologyWidget } from './market-psychology-widget';
-import { RiskRewardProfilesWidget } from './risk-reward-profiles-widget';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
 export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
@@ -29,7 +25,7 @@ export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2">
 						<BarChart3 className="h-5 w-5" />
-						Enhanced Statistical Models
+						Statistical Models
 						<Badge
 							variant="secondary"
 							className="text-xs uppercase"
@@ -38,57 +34,49 @@ export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
 						</Badge>
 					</CardTitle>
 					<CardDescription>
-						Advanced statistical analysis specifically designed for
-						BC.game crash mechanics, providing actionable insights
-						for risk management and strategy optimization
+						Advanced crash game analysis for risk management and
+						strategy optimization
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<Alert className="mb-6">
-						<AlertCircle className="h-4 w-4" />
-						<AlertDescription>
-							All recommendations are based on historical data and
-							do not guarantee future results. Always gamble
-							responsibly.
-						</AlertDescription>
-					</Alert>
-
 					<Tabs
 						defaultValue="risk-metrics"
 						className="w-full"
 					>
-						<TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
-							<TabsTrigger value="risk-metrics">
-								<span className="hidden sm:inline">
+						<div className="bg-muted/50 p-0.5 rounded-md">
+							<TabsList className="grid w-full grid-cols-5 bg-transparent p-0">
+								<TabsTrigger
+									value="risk-metrics"
+									className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-black data-[state=active]:!text-white data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground border-0 data-[state=active]:border-0"
+								>
 									Risk Metrics
-								</span>
-								<span className="sm:hidden">Risk</span>
-							</TabsTrigger>
-							<TabsTrigger value="risk-reward">
-								<span className="hidden sm:inline">
+								</TabsTrigger>
+								<TabsTrigger
+									value="risk-reward"
+									className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-black data-[state=active]:!text-white data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground border-0 data-[state=active]:border-0"
+								>
 									Risk/Reward
-								</span>
-								<span className="sm:hidden">R/R</span>
-							</TabsTrigger>
-							<TabsTrigger value="patterns">
-								<span className="hidden sm:inline">
+								</TabsTrigger>
+								<TabsTrigger
+									value="patterns"
+									className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-black data-[state=active]:!text-white data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground border-0 data-[state=active]:border-0"
+								>
 									Patterns
-								</span>
-								<span className="sm:hidden">Pattern</span>
-							</TabsTrigger>
-							<TabsTrigger value="expected-values">
-								<span className="hidden sm:inline">
+								</TabsTrigger>
+								<TabsTrigger
+									value="expected-values"
+									className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-black data-[state=active]:!text-white data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground border-0 data-[state=active]:border-0"
+								>
 									Expected Values
-								</span>
-								<span className="sm:hidden">EV</span>
-							</TabsTrigger>
-							<TabsTrigger value="psychology">
-								<span className="hidden sm:inline">
+								</TabsTrigger>
+								<TabsTrigger
+									value="psychology"
+									className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-black data-[state=active]:!text-white data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground border-0 data-[state=active]:border-0"
+								>
 									Psychology
-								</span>
-								<span className="sm:hidden">Psych</span>
-							</TabsTrigger>
-						</TabsList>
+								</TabsTrigger>
+							</TabsList>
+						</div>
 
 						<TabsContent
 							value="risk-metrics"

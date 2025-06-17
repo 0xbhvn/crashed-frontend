@@ -1,0 +1,1 @@
+export { PatternAnalysisWidget } from './pattern-analysis-widget';

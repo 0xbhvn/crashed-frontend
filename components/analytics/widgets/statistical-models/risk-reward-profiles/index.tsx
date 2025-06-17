@@ -1,0 +1,1 @@
+export { RiskRewardProfilesWidget } from './risk-reward-profiles-widget';

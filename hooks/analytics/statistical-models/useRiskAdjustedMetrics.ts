@@ -43,7 +43,7 @@ interface OptimalStrategy {
   recommendation: string;
 }
 
-interface RiskAdjustedMetricsData {
+export interface RiskAdjustedMetricsData {
   total_games: number;
   analysis_period: {
     start: string;
