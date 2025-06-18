@@ -76,8 +76,8 @@ const getRiskLevelColor = (level: string) => {
 };
 
 export function MarketPsychologyWidget({ className }: BaseWidgetProps) {
-	const [limit, setLimit] = React.useState<number>(1000);
-	const [limitInput, setLimitInput] = React.useState<string>('1000');
+	const [limit, setLimit] = React.useState<number>(2000);
+	const [limitInput, setLimitInput] = React.useState<string>('2000');
 	const [shortWindow, setShortWindow] = React.useState<number>(50);
 	const [shortWindowInput, setShortWindowInput] =
 		React.useState<string>('50');
@@ -148,7 +148,7 @@ export function MarketPsychologyWidget({ className }: BaseWidgetProps) {
 									onChange={(e) =>
 										setLimitInput(e.target.value)
 									}
-									placeholder="1000"
+									placeholder="2000"
 									className="flex-1"
 								/>
 								<Button

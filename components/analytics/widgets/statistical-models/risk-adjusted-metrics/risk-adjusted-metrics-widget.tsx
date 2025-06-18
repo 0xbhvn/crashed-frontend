@@ -27,8 +27,8 @@ import { DetailsTable } from './details-table';
 export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 	const [targets, setTargets] = React.useState<number[]>([2, 3, 5, 10]);
 	const [inputValue, setInputValue] = React.useState<string>('');
-	const [limit, setLimit] = React.useState<number>(1000);
-	const [limitInput, setLimitInput] = React.useState<string>('1000');
+	const [limit, setLimit] = React.useState<number>(2000);
+	const [limitInput, setLimitInput] = React.useState<string>('2000');
 
 	const { data, isLoading, error } = useRealTimeRiskAdjustedMetrics({
 		targets,

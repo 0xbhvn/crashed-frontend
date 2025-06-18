@@ -26,8 +26,8 @@ import { PatternsAnalysis } from './patterns-analysis';
 import { SummaryCards } from './summary-cards';
 
 export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
-  const [limit, setLimit] = React.useState<number>(1000);
-  const [limitInput, setLimitInput] = React.useState<string>('1000');
+  const [limit, setLimit] = React.useState<number>(2000);
+  const [limitInput, setLimitInput] = React.useState<string>('2000');
   const [anomalyThreshold, setAnomalyThreshold] = React.useState<number>(3.0);
   const [thresholdInput, setThresholdInput] = React.useState<string>('3.0');
 

@@ -81,7 +81,7 @@ export function RiskAdjustedMetricsControls({
 							applyLimitChange();
 						}
 					}}
-					placeholder="1000"
+					placeholder="2000"
 					className="w-24 h-8 text-center [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 					min="1"
 					max="10000"
