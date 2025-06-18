@@ -2,8 +2,6 @@ import type { HtmlChartConfig } from '@/utils/export-utils/chart-html';
 import type { RiskRewardData } from './types';
 import {
 	transformToRiskRewardData,
-	getSharpeRatioColor,
-	getWinRateColor,
 } from './utils';
 
 interface ExportProps {
@@ -14,7 +12,8 @@ export function getHtmlConfig({ data }: ExportProps): HtmlChartConfig {
 	if (!data) {
 		return {
 			title: 'Risk/Expected Value Profiles',
-			customHtml: '<p>No data available for visualization</p>',
+			subtitle: 'No data available',
+			customHtml: '<div style="text-align: center; padding: 40px; color: #666;"><p>No data available for visualization</p></div>',
 		};
 	}
 
@@ -22,6 +21,13 @@ export function getHtmlConfig({ data }: ExportProps): HtmlChartConfig {
 
 	// Build custom HTML content
 	let customHtml = '';
+
+	// Add export timestamp
+	customHtml += `
+    <div style="text-align: right; color: #666; font-size: 0.875em; margin-bottom: 20px;">
+      <p>Generated: ${new Date().toLocaleString()}</p>
+    </div>
+  `;
 
 	// Summary section
 	customHtml += `
@@ -79,11 +85,7 @@ export function getHtmlConfig({ data }: ExportProps): HtmlChartConfig {
               </td>
               <td style="padding: 10px; text-align: right;">
                 <span style="color: ${
-					getSharpeRatioColor(d.sharpeRatio) === 'green'
-						? '#16a34a'
-						: getSharpeRatioColor(d.sharpeRatio) === 'yellow'
-						? '#ca8a04'
-						: '#dc2626'
+					d.sharpeRatio > 1 ? '#16a34a' : d.sharpeRatio > 0.5 ? '#ca8a04' : '#dc2626'
 				};">
                   ${d.sharpeRatio.toFixed(2)}
                 </span>
@@ -122,11 +124,7 @@ export function getHtmlConfig({ data }: ExportProps): HtmlChartConfig {
               <td style="padding: 10px;">${d.strategy}</td>
               <td style="padding: 10px; text-align: right;">
                 <span style="color: ${
-					getWinRateColor(d.winRate) === 'green'
-						? '#16a34a'
-						: getWinRateColor(d.winRate) === 'yellow'
-						? '#ca8a04'
-						: '#dc2626'
+					d.winRate > 50 ? '#16a34a' : d.winRate > 40 ? '#ca8a04' : '#dc2626'
 				};">
                   ${d.winRate.toFixed(2)}
                 </span>
@@ -241,8 +239,47 @@ export function getHtmlConfig({ data }: ExportProps): HtmlChartConfig {
     </div>
   `;
 
+	// Build charts array
+	const charts: import('@/utils/export-utils/chart-html').ChartDefinition[] = [];
+	
+	// Add scatter plot data as bar chart (since Chart.js scatter requires different format)
+	charts.push({
+		id: 'risk-reward-chart',
+		title: 'Expected Value by Target Crash Point',
+		type: 'bar',
+		labels: chartData.map(d => d.strategy),
+		datasets: [{
+			label: 'Expected Value (%)',
+			data: chartData.map(d => d.expectedValue),
+			backgroundColor: 'rgba(75, 192, 192, 0.8)',
+			borderColor: 'rgba(75, 192, 192, 1)',
+			borderWidth: 1,
+		}],
+		yAxisTitle: 'Expected Value (%)',
+		xAxisTitle: 'Target Strategy',
+	});
+	
+	// Add Sharpe Ratio chart
+	charts.push({
+		id: 'sharpe-ratio-profiles-chart',
+		title: 'Sharpe Ratio by Strategy',
+		type: 'line',
+		labels: chartData.map(d => d.strategy),
+		datasets: [{
+			label: 'Sharpe Ratio',
+			data: chartData.map(d => d.sharpeRatio),
+			backgroundColor: 'rgba(99, 102, 241, 0.2)',
+			borderColor: 'rgba(99, 102, 241, 1)',
+			borderWidth: 2,
+		}],
+		yAxisTitle: 'Sharpe Ratio',
+		xAxisTitle: 'Target Strategy',
+	});
+
 	return {
 		title: 'Risk/Expected Value Profiles Analysis',
+		subtitle: `Analysis of ${data.total_games} games`,
+		charts,
 		customHtml,
 	};
 }

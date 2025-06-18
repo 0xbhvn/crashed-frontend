@@ -23,7 +23,6 @@ import { OverviewTable } from './overview-table';
 import { RiskMetricsTable } from './risk-metrics-table';
 import { DrawdownTable } from './drawdown-table';
 import { DetailsTable } from './details-table';
-import { getRiskLevelColor } from './utils';
 
 export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 	const [targets, setTargets] = React.useState<number[]>([2, 3, 5, 10]);
@@ -73,7 +72,7 @@ export function RiskAdjustedMetricsWidget({ className }: BaseWidgetProps) {
 
 	// Generate HTML chart configuration
 	const getChartConfigAsync = async (): Promise<HtmlChartConfig> => {
-		return getHtmlConfig({ data, getRiskLevelColor });
+		return getHtmlConfig({ data });
 	};
 
 	return (

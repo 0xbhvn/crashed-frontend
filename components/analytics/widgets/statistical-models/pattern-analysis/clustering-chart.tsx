@@ -53,8 +53,9 @@ export function ClusteringChart({ data }: ClusteringChartProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
-          <ResponsiveContainer width="100%" height={350}>
+        <div className="mb-4">
+          <ChartContainer config={chartConfig}>
+            <ResponsiveContainer width="100%" height={450}>
             <PieChart>
               <Pie
                 data={clusterData}
@@ -62,7 +63,7 @@ export function ClusteringChart({ data }: ClusteringChartProps) {
                 cy="50%"
                 labelLine={false}
                 label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
-                outerRadius={100}
+                outerRadius={150}
                 fill="#8884d8"
                 dataKey="value"
               >
@@ -107,9 +108,10 @@ export function ClusteringChart({ data }: ClusteringChartProps) {
               />
             </PieChart>
           </ResponsiveContainer>
-        </ChartContainer>
+          </ChartContainer>
+        </div>
         
-        <div className="rounded-md border">
+        <div className="rounded-md border mt-6">
           <Table>
             <TableHeader>
               <TableRow className="h-9">

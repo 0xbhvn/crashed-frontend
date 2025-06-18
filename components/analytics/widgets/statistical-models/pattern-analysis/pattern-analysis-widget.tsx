@@ -103,14 +103,14 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
               <SummaryCards data={data} />
 
               {/* Detailed Analysis Tabs */}
-              <Tabs defaultValue="clustering" className="w-full">
+              <Tabs defaultValue="distribution" className="w-full">
                 <div className="bg-muted/50 p-0.5 rounded-md">
                   <TabsList className="grid w-full grid-cols-4 bg-transparent p-0">
                     <TabsTrigger
-                      value="clustering"
+                      value="distribution"
                       className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-black data-[state=active]:!text-white data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground border-0 data-[state=active]:border-0"
                     >
-                      Clustering
+                      Distribution
                     </TabsTrigger>
                     <TabsTrigger
                       value="anomalies"
@@ -133,7 +133,7 @@ export function PatternAnalysisWidget({ className }: BaseWidgetProps) {
                   </TabsList>
                 </div>
 
-                <TabsContent value="clustering" className="mt-6">
+                <TabsContent value="distribution" className="mt-6">
                   <ClusteringChart data={data} />
                 </TabsContent>
 

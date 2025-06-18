@@ -10,13 +10,21 @@ export function getHtmlConfig({ data }: ExportProps): HtmlChartConfig {
   if (!data) {
     return {
       title: 'Pattern Analysis & Anomaly Detection',
-      customHtml: '<p>No data available for visualization</p>',
+      subtitle: 'No data available',
+      customHtml: '<div style="text-align: center; padding: 40px; color: #666;"><p>No data available for visualization</p></div>',
     };
   }
 
   const clusterData = formatClusterData(data);
 
   let customHtml = '';
+
+  // Add export timestamp
+  customHtml += `
+    <div style="text-align: right; color: #666; font-size: 0.875em; margin-bottom: 20px;">
+      <p>Generated: ${new Date().toLocaleString()}</p>
+    </div>
+  `;
 
   // Summary section
   customHtml += `
@@ -153,8 +161,38 @@ export function getHtmlConfig({ data }: ExportProps): HtmlChartConfig {
     </div>
   `;
 
+  // Statistical summary
+  customHtml += `
+    <h2 style="margin-top: 30px; margin-bottom: 15px;">Statistical Summary</h2>
+    <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
+      <p><strong>Analysis Overview:</strong></p>
+      <ul style="margin-top: 10px; list-style-type: none; padding-left: 0;">
+        <li>• Total games analyzed: ${data.summary.total_anomalies > 0 ? data.anomalies.anomalous_games.length + ' anomalous out of unknown total' : 'Unknown'}</li>
+        <li>• Randomness interpretation: ${data.randomness_metrics.interpretation}</li>
+        <li>• Autocorrelation assessment: ${data.autocorrelation.interpretation}</li>
+        <li>• Dominant pattern type: ${data.summary.dominant_pattern}</li>
+      </ul>
+    </div>
+  `;
+
   return {
     title: 'Pattern Analysis & Anomaly Detection Report',
+    subtitle: `Comprehensive pattern recognition and anomaly analysis`,
     customHtml,
+    charts: [
+      {
+        id: 'clustering-chart',
+        type: 'pie',
+        title: 'Crash Point Distribution',
+        labels: clusterData.map(cluster => cluster.name),
+        datasets: [{
+          label: 'Percentage',
+          data: clusterData.map(cluster => cluster.value),
+          backgroundColor: 'rgba(75, 192, 192, 0.8)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1,
+        }],
+      },
+    ],
   };
 }

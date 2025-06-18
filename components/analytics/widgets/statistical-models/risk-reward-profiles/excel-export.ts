@@ -10,7 +10,7 @@ interface ExportProps {
 export function getExcelConfig({ targets, limit, data }: ExportProps): ExcelExportConfig {
   if (!data) {
     return {
-      fileName: 'risk-reward-profiles-empty',
+      fileName: `risk-reward-profiles-${new Date().toISOString().split('T')[0]}`,
       sheets: [
         {
           name: 'No Data',
@@ -50,6 +50,8 @@ export function getExcelConfig({ targets, limit, data }: ExportProps): ExcelExpo
       { header: 'Max Drawdown (%)', key: 'Max Drawdown (%)', width: 18 },
     ],
     data: overviewData,
+    autoFilter: true,
+    freezeHeader: true,
   });
 
   // Risk Metrics Sheet
@@ -81,6 +83,8 @@ export function getExcelConfig({ targets, limit, data }: ExportProps): ExcelExpo
       { header: 'Sortino Ratio', key: 'Sortino Ratio', width: 15 },
     ],
     data: riskMetricsData,
+    autoFilter: true,
+    freezeHeader: true,
   });
 
   // Performance Sheet
@@ -108,6 +112,8 @@ export function getExcelConfig({ targets, limit, data }: ExportProps): ExcelExpo
       { header: 'Expected Value (%)', key: 'Expected Value (%)', width: 18 },
     ],
     data: performanceData,
+    autoFilter: true,
+    freezeHeader: true,
   });
 
   // Drawdown Analysis Sheet
@@ -129,6 +135,8 @@ export function getExcelConfig({ targets, limit, data }: ExportProps): ExcelExpo
       { header: 'Longest Drawdown', key: 'Longest Drawdown', width: 18 },
     ],
     data: drawdownData,
+    autoFilter: true,
+    freezeHeader: true,
   });
 
   // Analysis Summary Sheet
@@ -172,8 +180,57 @@ export function getExcelConfig({ targets, limit, data }: ExportProps): ExcelExpo
     data: summaryData,
   });
 
+  // Add Risk Categories sheet
+  const lowRiskStrategies = Object.entries(data.strategies).filter(
+    ([, strategy]) => strategy.risk_metrics.standard_deviation < 0.5 && strategy.drawdown_analysis.max_drawdown_percent < 15
+  );
+  const mediumRiskStrategies = Object.entries(data.strategies).filter(
+    ([, strategy]) => strategy.risk_metrics.standard_deviation >= 0.5 && strategy.risk_metrics.standard_deviation < 1 && strategy.drawdown_analysis.max_drawdown_percent < 30
+  );
+  const highRiskStrategies = Object.entries(data.strategies).filter(
+    ([, strategy]) => strategy.risk_metrics.standard_deviation >= 1 || strategy.drawdown_analysis.max_drawdown_percent >= 30
+  );
+
+  const riskCategoriesData = [
+    ...lowRiskStrategies.map(([key, strategy]) => ({
+      Category: 'Low Risk',
+      Strategy: key,
+      'Expected Value (%)': (strategy.performance.average_return * 100).toFixed(2),
+      'Risk (Std Dev)': strategy.risk_metrics.standard_deviation.toFixed(4),
+      'Max Drawdown (%)': strategy.drawdown_analysis.max_drawdown_percent.toFixed(2),
+    })),
+    ...mediumRiskStrategies.map(([key, strategy]) => ({
+      Category: 'Medium Risk',
+      Strategy: key,
+      'Expected Value (%)': (strategy.performance.average_return * 100).toFixed(2),
+      'Risk (Std Dev)': strategy.risk_metrics.standard_deviation.toFixed(4),
+      'Max Drawdown (%)': strategy.drawdown_analysis.max_drawdown_percent.toFixed(2),
+    })),
+    ...highRiskStrategies.map(([key, strategy]) => ({
+      Category: 'High Risk',
+      Strategy: key,
+      'Expected Value (%)': (strategy.performance.average_return * 100).toFixed(2),
+      'Risk (Std Dev)': strategy.risk_metrics.standard_deviation.toFixed(4),
+      'Max Drawdown (%)': strategy.drawdown_analysis.max_drawdown_percent.toFixed(2),
+    })),
+  ];
+
+  sheets.push({
+    name: 'Risk Categories',
+    columns: [
+      { header: 'Category', key: 'Category', width: 15 },
+      { header: 'Strategy', key: 'Strategy', width: 15 },
+      { header: 'Expected Value (%)', key: 'Expected Value (%)', width: 18 },
+      { header: 'Risk (Std Dev)', key: 'Risk (Std Dev)', width: 15 },
+      { header: 'Max Drawdown (%)', key: 'Max Drawdown (%)', width: 18 },
+    ],
+    data: riskCategoriesData,
+    autoFilter: true,
+    freezeHeader: true,
+  });
+
   return {
-    fileName: `risk-reward-profiles-${new Date().toISOString().split('T')[0]}`,
+    fileName: `risk-reward-profiles-${targets.join('-')}x-${limit}games-${new Date().toISOString().split('T')[0]}`,
     sheets,
   };
 }
