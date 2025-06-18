@@ -41,6 +41,7 @@ import { PatternAnalysisWidget } from '@/components/analytics/widgets/statistica
 ## Data Analysis
 
 The widget analyzes:
+
 - **Randomness Score**: Entropy-based randomness measurement
 - **Anomaly Detection**: Statistical outliers using Z-score analysis
 - **Clustering**: Distribution of crash points across categories
