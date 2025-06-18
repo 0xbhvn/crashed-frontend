@@ -1,4 +1,4 @@
-export { MarketPsychologyWidget } from './market-psychology-widget';
+export { MarketPsychologyWidget } from './market-psychology';
 export { ExpectedValuesWidget } from './expected-values';
 export { RiskRewardProfilesWidget } from './risk-reward-profiles';
 export { PatternAnalysisWidget } from './pattern-analysis';

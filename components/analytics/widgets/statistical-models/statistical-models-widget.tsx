@@ -15,7 +15,7 @@ import { RiskAdjustedMetricsWidget } from './risk-adjusted-metrics';
 import { RiskRewardProfilesWidget } from './risk-reward-profiles';
 import { PatternAnalysisWidget } from './pattern-analysis';
 import { ExpectedValuesWidget } from './expected-values';
-import { MarketPsychologyWidget } from './market-psychology-widget';
+import { MarketPsychologyWidget } from './market-psychology';
 import type { BaseWidgetProps } from '@/utils/export-utils/types';
 
 export function StatisticalModelsWidget({ className }: BaseWidgetProps) {
