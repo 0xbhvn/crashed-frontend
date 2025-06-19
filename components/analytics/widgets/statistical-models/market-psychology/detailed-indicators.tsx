@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
 import {
   AlertCircle,
   AlertTriangle,
@@ -13,7 +12,8 @@ import {
   TrendingDown,
 } from 'lucide-react';
 import type { BustFrequencyIndex, VolatilityRegime, MomentumIndicators } from './types';
-import { getMomentumBadgeVariant, formatPercentage, formatMultiplier } from './utils';
+import { cn } from '@/lib/utils';
+import { getMomentumBadgeColor, getBustFrequencyBadgeColor, getVolatilityRegimeBadgeColor, formatPercentage, formatMultiplier } from './utils';
 
 interface DetailedIndicatorsProps {
   bustFrequency: BustFrequencyIndex;
@@ -40,23 +40,24 @@ export function DetailedIndicators({
           <div className="space-y-2">
             <div className="flex items-baseline justify-between">
               <p className="text-2xl font-bold">{bustFrequency.index.toFixed(2)}</p>
-              <Badge variant={bustFrequency.index > 110 ? 'destructive' : 'default'}>
+              <Badge className={cn('px-2.5 py-0.5 font-semibold', getBustFrequencyBadgeColor(bustFrequency.index))}>
                 {bustFrequency.interpretation.split(' - ')[0]}
               </Badge>
             </div>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span>Recent rate:</span>
-                <span>{formatPercentage(bustFrequency.recent_bust_rate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Long-term rate:</span>
-                <span>{formatPercentage(bustFrequency.long_term_bust_rate)}</span>
-              </div>
+            <div className="mt-3">
+              <table className="w-full text-xs">
+                <tbody>
+                  <tr className="border-b">
+                    <td className="py-1.5 text-muted-foreground">Recent rate</td>
+                    <td className="py-1.5 text-right font-medium">{formatPercentage(bustFrequency.recent_bust_rate)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5 text-muted-foreground">Long-term rate</td>
+                    <td className="py-1.5 text-right font-medium">{formatPercentage(bustFrequency.long_term_bust_rate)}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {bustFrequency.interpretation}
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -82,24 +83,46 @@ export function DetailedIndicators({
                   <p className="text-2xl font-bold">
                     {volatilityRegime.current_volatility.toFixed(2)}
                   </p>
-                  <Badge>{volatilityRegime.regime}</Badge>
+                  <Badge className={cn('px-2.5 py-0.5 font-semibold', getVolatilityRegimeBadgeColor(volatilityRegime.regime))}>
+                    {volatilityRegime.regime}
+                  </Badge>
                 </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span>Percentile rank:</span>
-                    <span>{formatPercentage(volatilityRegime.percentile_rank)}</span>
-                  </div>
-                  <Progress value={volatilityRegime.percentile_rank} className="h-2" />
-                </div>
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span>Vol ratio:</span>
-                    <span>{volatilityRegime.volatility_ratio.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Average vol:</span>
-                    <span>{volatilityRegime.average_volatility.toFixed(2)}</span>
-                  </div>
+                <div className="mt-3">
+                  <table className="w-full text-xs">
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="py-1.5 text-muted-foreground">Percentile rank</td>
+                        <td className="py-1.5 text-right">
+                          <Badge className={cn(
+                            'px-2 py-0.5 text-xs font-medium',
+                            volatilityRegime.percentile_rank > 75 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                            volatilityRegime.percentile_rank > 50 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' :
+                            volatilityRegime.percentile_rank > 25 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                            'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                          )}>
+                            {formatPercentage(volatilityRegime.percentile_rank)}
+                          </Badge>
+                        </td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-1.5 text-muted-foreground">Volatility ratio</td>
+                        <td className="py-1.5 text-right">
+                          <Badge className={cn(
+                            'px-2 py-0.5 text-xs font-medium',
+                            volatilityRegime.volatility_ratio > 1.5 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                            volatilityRegime.volatility_ratio > 1 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                            'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                          )}>
+                            {volatilityRegime.volatility_ratio.toFixed(2)}
+                          </Badge>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 text-muted-foreground">Average volatility</td>
+                        <td className="py-1.5 text-right font-medium">{volatilityRegime.average_volatility.toFixed(2)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </>
             )}
@@ -135,32 +158,35 @@ export function DetailedIndicators({
                     <p className="text-2xl font-bold">{momentumIndicators.rsi.toFixed(0)}</p>
                     <p className="text-xs text-muted-foreground">RSI</p>
                   </div>
-                  <Badge variant={getMomentumBadgeVariant(momentumIndicators.trend)}>
+                  <Badge className={cn('px-2.5 py-0.5 font-semibold', getMomentumBadgeColor(momentumIndicators.trend))}>
                     {momentumIndicators.trend.charAt(0).toUpperCase() + momentumIndicators.trend.slice(1)}
                   </Badge>
                 </div>
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span>Momentum score:</span>
-                    <span
-                      className={
-                        momentumIndicators.momentum_score > 0
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }
-                    >
-                      {momentumIndicators.momentum_score > 0 ? '+' : ''}
-                      {formatPercentage(momentumIndicators.momentum_score)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Recent average:</span>
-                    <span>{formatMultiplier(momentumIndicators.recent_average)}</span>
-                  </div>
+                <div className="mt-3">
+                  <table className="w-full text-xs">
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="py-1.5 text-muted-foreground">Momentum score</td>
+                        <td className="py-1.5 text-right">
+                          <Badge className={cn(
+                            'px-2 py-0.5 text-xs font-medium',
+                            momentumIndicators.momentum_score > 20 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                            momentumIndicators.momentum_score > 0 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                            momentumIndicators.momentum_score > -20 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                          )}>
+                            {momentumIndicators.momentum_score > 0 ? '+' : ''}
+                            {formatPercentage(momentumIndicators.momentum_score)}
+                          </Badge>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 text-muted-foreground">Recent average</td>
+                        <td className="py-1.5 text-right font-medium">{formatMultiplier(momentumIndicators.recent_average)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {momentumIndicators.interpretation}
-                </p>
               </>
             )}
           </div>
