@@ -1,17 +1,17 @@
 export const getFearGreedColor = (index: number) => {
-  if (index >= 75) return '#ef4444'; // Extreme Greed - Red
-  if (index >= 60) return '#f59e0b'; // Greed - Orange
+  if (index >= 75) return '#10b981'; // Extreme Greed - Green
+  if (index >= 60) return '#84cc16'; // Greed - Light Green
   if (index >= 40) return '#facc15'; // Neutral - Yellow
-  if (index >= 25) return '#84cc16'; // Fear - Light Green
-  return '#10b981'; // Extreme Fear - Green
+  if (index >= 25) return '#f59e0b'; // Fear - Orange
+  return '#ef4444'; // Extreme Fear - Red
 };
 
 export const getFearGreedBadgeColor = (index: number) => {
-  if (index >= 75) return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-  if (index >= 60) return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+  if (index >= 75) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+  if (index >= 60) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
   if (index >= 40) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-  if (index >= 25) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-  return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+  if (index >= 25) return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+  return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
 };
 
 export const getRiskLevelColor = (level: string) => {

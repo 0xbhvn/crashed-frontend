@@ -40,8 +40,8 @@ export function DetailedIndicators({
           <div className="space-y-2">
             <div className="flex items-baseline justify-between">
               <p className="text-2xl font-bold">{bustFrequency.index.toFixed(2)}</p>
-              <Badge className={cn('px-2.5 py-0.5 font-semibold', getBustFrequencyBadgeColor(bustFrequency.index))}>
-                {bustFrequency.interpretation.split(' - ')[0]}
+              <Badge className={cn('px-3 py-1 text-base font-semibold', getBustFrequencyBadgeColor(bustFrequency.index))}>
+                {bustFrequency.interpretation.split(' - ')[0].replace(/bust frequency/i, '').trim()}
               </Badge>
             </div>
             <div className="mt-3">
@@ -83,7 +83,7 @@ export function DetailedIndicators({
                   <p className="text-2xl font-bold">
                     {volatilityRegime.current_volatility.toFixed(2)}
                   </p>
-                  <Badge className={cn('px-2.5 py-0.5 font-semibold', getVolatilityRegimeBadgeColor(volatilityRegime.regime))}>
+                  <Badge className={cn('px-3 py-1 text-base font-semibold', getVolatilityRegimeBadgeColor(volatilityRegime.regime))}>
                     {volatilityRegime.regime}
                   </Badge>
                 </div>
@@ -158,7 +158,7 @@ export function DetailedIndicators({
                     <p className="text-2xl font-bold">{momentumIndicators.rsi.toFixed(0)}</p>
                     <p className="text-xs text-muted-foreground">RSI</p>
                   </div>
-                  <Badge className={cn('px-2.5 py-0.5 font-semibold', getMomentumBadgeColor(momentumIndicators.trend))}>
+                  <Badge className={cn('px-3 py-1 text-base font-semibold', getMomentumBadgeColor(momentumIndicators.trend))}>
                     {momentumIndicators.trend.charAt(0).toUpperCase() + momentumIndicators.trend.slice(1)}
                   </Badge>
                 </div>

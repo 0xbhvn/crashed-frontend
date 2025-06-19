@@ -27,11 +27,11 @@ export function FearGreedIndex({ data }: FearGreedIndexProps) {
 
   // Define gauge segments for background
   const gaugeSegments = [
-    { value: 25, fill: '#10b981' }, // Extreme Fear (0-25)
-    { value: 15, fill: '#84cc16' }, // Fear (25-40)
-    { value: 20, fill: '#facc15' }, // Neutral (40-60)
-    { value: 15, fill: '#f59e0b' }, // Greed (60-75)
-    { value: 25, fill: '#ef4444' }, // Extreme Greed (75-100)
+    { value: 25, fill: '#ef4444' }, // Extreme Fear (0-25) - Red
+    { value: 15, fill: '#f59e0b' }, // Fear (25-40) - Orange
+    { value: 20, fill: '#facc15' }, // Neutral (40-60) - Yellow
+    { value: 15, fill: '#84cc16' }, // Greed (60-75) - Light Green
+    { value: 25, fill: '#10b981' }, // Extreme Greed (75-100) - Green
   ];
 
   const needle = (value: number, cx: number, cy: number, iR: number, oR: number) => {
@@ -80,7 +80,7 @@ export function FearGreedIndex({ data }: FearGreedIndexProps) {
             >
               {Math.round(data.index)}
             </p>
-            <Badge className={cn('mt-2 px-2.5 py-0.5 font-semibold', getFearGreedBadgeColor(data.index))}>
+            <Badge className={cn('mt-2 px-3 py-1 text-base font-semibold', getFearGreedBadgeColor(data.index))}>
               {data.sentiment}
             </Badge>
           </div>
