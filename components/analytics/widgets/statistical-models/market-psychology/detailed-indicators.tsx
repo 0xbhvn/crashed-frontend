@@ -84,7 +84,7 @@ export function DetailedIndicators({
                     {volatilityRegime.current_volatility.toFixed(2)}
                   </p>
                   <Badge className={cn('px-3 py-1 text-base font-semibold', getVolatilityRegimeBadgeColor(volatilityRegime.regime))}>
-                    {volatilityRegime.regime}
+                    {volatilityRegime.regime.replace(/volatility regime/i, '').trim()}
                   </Badge>
                 </div>
                 <div className="mt-3">
